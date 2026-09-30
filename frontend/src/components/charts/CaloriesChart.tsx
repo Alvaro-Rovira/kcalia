@@ -52,7 +52,7 @@ export default function CaloriesChart({ data, target, height = 210 }: { data: Ca
     <figure>
       <div style={{ height }} role="img" aria-label={`Gráfica de calorías por día. Objetivo: ${fmt(target)} kilocalorías.`}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 14, right: 4, bottom: 0, left: -18 }} barCategoryGap="22%">
+          <BarChart data={data} margin={{ top: 14, right: 4, bottom: 0, left: 0 }} barCategoryGap="22%">
             <CartesianGrid vertical={false} stroke={GRID_STROKE} />
             <XAxis
               dataKey="date"
@@ -69,7 +69,7 @@ export default function CaloriesChart({ data, target, height = 210 }: { data: Ca
               tick={AXIS_TICK}
               ticks={ticks}
               domain={[0, top]}
-              width={52}
+              width={44}
               tickFormatter={(value: number) => fmt(value)}
             />
             <Tooltip content={<DayTooltip target={target} />} cursor={{ fill: 'var(--track)', radius: 6 }} isAnimationActive={false} />

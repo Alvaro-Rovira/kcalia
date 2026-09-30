@@ -51,7 +51,7 @@ export default function WeightChart({ entries, target, unit, convert, height = 2
     <figure>
       <div style={{ height }} role="img" aria-label="Gráfica de peso con media móvil de 7 días">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 12, right: 10, bottom: 0, left: -22 }}>
+          <LineChart data={data} margin={{ top: 12, right: 10, bottom: 0, left: 0 }}>
             <CartesianGrid vertical={false} stroke={GRID_STROKE} />
             <XAxis
               dataKey="time"
@@ -74,7 +74,7 @@ export default function WeightChart({ entries, target, unit, convert, height = 2
               tick={AXIS_TICK}
               domain={[low, high]}
               ticks={ticks}
-              width={52}
+              width={34}
               tickFormatter={(value: number) => fmt(value)}
             />
             <Tooltip content={<WeightTooltip unit={unit} />} cursor={{ stroke: 'var(--border-strong)', strokeWidth: 1 }} isAnimationActive={false} />

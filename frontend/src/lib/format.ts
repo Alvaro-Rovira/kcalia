@@ -18,10 +18,17 @@ export function fmt(value: number, decimals = 0): string {
   return format.format(Object.is(rounded, -0) ? 0 : rounded)
 }
 
-/** Un decimal solo si aporta algo: 80 -> "80", 80.4 -> "80,4". */
-export function fmtSmart(value: number, decimals = 1): string {
-  const rounded = Number(value.toFixed(decimals))
-  return fmt(rounded, Number.isInteger(rounded) ? 0 : decimals)
+const smartFormats = new Map<number, Intl.NumberFormat>()
+
+/** Solo los decimales que aportan algo: 80 -> "80", 80,4 -> "80,4", 1,5 con 2 decimales -> "1,5". */
+export function fmtSmart(value: number, maxDecimals = 1): string {
+  let format = smartFormats.get(maxDecimals)
+  if (!format) {
+    format = new Intl.NumberFormat(LOCALE, { minimumFractionDigits: 0, maximumFractionDigits: maxDecimals, useGrouping: 'always' })
+    smartFormats.set(maxDecimals, format)
+  }
+  const rounded = Number(value.toFixed(maxDecimals))
+  return format.format(Object.is(rounded, -0) ? 0 : rounded)
 }
 
 export function fmtSigned(value: number, decimals = 0): string {
