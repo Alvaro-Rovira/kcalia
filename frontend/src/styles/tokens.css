@@ -35,7 +35,7 @@
   --surface-3: #262a31;
   --border: rgba(255, 255, 255, 0.075);
   --border-strong: rgba(255, 255, 255, 0.15);
-  --glass: rgba(18, 20, 24, 0.72);
+  --glass: rgba(18, 20, 24, 0.84);
   --glass-border: rgba(255, 255, 255, 0.09);
   --scrim: rgba(0, 0, 0, 0.6);
   --track: rgba(255, 255, 255, 0.075);
@@ -121,7 +121,7 @@
   --surface-3: #e6e4dd;
   --border: rgba(24, 26, 31, 0.085);
   --border-strong: rgba(24, 26, 31, 0.2);
-  --glass: rgba(255, 255, 255, 0.78);
+  --glass: rgba(255, 255, 255, 0.86);
   --glass-border: rgba(24, 26, 31, 0.08);
   --scrim: rgba(20, 22, 26, 0.38);
   --track: rgba(24, 26, 31, 0.08);

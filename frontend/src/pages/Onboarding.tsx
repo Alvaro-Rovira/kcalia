@@ -96,7 +96,7 @@ export default function Onboarding() {
   const client = useQueryClient()
   const reduce = useReducedMotion()
   const [index, setIndex] = useState(0)
-  const [direction, setDirection] = useState(1)
+  const [direction, setDirection] = useState(0)
   const [answers, setAnswers] = useState<Answers>({
     sex: null,
     age: 30,
@@ -180,7 +180,7 @@ export default function Onboarding() {
     step === 'sex' ? !!answers.sex : step === 'activity' ? !!answers.activity : step === 'goal' ? !!answers.goal : true
   const isQuestion = index >= 1 && index <= QUESTIONS
   const variants = {
-    enter: (d: number) => (reduce ? { opacity: 0 } : { opacity: 0, x: d > 0 ? 44 : -44 }),
+    enter: (d: number) => (d === 0 ? { opacity: 1, x: 0 } : reduce ? { opacity: 0 } : { opacity: 0, x: d > 0 ? 44 : -44 }),
     center: { opacity: 1, x: 0 },
     exit: (d: number) => (reduce ? { opacity: 0 } : { opacity: 0, x: d > 0 ? -44 : 44 }),
   }
@@ -223,7 +223,7 @@ export default function Onboarding() {
       </header>
 
       <main className="relative flex min-h-0 flex-1 flex-col pt-5">
-        <AnimatePresence mode="wait" custom={direction} initial={false}>
+        <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={step}
             custom={direction}

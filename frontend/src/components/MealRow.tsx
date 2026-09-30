@@ -9,12 +9,14 @@ interface Props {
   meal: Meal
   onOpen: (meal: Meal) => void
   onDelete: (meal: Meal) => void
+  /** Posición en la lista: escalona la animación de entrada. */
+  index?: number
 }
 
 const THRESHOLD = 84
 
 /** Fila de comida: toca para ver el detalle, desliza a la izquierda para borrar o a la derecha para editar. */
-export function MealRow({ meal, onOpen, onDelete }: Props) {
+export function MealRow({ meal, onOpen, onDelete, index = 0 }: Props) {
   const x = useMotionValue(0)
   const reduce = useReducedMotion()
   const deleteOpacity = useTransform(x, [-THRESHOLD, -24, 0], [1, 0.4, 0])
@@ -28,7 +30,7 @@ export function MealRow({ meal, onOpen, onDelete }: Props) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, height: 0, marginTop: 0, transition: { duration: 0.22 } }}
-      transition={{ type: 'spring', stiffness: 420, damping: 36 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 36, delay: Math.min(index, 8) * 0.045 }}
       className="relative overflow-hidden rounded-md"
     >
       <div className="absolute inset-0 flex items-center justify-between rounded-md" aria-hidden>

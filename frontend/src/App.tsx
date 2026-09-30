@@ -83,6 +83,9 @@ export default function App() {
   let screen
   if (!auth.data) {
     screen = auth.isError ? <CannotConnect onRetry={() => void auth.refetch()} /> : <Splash />
+  } else if (!auth.data.authenticated && auth.isFetching && !expired) {
+    // Lo guardado dice "sin sesión": se confirma antes de enseñar el login.
+    screen = <Splash />
   } else if (!auth.data.authenticated) {
     screen = <Auth mode={auth.data.registered ? 'login' : 'register'} expired={expired} />
   } else {

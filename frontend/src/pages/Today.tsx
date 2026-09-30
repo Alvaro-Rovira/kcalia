@@ -97,10 +97,13 @@ export default function Today() {
   }
 
   const groups = SLOTS.map((slot) => ({ ...slot, meals: list.filter((m) => m.slot === slot.key) })).filter((g) => g.meals.length > 0)
+  // Posición global de cada comida, para escalonar la entrada de toda la lista.
+  const groupOffset = Object.fromEntries(groups.map((g, i) => [g.key, groups.slice(0, i).reduce((n, x) => n + x.meals.length, 0)]))
   const streak = stats.data?.streak
   const tipStyle = TIP_STYLE[tip.tone]
   const slide = {
-    enter: (d: number) => (reduce || d === 0 ? { opacity: 0 } : { opacity: 0, x: d * 56 }),
+    // Dirección 0 = primer render: el contenedor ya está en su sitio y solo animan sus hijos.
+    enter: (d: number) => (d === 0 ? { opacity: 1, x: 0 } : reduce ? { opacity: 0 } : { opacity: 0, x: d * 56 }),
     center: { opacity: 1, x: 0 },
     exit: (d: number) => (reduce || d === 0 ? { opacity: 0 } : { opacity: 0, x: d * -56 }),
   }
@@ -143,7 +146,7 @@ export default function Today() {
         <DateStrip date={date} onChange={setDate} targetKcal={targets.kcal} />
       </div>
 
-      <AnimatePresence mode="wait" custom={direction} initial={false}>
+      <AnimatePresence mode="wait" custom={direction}>
         <motion.div
           key={date}
           custom={direction}
@@ -322,9 +325,9 @@ export default function Today() {
                         </div>
                       </div>
                       <ul className="space-y-2">
-                        <AnimatePresence initial={false}>
-                          {group.meals.map((meal) => (
-                            <MealRow key={meal.client_id} meal={meal} onOpen={setDetail} onDelete={remove} />
+                        <AnimatePresence>
+                          {group.meals.map((meal, index) => (
+                            <MealRow key={meal.client_id} meal={meal} index={groupOffset[group.key] + index} onOpen={setDetail} onDelete={remove} />
                           ))}
                         </AnimatePresence>
                       </ul>

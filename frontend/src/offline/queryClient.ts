@@ -31,15 +31,26 @@ export const queryClient = new QueryClient({
 let timer: ReturnType<typeof setTimeout> | undefined
 let latest: PersistedClient | undefined
 
+function writeNow(): void {
+  if (timer) clearTimeout(timer)
+  timer = undefined
+  if (latest) void set(CACHE_KEY, latest).catch(() => undefined)
+}
+
+if (typeof document !== 'undefined') {
+  // Una PWA puede cerrarse en cualquier momento: al ocultarse se guarda sin esperar al retardo.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') writeNow()
+  })
+  window.addEventListener('pagehide', writeNow)
+}
+
 /** Caché de React Query persistida en IndexedDB (el diario se ve sin conexión). */
 export const persister: Persister = {
   persistClient: (client) => {
     latest = client
     if (timer) return
-    timer = setTimeout(() => {
-      timer = undefined
-      if (latest) void set(CACHE_KEY, latest).catch(() => undefined)
-    }, 800)
+    timer = setTimeout(writeNow, 800)
   },
   restoreClient: () => get<PersistedClient>(CACHE_KEY).catch(() => undefined),
   removeClient: () => del(CACHE_KEY).catch(() => undefined),

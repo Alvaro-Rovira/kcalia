@@ -22,7 +22,9 @@ interface MealsResponse {
 }
 
 export function useAuthStatus() {
-  return useQuery({ queryKey: keys.auth, queryFn: () => api.get<AuthStatus>('/api/auth/status'), staleTime: 60_000 })
+  // staleTime 0: el estado de sesión guardado nunca se da por bueno sin comprobarlo. Sin red
+  // se conserva el guardado, así que el diario sigue viéndose sin conexión.
+  return useQuery({ queryKey: keys.auth, queryFn: () => api.get<AuthStatus>('/api/auth/status'), staleTime: 0 })
 }
 
 export function useBootstrap(enabled = true) {
