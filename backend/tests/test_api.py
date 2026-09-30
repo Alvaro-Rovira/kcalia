@@ -178,12 +178,12 @@ def test_cola_offline_idempotente(client):
 def test_raciones_editar_borrar_y_deshacer(client):
     meals = client.get("/api/meals", params={"date": "2026-09-21"}).json()["meals"]
     meal = meals[0]
-    doubled = client.patch(f"/api/meals/{meal['id']}", json={"servings": 2}).json()
+    doubled = client.patch(f"/api/meals/{meal['client_id']}", json={"servings": 2}).json()
     assert doubled["kcal"] == pytest.approx(meal["kcal"] * 2, abs=0.2)
-    client.patch(f"/api/meals/{meal['id']}", json={"servings": 1})
-    assert client.delete(f"/api/meals/{meal['id']}").json() == {"ok": True}
+    client.patch(f"/api/meals/{meal['client_id']}", json={"servings": 1})
+    assert client.delete(f"/api/meals/{meal['client_id']}").json() == {"ok": True}
     assert len(client.get("/api/meals", params={"date": "2026-09-21"}).json()["meals"]) == 4
-    client.post(f"/api/meals/{meal['id']}/restore")
+    client.post(f"/api/meals/{meal['client_id']}/restore")
     assert len(client.get("/api/meals", params={"date": "2026-09-21"}).json()["meals"]) == 5
 
 

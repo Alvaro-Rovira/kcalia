@@ -8,7 +8,7 @@ from argon2.exceptions import InvalidHashError, VerificationError
 
 _hasher = PasswordHasher()
 
-SESSION_COOKIE = "kcalma_session"
+SESSION_COOKIE = "kcalia_session"
 
 
 def hash_password(password: str) -> str:

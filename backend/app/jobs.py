@@ -13,7 +13,7 @@ from .config import Settings, get_settings
 from .db import SessionLocal
 from .summary import week_start
 
-log = logging.getLogger("kcalma.jobs")
+log = logging.getLogger("kcalia.jobs")
 
 BACKUP_HOUR = 3
 SUMMARY_WEEKDAY = 6  # domingo
@@ -27,8 +27,8 @@ def backup_database(settings: Settings, now: datetime | None = None) -> Path | N
         return None
     now = now or datetime.now(settings.zone)
     settings.backup_dir.mkdir(parents=True, exist_ok=True)
-    target = settings.backup_dir / f"kcalma-{now:%Y-%m-%d}.db.gz"
-    temp = settings.backup_dir / ".kcalma-backup.tmp"
+    target = settings.backup_dir / f"kcalia-{now:%Y-%m-%d}.db.gz"
+    temp = settings.backup_dir / ".kcalia-backup.tmp"
 
     source = sqlite3.connect(settings.db_path)
     dest = sqlite3.connect(temp)
@@ -41,7 +41,7 @@ def backup_database(settings: Settings, now: datetime | None = None) -> Path | N
         shutil.copyfileobj(raw, packed)
     temp.unlink(missing_ok=True)
 
-    backups = sorted(settings.backup_dir.glob("kcalma-*.db.gz"))
+    backups = sorted(settings.backup_dir.glob("kcalia-*.db.gz"))
     for old in backups[: -settings.backup_keep]:
         old.unlink(missing_ok=True)
     return target
@@ -51,7 +51,7 @@ def _tick(settings: Settings) -> None:
     now = datetime.now(settings.zone)
     today = now.date()
 
-    todays_backup = settings.backup_dir / f"kcalma-{today:%Y-%m-%d}.db.gz"
+    todays_backup = settings.backup_dir / f"kcalia-{today:%Y-%m-%d}.db.gz"
     if now.hour >= BACKUP_HOUR and not todays_backup.exists():
         path = backup_database(settings, now)
         if path:
@@ -78,6 +78,6 @@ def start_scheduler(stop: threading.Event) -> threading.Thread:
                 log.exception("Fallo en las tareas periódicas")
             stop.wait(CHECK_EVERY_SECONDS)
 
-    thread = threading.Thread(target=loop, name="kcalma-jobs", daemon=True)
+    thread = threading.Thread(target=loop, name="kcalia-jobs", daemon=True)
     thread.start()
     return thread

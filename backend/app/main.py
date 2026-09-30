@@ -15,7 +15,7 @@ from .jobs import start_scheduler
 from .routers import account, auth, meals, profile, summary, weight
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-log = logging.getLogger("kcalma")
+log = logging.getLogger("kcalia")
 
 CSP = (
     "default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; "
@@ -43,7 +43,7 @@ async def lifespan(_: FastAPI):
     stop.set()
 
 
-app = FastAPI(title="Kcalma", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(title="Kcalia", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 
 
 @app.middleware("http")

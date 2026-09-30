@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from .config import Settings
 
-log = logging.getLogger("kcalma.ai")
+log = logging.getLogger("kcalia.ai")
 
 UNIT_ENUM = "g|ml|pieza|cda|cdta|vaso|taza|rebanada|loncha|lata|puñado|plato|racion|bol|cazo"
 MAX_OUTPUT_TOKENS = 1500

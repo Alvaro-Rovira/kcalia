@@ -8,7 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    app_name: str = "Kcalma"
+    app_name: str = "Kcalia"
     domain: str = "localhost"
     tz: str = "Europe/Madrid"
 
@@ -36,7 +36,7 @@ class Settings(BaseSettings):
 
     @property
     def db_path(self) -> Path:
-        return self.data_dir / "kcalma.db"
+        return self.data_dir / "kcalia.db"
 
     @property
     def zone(self) -> ZoneInfo:

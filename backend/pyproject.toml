@@ -1,7 +1,7 @@
 [project]
-name = "kcalma-backend"
+name = "kcalia-backend"
 version = "1.0.0"
-description = "API de Kcalma: control de calorías y macros con ahorro de IA"
+description = "API de Kcalia: control de calorías y macros con ahorro de IA"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",

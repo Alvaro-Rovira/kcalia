@@ -36,7 +36,7 @@ def _live_meals(db: Session) -> list[Meal]:
 def export_json(db: Session = Depends(get_db)) -> dict:
     profile, targets = services.get_profile(db), services.get_targets(db)
     return {
-        "app": "Kcalma",
+        "app": "Kcalia",
         "exported_at": datetime.now().isoformat(timespec="seconds"),
         "profile": services.profile_dict(profile) if profile else None,
         "targets": services.targets_dict(targets) if targets else None,
@@ -98,7 +98,7 @@ def export_meals_csv(db: Session = Depends(get_db)) -> Response:
             ]
         )
     # BOM para que Excel detecte UTF-8.
-    return _download("﻿" + out.getvalue(), f"kcalma-comidas-{_stamp()}.csv", "text/csv; charset=utf-8")
+    return _download("﻿" + out.getvalue(), f"kcalia-comidas-{_stamp()}.csv", "text/csv; charset=utf-8")
 
 
 @router.get("/export/weights.csv")
@@ -108,7 +108,7 @@ def export_weights_csv(db: Session = Depends(get_db)) -> Response:
     writer.writerow(["fecha", "peso_kg"])
     for weight in db.scalars(select(Weight).order_by(Weight.date)):
         writer.writerow([weight.date, f"{weight.kg:.2f}".replace(".", ",")])
-    return _download("﻿" + out.getvalue(), f"kcalma-peso-{_stamp()}.csv", "text/csv; charset=utf-8")
+    return _download("﻿" + out.getvalue(), f"kcalia-peso-{_stamp()}.csv", "text/csv; charset=utf-8")
 
 
 def _confirm(user: User, body: PasswordConfirm) -> None:

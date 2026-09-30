@@ -231,16 +231,18 @@ def create_meal(body: MealIn, db: Session = Depends(get_db)) -> dict:
     return services.meal_dict(meal)
 
 
-def _get_meal(db: Session, meal_id: int) -> Meal:
-    meal = db.get(Meal, meal_id)
+def _get_meal(db: Session, client_id: str) -> Meal:
+    # Se direcciona por client_id para que la cola offline pueda editar o borrar
+    # una comida que creó antes de conocer su id de servidor.
+    meal = db.scalar(select(Meal).where(Meal.client_id == client_id))
     if meal is None:
         raise HTTPException(404, "No encuentro esa comida. Puede que ya se hubiera borrado.")
     return meal
 
 
-@router.patch("/meals/{meal_id}")
-def update_meal(meal_id: int, body: MealPatch, db: Session = Depends(get_db)) -> dict:
-    meal = _get_meal(db, meal_id)
+@router.patch("/meals/{client_id}")
+def update_meal(client_id: str, body: MealPatch, db: Session = Depends(get_db)) -> dict:
+    meal = _get_meal(db, client_id)
     old_date = meal.date
     if body.date:
         meal.date = body.date
@@ -262,19 +264,19 @@ def update_meal(meal_id: int, body: MealPatch, db: Session = Depends(get_db)) ->
     return services.meal_dict(meal)
 
 
-@router.delete("/meals/{meal_id}")
-def delete_meal(meal_id: int, db: Session = Depends(get_db)) -> dict:
+@router.delete("/meals/{client_id}")
+def delete_meal(client_id: str, db: Session = Depends(get_db)) -> dict:
     """Borrado lógico, para poder deshacerlo desde el aviso."""
-    meal = _get_meal(db, meal_id)
+    meal = _get_meal(db, client_id)
     meal.deleted_at = utcnow()
     db.commit()
     services.refresh_week_if_stored(db, meal.date, today_local())
     return {"ok": True}
 
 
-@router.post("/meals/{meal_id}/restore")
-def restore_meal(meal_id: int, db: Session = Depends(get_db)) -> dict:
-    meal = _get_meal(db, meal_id)
+@router.post("/meals/{client_id}/restore")
+def restore_meal(client_id: str, db: Session = Depends(get_db)) -> dict:
+    meal = _get_meal(db, client_id)
     meal.deleted_at = None
     db.commit()
     services.refresh_week_if_stored(db, meal.date, today_local())

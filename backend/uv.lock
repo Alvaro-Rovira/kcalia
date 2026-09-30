@@ -313,7 +313,7 @@ wheels = [
 ]
 
 [[package]]
-name = "kcalma-backend"
+name = "kcalia-backend"
 version = "1.0.0"
 source = { virtual = "." }
 dependencies = [
