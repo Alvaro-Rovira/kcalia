@@ -137,9 +137,8 @@ def main() -> None:
     if args.price_in is not None and args.price_out is not None:
         per_meal = (r["avg_prompt"] * args.price_in + r["avg_completion"] * args.price_out) / 1_000_000
         monthly = per_meal * 60 * 30
-        print(
-            f"Coste estimado (sin caché): {per_meal * 100:.3f} USD/100 comidas  ·  {monthly:.2f} USD/mes al tope de 60/día"
-        )
+        print(f"Coste estimado (sin caché): {per_meal * 100:.3f} USD/100 comidas")
+        print(f"                            {monthly:.2f} USD/mes al tope de 60 consultas al día")
 
 
 if __name__ == "__main__":
