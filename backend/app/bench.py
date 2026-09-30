@@ -38,6 +38,8 @@ EXACT = [
 ]
 # Sin cantidades: se acepta un rango razonable de calorías.
 AMBIGUOUS = [
+    ("dos huevos revueltos con una tostada de pan integral y aceite", 290, 420),
+    ("tres croquetas de jamón", 180, 330),
     ("un café con leche", 40, 130),
     ("una tostada con tomate y aceite", 110, 240),
     ("un plato de lentejas con chorizo", 300, 620),
@@ -46,14 +48,22 @@ AMBIGUOUS = [
 TOLERANCE = 0.12
 
 
-def run(model: str | None, base_url: str | None, api_key: str | None) -> dict:
+def run(model: str | None, base_url: str | None, api_key: str | None, rpm: float | None = None) -> dict:
     settings = get_settings()
     update = {k: v for k, v in {"ai_model": model, "ai_base_url": base_url, "ai_api_key": api_key}.items() if v}
     client = AiClient(settings.model_copy(update=update))
     if not client.configured:
         raise SystemExit("Falta AI_API_KEY (o --api-key).")
 
+    spacing = 60 / rpm + 1.5 if rpm else 0.0
+    last_start = [0.0]
+
     def ask(text: str):
+        # Respeta el límite de peticiones por minuto de la cuenta: sin esto la mayoría de llamadas darían 429.
+        pause = last_start[0] + spacing - time.perf_counter()
+        if pause > 0:
+            time.sleep(pause)
+        last_start[0] = time.perf_counter()
         started = time.perf_counter()
         try:
             meal, usage = client.analyze_text(text)
@@ -122,11 +132,12 @@ def main() -> None:
     parser.add_argument(
         "--api-key", help="Clave (por defecto AI_API_KEY). Mejor pasarla por entorno que por argumento."
     )
+    parser.add_argument("--rpm", type=float, help="Peticiones por minuto que permite tu cuenta (espacia las llamadas)")
     parser.add_argument("--price-in", type=float, help="USD por millón de tokens de entrada, para estimar el coste")
     parser.add_argument("--price-out", type=float, help="USD por millón de tokens de salida")
     args = parser.parse_args()
 
-    r = run(args.model, args.base_url, args.api_key)
+    r = run(args.model, args.base_url, args.api_key, args.rpm)
     print("\n" + "─" * 64)
     band = f"{TOLERANCE * 100:.0f}"
     print(f"Calorías: error medio {r['kcal_mape']:.1f} %  ·  dentro de ±{band} %: {r['within']}/{r['exact']}")

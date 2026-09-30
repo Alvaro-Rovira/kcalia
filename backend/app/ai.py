@@ -4,6 +4,7 @@ import base64
 import json
 import logging
 import re
+import time
 
 import httpx
 from pydantic import BaseModel, Field, ValidationError, field_validator
@@ -165,10 +166,27 @@ def _provider_params(model: str) -> dict:
     return {"temperature": 0.1, "max_tokens": MAX_OUTPUT_TOKENS}
 
 
+MAX_RETRY_WAIT_SECONDS = 5.0
+
+
+def _retry_after(resp: httpx.Response) -> float:
+    try:
+        return max(0.0, float(resp.headers.get("retry-after", "1")))
+    except ValueError:
+        return 1.0
+
+
+def _is_quota_error(resp: httpx.Response) -> bool:
+    """429 por saldo agotado (no por ritmo de peticiones): cambia lo que hay que decirle al usuario."""
+    text = resp.text.lower()
+    return any(mark in text for mark in ("quota", "insufficient", "balance", "billing", "credit"))
+
+
 class AiClient:
-    def __init__(self, settings: Settings, http: httpx.Client | None = None):
+    def __init__(self, settings: Settings, http: httpx.Client | None = None, sleep=time.sleep):
         self.settings = settings
         self.http = http or httpx.Client(timeout=settings.ai_timeout)
+        self._sleep = sleep
 
     @property
     def configured(self) -> bool:
@@ -193,6 +211,14 @@ class AiClient:
                 log.warning("La IA rechazó los parámetros (%s); reintento sin opcionales", resp.text[:300])
                 minimal = {"model": body["model"], "messages": body["messages"]}
                 resp = self.http.post(url, json=minimal, headers=headers)
+            if resp.status_code == 429:
+                wait = _retry_after(resp)
+                # Una espera corta suele bastar (otra petición nuestra a punto de caducar en la ventana);
+                # si el proveedor pide más, no se deja al usuario mirando una rueda: se le explica.
+                if wait <= MAX_RETRY_WAIT_SECONDS:
+                    log.warning("La IA pidió esperar %.0f s (429): %s", wait, resp.text[:200])
+                    self._sleep(wait)
+                    resp = self.http.post(url, json=body, headers=headers)
         except httpx.TimeoutException as exc:
             raise AiError("timeout", "La IA ha tardado demasiado en responder. Prueba otra vez.", 504) from exc
         except httpx.HTTPError as exc:
@@ -201,7 +227,19 @@ class AiClient:
         if resp.status_code in (401, 403):
             raise AiError("auth", "La clave de la IA no es válida o ha caducado. Revísala en el servidor.")
         if resp.status_code == 429:
-            raise AiError("rate", "La IA está saturada ahora mismo. Espera unos segundos y reintenta.", 503)
+            log.warning("Límite del proveedor de IA (429): %s", resp.text[:300])
+            if _is_quota_error(resp):
+                raise AiError(
+                    "quota",
+                    "La cuenta de la IA se ha quedado sin saldo. Recárgala en la consola del proveedor.",
+                    503,
+                )
+            raise AiError(
+                "rate",
+                "Tu cuenta de IA ha llegado a su límite de peticiones por minuto. "
+                "Espera un poco (hasta un minuto) y vuelve a intentarlo.",
+                503,
+            )
         if resp.status_code >= 400:
             log.error("Error %s de la IA: %s", resp.status_code, resp.text[:500])
             raise AiError("upstream", "La IA ha devuelto un error. Inténtalo de nuevo en un momento.")

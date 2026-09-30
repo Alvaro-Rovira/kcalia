@@ -148,3 +148,65 @@ def test_transcripcion_vacia_o_con_error_da_mensaje_claro():
         with pytest.raises(AiError) as caught:
             transcribe(settings, b"audio", "a.webm", "audio/webm", http=client)
         assert caught.value.code == code
+
+
+def _client(responses, sleeps):
+    import httpx
+
+    from app.ai import AiClient
+    from app.config import Settings
+
+    queue = list(responses)
+    settings = Settings(_env_file=None, ai_api_key="k", ai_model="modelo")
+    http = httpx.Client(transport=httpx.MockTransport(lambda request: queue.pop(0)))
+    return AiClient(settings, http=http, sleep=sleeps.append)
+
+
+def _ok():
+    import httpx
+
+    return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(VALID)}}], "usage": {}})
+
+
+def _limit(seconds="1", body=None):
+    import httpx
+
+    return httpx.Response(
+        429,
+        headers={"retry-after": seconds},
+        json=body or {"error": {"message": "Organization Rate limit exceeded", "type": "rate_limit_reached_error"}},
+    )
+
+
+def test_un_429_corto_se_reintenta_una_vez_y_sale_bien():
+    sleeps: list[float] = []
+    meal, _ = _client([_limit("1"), _ok()], sleeps).analyze_text("un yogur")
+    assert meal.name == "Yogur" and sleeps == [1.0]
+
+
+def test_dos_429_seguidos_explican_el_limite_por_minuto():
+    from app.ai import AiError
+
+    sleeps: list[float] = []
+    with pytest.raises(AiError) as caught:
+        _client([_limit("1"), _limit("1")], sleeps).analyze_text("un yogur")
+    assert caught.value.code == "rate" and caught.value.status == 503
+    assert "por minuto" in caught.value.message and sleeps == [1.0]
+
+
+def test_una_espera_larga_no_se_bloquea_esperando():
+    from app.ai import AiError
+
+    sleeps: list[float] = []
+    with pytest.raises(AiError) as caught:
+        _client([_limit("40")], sleeps).analyze_text("un yogur")
+    assert caught.value.code == "rate" and sleeps == []
+
+
+def test_429_por_saldo_agotado_se_distingue_del_limite_de_ritmo():
+    from app.ai import AiError
+
+    body = {"error": {"message": "Your account balance is insufficient", "type": "exceeded_current_quota_error"}}
+    with pytest.raises(AiError) as caught:
+        _client([_limit("1", body), _limit("1", body)], []).analyze_text("un yogur")
+    assert caught.value.code == "quota" and "saldo" in caught.value.message
