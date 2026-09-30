@@ -54,7 +54,7 @@ Kcalia es una PWA para uso personal, en español y pensada primero para el móvi
 
 - **Texto libre.** «Dos huevos revueltos con una tostada de pan integral y aceite» se convierte en ingredientes con gramos, calorías, proteínas, hidratos y grasas. Antes de guardar ves el desglose y puedes corregir cualquier cantidad.
 - **Foto.** La imagen se reduce en el móvil y el modelo de visión estima el plato. Puedes añadir una nota («era media ración»).
-- **Voz.** Grabas, se transcribe con un Whisper propio que corre en tu servidor y el texto sigue el mismo camino que si lo hubieras escrito.
+- **Voz.** Grabas, se transcribe con un Whisper propio que corre en tu servidor (unos 4-5 segundos por frase en CPU) y el texto sigue el mismo camino que si lo hubieras escrito.
 - **Momento del día** detectado por la hora (desayuno, comida, merienda, cena, snack) y editable.
 - **Raciones** ×0,5, ×1, ×1,5, ×2 o a medida, y gramos por ingrediente: todo se recalcula en el móvil, sin IA.
 - **Favoritos y recientes** a un toque.
@@ -391,7 +391,7 @@ make e2e
 | Metabolismo basal, objetivos, avisos de seguridad | `backend/tests/test_nutrition.py` | 24 |
 | Normalización, similitud y coincidencias | `backend/tests/test_textnorm.py`, `test_matching.py` | 69 |
 | Resumen semanal, proyección, racha, media móvil, logros | `backend/tests/test_summary.py` | 12 |
-| Validación de la respuesta de la IA | `backend/tests/test_ai.py` | 11 |
+| Validación de la respuesta de la IA y cliente de voz | `backend/tests/test_ai.py` | 13 |
 | API completa con IA simulada | `backend/tests/test_api.py` | 19 |
 | HTML servido y copias de seguridad | `backend/tests/test_spa.py`, `test_jobs.py` | 8 |
 | Audio de Chrome, Safari y Firefox decodificado para Whisper | `stt/test_audio.py` | 5 |
