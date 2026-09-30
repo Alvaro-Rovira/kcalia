@@ -394,6 +394,7 @@ make e2e
 | Validación de la respuesta de la IA | `backend/tests/test_ai.py` | 11 |
 | API completa con IA simulada | `backend/tests/test_api.py` | 19 |
 | HTML servido y copias de seguridad | `backend/tests/test_spa.py`, `test_jobs.py` | 8 |
+| Audio de Chrome, Safari y Firefox decodificado para Whisper | `stt/test_audio.py` | 5 |
 | Formato es-ES, fechas, momentos del día, espejo de la normalización | `frontend/src/lib/*.test.ts` | 80 |
 | Flujo completo en un móvil de 390 px | `e2e/test_flow.py` | 9 |
 

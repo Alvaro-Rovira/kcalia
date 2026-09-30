@@ -4,7 +4,6 @@ Corre Whisper en CPU con faster-whisper. El modelo se carga en la primera petici
 tras un rato sin uso, para no ocupar RAM en una VPS compartida con otros proyectos.
 """
 
-import io
 import logging
 import os
 import threading
@@ -13,6 +12,8 @@ import time
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import PlainTextResponse
 from faster_whisper import WhisperModel
+
+from audio import decode
 
 log = logging.getLogger("kcalia.stt")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -78,11 +79,17 @@ def transcriptions(
     if not data:
         raise HTTPException(400, "Audio vacío")
 
+    try:
+        samples = decode(data)
+    except Exception as error:  # PyAV lanza errores distintos según el contenedor
+        log.warning("Audio ilegible (%s, %s bytes): %s", file.content_type, len(data), error)
+        raise HTTPException(422, "No se ha podido leer el audio") from error
+
     with _lock:
         whisper = _load()
         started = time.time()
         segments, info = whisper.transcribe(
-            io.BytesIO(data),
+            samples,
             language=language or None,
             initial_prompt=prompt or None,
             temperature=temperature,

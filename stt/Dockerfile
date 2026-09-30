@@ -14,7 +14,7 @@ RUN python -c "import os; from faster_whisper import WhisperModel; WhisperModel(
     && useradd --system --uid 10002 --no-create-home stt \
     && chown -R stt /models
 
-COPY app.py .
+COPY app.py audio.py ./
 USER stt
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

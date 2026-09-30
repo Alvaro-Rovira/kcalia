@@ -1,4 +1,4 @@
-.PHONY: help dev test test-api test-web e2e build assets deploy
+.PHONY: help dev test test-api test-web test-voz e2e build assets deploy
 
 help:            ## Lista los comandos
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-9s %s\n", $$1, $$2}'
@@ -8,13 +8,16 @@ dev:             ## API (8765) con IA simulada + frontend con recarga en calient
 	@echo "Terminal 2: cd backend && AI_BASE_URL=http://127.0.0.1:8799/v1 AI_API_KEY=x COOKIE_SECURE=false uv run uvicorn app.main:app --port 8765"
 	@echo "Terminal 3: cd frontend && npm run dev"
 
-test: test-api test-web  ## Tests unitarios (API y frontend)
+test: test-api test-web test-voz  ## Tests unitarios (API, frontend y voz)
 
 test-api:        ## Cálculos, normalización, coincidencias, resumen y API
 	cd backend && uv run pytest -q
 
 test-web:        ## Formato, fechas y espejo de la normalización
 	cd frontend && npm test
+
+test-voz:        ## Decodificación de audio de cada navegador
+	cd stt && uv run --python 3.12 --with-requirements requirements.txt --with pytest pytest -q test_audio.py
 
 build:           ## Compila el frontend
 	cd frontend && npm ci && npm run build
