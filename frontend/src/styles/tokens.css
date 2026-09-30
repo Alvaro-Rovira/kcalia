@@ -1,0 +1,170 @@
+/*
+ * Design tokens de Kcalia. Todo color, radio, sombra y duración de la app sale de aquí.
+ * El tema oscuro es el predeterminado; [data-theme='light'] lo redefine.
+ *
+ * Macros: cada uno tiene SIEMPRE el mismo color (anillos, barras, gráficas, chips):
+ *   calorías  naranja -> esmeralda según el progreso (base esmeralda)
+ *   proteínas índigo · hidratos ámbar · grasas rosa
+ * Las variantes *-text están oscurecidas en claro para cumplir WCAG AA como texto.
+ *
+ * Paleta comprobada con simulación de daltonismo (todas las parejas, ΔE OKLab ≥ 8):
+ * el coral inicial de las grasas se confundía con el verde de las calorías en
+ * deuteranopia (ΔE 1,8), por eso es un rosa más azulado. Aun así el color nunca va
+ * solo: cada macro lleva su letra (P/H/G) y su icono.
+ */
+
+@font-face {
+  font-family: 'Geist Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('@fontsource-variable/geist/files/geist-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F,
+    U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* Superficies */
+  --bg: #0b0c0e;
+  --bg-glow: rgba(52, 211, 153, 0.07);
+  --surface: #14161a;
+  --surface-2: #1b1e23;
+  --surface-3: #262a31;
+  --border: rgba(255, 255, 255, 0.075);
+  --border-strong: rgba(255, 255, 255, 0.15);
+  --glass: rgba(18, 20, 24, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --scrim: rgba(0, 0, 0, 0.6);
+  --track: rgba(255, 255, 255, 0.075);
+
+  /* Texto */
+  --text: #f4f5f7;
+  --text-2: #aab0bb;
+  --text-3: #838a97;
+
+  /* Marca */
+  --accent: #34d399;
+  --accent-strong: #10b981;
+  --accent-text: #4ade9f;
+  --accent-soft: rgba(52, 211, 153, 0.14);
+  --on-accent: #04261a;
+
+  /* Macros */
+  --kcal-from: #ff8a3d;
+  --kcal: #34d399;
+  --kcal-text: #4ade9f;
+  --kcal-soft: rgba(52, 211, 153, 0.14);
+  --kcal-over: #ff6b6b;
+  --protein: #7f95ff;
+  --protein-text: #9aacff;
+  --protein-soft: rgba(127, 149, 255, 0.16);
+  --carbs: #f6c445;
+  --carbs-text: #f6c445;
+  --carbs-soft: rgba(246, 196, 69, 0.15);
+  --fat: #ee6bb0;
+  --fat-text: #f58fc4;
+  --fat-soft: rgba(238, 107, 176, 0.16);
+
+  /* Estados */
+  --danger: #ff6b6b;
+  --danger-text: #ff8585;
+  --danger-soft: rgba(255, 107, 107, 0.14);
+  --warn: #f5b84f;
+  --warn-text: #f5b84f;
+  --warn-soft: rgba(245, 184, 79, 0.14);
+  --info: #6cb6ff;
+  --info-text: #8cc6ff;
+  --info-soft: rgba(108, 182, 255, 0.14);
+
+  /* Radios */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-xl: 28px;
+  --r-full: 999px;
+
+  /* Sombras */
+  --elev-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --elev-md: 0 8px 24px -8px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --elev-lg: 0 24px 60px -16px rgba(0, 0, 0, 0.7), 0 6px 16px rgba(0, 0, 0, 0.35);
+  --elev-fab: 0 10px 28px -6px rgba(16, 185, 129, 0.55), 0 2px 8px rgba(0, 0, 0, 0.4);
+  --ring-glow: drop-shadow(0 0 10px rgba(52, 211, 153, 0.35));
+
+  /* Movimiento */
+  --curve-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --curve-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --dur-fast: 140ms;
+  --dur: 240ms;
+  --dur-slow: 480ms;
+
+  /* Estructura */
+  --nav-h: 64px;
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --page-x: 20px;
+  --content-w: 520px;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: #f6f5f1;
+  --bg-glow: rgba(16, 185, 129, 0.09);
+  --surface: #ffffff;
+  --surface-2: #f1f0eb;
+  --surface-3: #e6e4dd;
+  --border: rgba(24, 26, 31, 0.085);
+  --border-strong: rgba(24, 26, 31, 0.2);
+  --glass: rgba(255, 255, 255, 0.78);
+  --glass-border: rgba(24, 26, 31, 0.08);
+  --scrim: rgba(20, 22, 26, 0.38);
+  --track: rgba(24, 26, 31, 0.08);
+
+  --text: #15171b;
+  --text-2: #4a505c;
+  --text-3: #636a77;
+
+  --accent: #10b981;
+  --accent-strong: #059669;
+  --accent-text: #04724f;
+  --accent-soft: rgba(16, 185, 129, 0.13);
+  /* Texto oscuro sobre el verde: el blanco no llega a contraste AA. */
+  --on-accent: #04261a;
+
+  --kcal-from: #f97316;
+  --kcal: #10b981;
+  --kcal-text: #04724f;
+  --kcal-soft: rgba(16, 185, 129, 0.13);
+  --kcal-over: #dc2626;
+  --protein: #5563e0;
+  --protein-text: #3f4bc4;
+  --protein-soft: rgba(85, 99, 224, 0.12);
+  --carbs: #bf8700;
+  --carbs-text: #8a5d00;
+  --carbs-soft: rgba(191, 135, 0, 0.15);
+  --fat: #db2777;
+  --fat-text: #be185d;
+  --fat-soft: rgba(219, 39, 119, 0.11);
+
+  --danger: #dc2626;
+  --danger-text: #b91c1c;
+  --danger-soft: rgba(220, 38, 38, 0.1);
+  --warn: #d97706;
+  --warn-text: #92500a;
+  --warn-soft: rgba(217, 119, 6, 0.12);
+  --info: #2563eb;
+  --info-text: #1d4ed8;
+  --info-soft: rgba(37, 99, 235, 0.1);
+
+  --elev-sm: 0 1px 2px rgba(24, 26, 31, 0.06);
+  --elev-md: 0 8px 24px -10px rgba(24, 26, 31, 0.16), 0 2px 6px rgba(24, 26, 31, 0.05);
+  --elev-lg: 0 24px 60px -18px rgba(24, 26, 31, 0.28), 0 6px 16px rgba(24, 26, 31, 0.08);
+  --elev-fab: 0 10px 26px -6px rgba(5, 150, 105, 0.5), 0 2px 8px rgba(24, 26, 31, 0.12);
+  --ring-glow: drop-shadow(0 0 8px rgba(16, 185, 129, 0.22));
+}

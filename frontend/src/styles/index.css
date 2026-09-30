@@ -1,0 +1,232 @@
+@import 'tailwindcss';
+@import './tokens.css';
+
+/* Los tokens se exponen a Tailwind: bg-surface, text-protein-text, rounded-lg, shadow-md... */
+@theme inline {
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-glass: var(--glass);
+  --color-track: var(--track);
+  --color-scrim: var(--scrim);
+
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-text: var(--accent-text);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+
+  --color-kcal: var(--kcal);
+  --color-kcal-from: var(--kcal-from);
+  --color-kcal-text: var(--kcal-text);
+  --color-kcal-soft: var(--kcal-soft);
+  --color-protein: var(--protein);
+  --color-protein-text: var(--protein-text);
+  --color-protein-soft: var(--protein-soft);
+  --color-carbs: var(--carbs);
+  --color-carbs-text: var(--carbs-text);
+  --color-carbs-soft: var(--carbs-soft);
+  --color-fat: var(--fat);
+  --color-fat-text: var(--fat-text);
+  --color-fat-soft: var(--fat-soft);
+
+  --color-danger: var(--danger);
+  --color-danger-text: var(--danger-text);
+  --color-danger-soft: var(--danger-soft);
+  --color-warn: var(--warn);
+  --color-warn-text: var(--warn-text);
+  --color-warn-soft: var(--warn-soft);
+  --color-info: var(--info);
+  --color-info-text: var(--info-text);
+  --color-info-soft: var(--info-soft);
+
+  --radius-xs: var(--r-xs);
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+
+  --shadow-sm: var(--elev-sm);
+  --shadow-md: var(--elev-md);
+  --shadow-lg: var(--elev-lg);
+  --shadow-fab: var(--elev-fab);
+
+  --ease-out: var(--curve-out);
+  --ease-spring: var(--curve-spring);
+
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-pulse-soft: pulse-soft 2.2s ease-in-out infinite;
+  --animate-spin-slow: spin 2.4s linear infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@layer base {
+  html {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-feature-settings: 'ss01', 'cv11';
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Sin rebote del documento: el scroll vive dentro de la app. */
+    overscroll-behavior: none;
+    height: 100%;
+  }
+
+  body {
+    min-height: 100%;
+    background:
+      radial-gradient(120% 60% at 50% -10%, var(--bg-glow), transparent 60%),
+      var(--bg);
+    background-attachment: fixed;
+    overscroll-behavior-y: none;
+  }
+
+  #root {
+    min-height: 100dvh;
+    isolation: isolate;
+  }
+
+  /* 16 px mínimo en campos: por debajo, iOS hace zoom al enfocar. */
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+    font-family: inherit;
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--r-xs);
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+  }
+
+  /* Los números no bailan al animarse. */
+  .tnum,
+  [data-num] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum', 'ss01';
+  }
+
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+@layer components {
+  .glass {
+    background: var(--glass);
+    -webkit-backdrop-filter: saturate(160%) blur(22px);
+    backdrop-filter: saturate(160%) blur(22px);
+    border: 1px solid var(--glass-border);
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--elev-sm);
+  }
+
+  .skeleton {
+    border-radius: var(--r-sm);
+    background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 45%, var(--surface-2) 65%);
+    background-size: 200% 100%;
+    animation: var(--animate-shimmer);
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .page {
+    width: 100%;
+    max-width: var(--content-w);
+    margin-inline: auto;
+    padding-inline: max(var(--page-x), var(--safe-l)) max(var(--page-x), var(--safe-r));
+    padding-top: calc(var(--safe-t) + 14px);
+    /* Barra inferior + botón flotante: lo último de cada pantalla queda libre por encima. */
+    padding-bottom: calc(var(--nav-h) + var(--safe-b) + 104px);
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --content-w: 960px;
+    --page-x: 32px;
+  }
+  .page {
+    padding-top: 36px;
+    padding-bottom: 56px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
