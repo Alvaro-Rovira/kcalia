@@ -270,12 +270,6 @@ class AiClient:
         )
 
 
-STT_PROMPT = (
-    "Registro de comidas: dos huevos revueltos, una tostada de pan integral con aceite de oliva, "
-    "café con leche, 150 gramos de pechuga de pollo a la plancha con arroz, un yogur griego."
-)
-
-
 def transcribe(settings: Settings, audio: bytes, filename: str, mime: str, http: httpx.Client | None = None) -> str:
     url = settings.stt_base_url.rstrip("/") + "/audio/transcriptions"
     headers = {"Authorization": f"Bearer {settings.stt_api_key}"} if settings.stt_api_key else {}
@@ -285,7 +279,9 @@ def transcribe(settings: Settings, audio: bytes, filename: str, mime: str, http:
             url,
             headers=headers,
             files={"file": (filename, audio, mime)},
-            data={"model": settings.stt_model, "language": "es", "response_format": "json", "prompt": STT_PROMPT},
+            # Sin "prompt" a propósito. Una guía con comidas de ejemplo hacía que Whisper, ante un audio poco
+            # claro, copiara la guía e inventara ingredientes que nadie había dicho.
+            data={"model": settings.stt_model, "language": "es", "response_format": "json"},
         )
     except httpx.TimeoutException as exc:
         raise AiError("timeout", "La transcripción ha tardado demasiado. Prueba con un audio más corto.", 504) from exc

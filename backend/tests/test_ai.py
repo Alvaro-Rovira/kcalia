@@ -109,3 +109,42 @@ def test_las_fotos_heredan_la_configuracion_del_texto():
         "k",
         "m",
     )
+
+
+def test_la_transcripcion_no_lleva_texto_guia():
+    """Whisper copiaba la guía cuando el audio no era claro: registraba comida que nadie dijo."""
+    import httpx
+
+    from app.ai import transcribe
+    from app.config import Settings
+
+    sent: dict[str, bytes] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        sent["body"] = request.content
+        sent["url"] = str(request.url).encode()
+        return httpx.Response(200, json={"text": " un plato de lentejas "})
+
+    settings = Settings(_env_file=None, stt_base_url="http://voz.example/v1", stt_model="small")
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    assert transcribe(settings, b"audio", "a.webm", "audio/webm", http=client) == "un plato de lentejas"
+    assert sent["url"] == b"http://voz.example/v1/audio/transcriptions"
+    assert b'name="language"' in sent["body"] and b'name="file"' in sent["body"]
+    assert b'name="prompt"' not in sent["body"]
+
+
+def test_transcripcion_vacia_o_con_error_da_mensaje_claro():
+    import httpx
+
+    from app.ai import AiError, transcribe
+    from app.config import Settings
+
+    settings = Settings(_env_file=None, stt_base_url="http://voz.example/v1")
+    for response, code in (
+        (httpx.Response(200, json={"text": "  "}), "stt_empty"),
+        (httpx.Response(422, json={}), "stt_error"),
+    ):
+        client = httpx.Client(transport=httpx.MockTransport(lambda _, r=response: r))
+        with pytest.raises(AiError) as caught:
+            transcribe(settings, b"audio", "a.webm", "audio/webm", http=client)
+        assert caught.value.code == code

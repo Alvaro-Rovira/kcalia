@@ -17,12 +17,11 @@ if id caddy >/dev/null 2>&1; then
   [ -f /var/log/caddy/kcalia.log ] || install -o caddy -g caddy -m 640 /dev/null /var/log/caddy/kcalia.log
 fi
 
-backup="$CADDYFILE.bak-$(date +%Y%m%d%H%M%S)"
-cp "$CADDYFILE" "$backup"
+candidate="$(mktemp)"
+trap 'rm -f "$candidate"' EXIT
 
-DOMAIN="$DOMAIN" APP_PORT="$APP_PORT" CADDYFILE="$CADDYFILE" python3 - <<'PY'
+DOMAIN="$DOMAIN" APP_PORT="$APP_PORT" CADDYFILE="$CADDYFILE" CANDIDATE="$candidate" python3 - <<'PY'
 import os, re
-path = os.environ["CADDYFILE"]
 block = f"""# BEGIN kcalia (gestionado por deploy/caddy-site.sh)
 {os.environ["DOMAIN"]} {{
 	encode zstd gzip
@@ -34,11 +33,21 @@ block = f"""# BEGIN kcalia (gestionado por deploy/caddy-site.sh)
 }}
 # END kcalia
 """
-text = open(path).read()
+text = open(os.environ["CADDYFILE"]).read()
 pattern = re.compile(r"# BEGIN kcalia.*?# END kcalia\n", re.S)
 text = pattern.sub(lambda _: block, text) if pattern.search(text) else text.rstrip("\n") + "\n\n" + block
-open(path, "w").write(text)
+open(os.environ["CANDIDATE"], "w").write(text)
 PY
+
+# Sin cambios no se toca nada: ni copia, ni recarga de Caddy.
+if cmp -s "$candidate" "$CADDYFILE"; then
+  echo "Caddy ya estaba al día: https://$DOMAIN -> 127.0.0.1:$APP_PORT"
+  exit 0
+fi
+
+backup="$CADDYFILE.bak-$(date +%Y%m%d%H%M%S)"
+cp "$CADDYFILE" "$backup"
+cat "$candidate" > "$CADDYFILE"
 
 if caddy validate --config "$CADDYFILE" --adapter caddyfile >/dev/null 2>&1; then
   systemctl reload caddy
