@@ -1,0 +1,138 @@
+import csv
+import io
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Response
+from sqlalchemy import delete, select
+from sqlalchemy.orm import Session
+
+from .. import services
+from ..db import get_db
+from ..deps import require_user
+from ..models import AuthSession, Food, Meal, User, WeeklySummary, Weight
+from ..schemas import PasswordConfirm
+from ..security import SESSION_COOKIE, verify_password
+
+router = APIRouter(prefix="/api", tags=["cuenta"], dependencies=[Depends(require_user)])
+
+
+def _stamp() -> str:
+    return datetime.now().strftime("%Y%m%d")
+
+
+def _download(content: str, filename: str, media_type: str) -> Response:
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+def _live_meals(db: Session) -> list[Meal]:
+    return list(db.scalars(select(Meal).where(Meal.deleted_at.is_(None)).order_by(Meal.date, Meal.created_at)))
+
+
+@router.get("/export/json")
+def export_json(db: Session = Depends(get_db)) -> dict:
+    profile, targets = services.get_profile(db), services.get_targets(db)
+    return {
+        "app": "Kcalma",
+        "exported_at": datetime.now().isoformat(timespec="seconds"),
+        "profile": services.profile_dict(profile) if profile else None,
+        "targets": services.targets_dict(targets) if targets else None,
+        "meals": [services.meal_dict(m) for m in _live_meals(db)],
+        "weights": [{"date": w.date, "kg": w.kg} for w in db.scalars(select(Weight).order_by(Weight.date))],
+        "dishes": services.all_dishes(db, limit=100000),
+        "foods": [
+            {
+                "name": f.name,
+                "kcal100": f.kcal100,
+                "protein100": f.protein100,
+                "carbs100": f.carbs100,
+                "fat100": f.fat100,
+                "unit_grams": f.unit_grams,
+            }
+            for f in db.scalars(select(Food).order_by(Food.name))
+        ],
+        "weekly_summaries": [s.data for s in db.scalars(select(WeeklySummary).order_by(WeeklySummary.week_start))],
+    }
+
+
+def _es(number: float) -> str:
+    """Decimales con coma, para que Excel en español los lea como números."""
+    return f"{number:.1f}".replace(".", ",")
+
+
+@router.get("/export/meals.csv")
+def export_meals_csv(db: Session = Depends(get_db)) -> Response:
+    out = io.StringIO()
+    writer = csv.writer(out, delimiter=";")
+    writer.writerow(
+        [
+            "fecha",
+            "momento",
+            "comida",
+            "raciones",
+            "kcal",
+            "proteinas_g",
+            "hidratos_g",
+            "grasas_g",
+            "origen",
+            "ingredientes",
+        ]
+    )
+    for meal in _live_meals(db):
+        ingredients = " | ".join(f"{i['name']} ({_es(i.get('grams', 0))} g)" for i in meal.items)
+        writer.writerow(
+            [
+                meal.date,
+                meal.slot,
+                meal.name,
+                _es(meal.servings),
+                _es(meal.kcal),
+                _es(meal.protein),
+                _es(meal.carbs),
+                _es(meal.fat),
+                meal.source,
+                ingredients,
+            ]
+        )
+    # BOM para que Excel detecte UTF-8.
+    return _download("﻿" + out.getvalue(), f"kcalma-comidas-{_stamp()}.csv", "text/csv; charset=utf-8")
+
+
+@router.get("/export/weights.csv")
+def export_weights_csv(db: Session = Depends(get_db)) -> Response:
+    out = io.StringIO()
+    writer = csv.writer(out, delimiter=";")
+    writer.writerow(["fecha", "peso_kg"])
+    for weight in db.scalars(select(Weight).order_by(Weight.date)):
+        writer.writerow([weight.date, f"{weight.kg:.2f}".replace(".", ",")])
+    return _download("﻿" + out.getvalue(), f"kcalma-peso-{_stamp()}.csv", "text/csv; charset=utf-8")
+
+
+def _confirm(user: User, body: PasswordConfirm) -> None:
+    if not verify_password(user.password_hash, body.password):
+        raise HTTPException(403, "La contraseña no es correcta.")
+
+
+@router.post("/data/delete")
+def delete_data(body: PasswordConfirm, user: User = Depends(require_user), db: Session = Depends(get_db)) -> dict:
+    """Borra todos los datos pero conserva la cuenta."""
+    _confirm(user, body)
+    services.wipe_data(db)
+    return {"ok": True}
+
+
+@router.post("/account/delete")
+def delete_account(
+    body: PasswordConfirm, response: Response, user: User = Depends(require_user), db: Session = Depends(get_db)
+) -> dict:
+    """Borra datos y cuenta. El registro vuelve a quedar abierto."""
+    _confirm(user, body)
+    services.wipe_data(db)
+    db.execute(delete(AuthSession))
+    db.execute(delete(User))
+    db.commit()
+    response.delete_cookie(SESSION_COOKIE, path="/")
+    return {"ok": True}

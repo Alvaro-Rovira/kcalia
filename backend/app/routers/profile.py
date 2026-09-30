@@ -1,0 +1,105 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from .. import services
+from ..config import get_settings
+from ..db import get_db
+from ..deps import get_ai_client, require_user, today_local
+from ..models import Profile, User, Weight
+from ..nutrition import calculate_targets, validate_custom_targets
+from ..schemas import PrefsIn, ProfileIn, ProfileSave, TargetsIn
+
+router = APIRouter(prefix="/api", tags=["perfil"], dependencies=[Depends(require_user)])
+
+
+@router.get("/bootstrap")
+def bootstrap(user: User = Depends(require_user), db: Session = Depends(get_db)) -> dict:
+    """Todo lo que la app necesita al arrancar, en una sola petición."""
+    settings = get_settings()
+    profile = services.get_profile(db)
+    targets = services.get_targets(db)
+    today = today_local(settings)
+    return {
+        "user": {"username": user.username},
+        "profile": services.profile_dict(profile) if profile else None,
+        "targets": services.targets_dict(targets) if targets else None,
+        "plan": services.plan_for(profile) if profile else None,
+        "dishes": services.all_dishes(db),
+        "ai": {
+            "configured": get_ai_client().configured,
+            "model": settings.ai_model,
+            "used_today": services.ai_calls_today(db, today),
+            "limit": settings.ai_daily_limit,
+        },
+        "server_date": today.isoformat(),
+    }
+
+
+@router.post("/plan/preview")
+def preview_plan(body: ProfileIn) -> dict:
+    return calculate_targets(**body.model_dump())
+
+
+@router.put("/profile")
+def save_profile(body: ProfileSave, db: Session = Depends(get_db)) -> dict:
+    profile = services.get_profile(db)
+    data = body.model_dump(exclude={"recalculate", "today"})
+    first_time = profile is None
+    if profile is None:
+        profile = Profile(**data)
+        db.add(profile)
+    else:
+        for key, value in data.items():
+            setattr(profile, key, value)
+    db.flush()
+
+    targets = services.get_targets(db)
+    plan = services.plan_for(profile)
+    if targets is None or body.recalculate:
+        targets, plan = services.apply_plan(db, profile)
+
+    if first_time:
+        day = body.today or today_local().isoformat()
+        if db.scalar(select(Weight).where(Weight.date == day)) is None:
+            db.add(Weight(date=day, kg=profile.weight_kg))
+    db.commit()
+    return {
+        "profile": services.profile_dict(profile),
+        "targets": services.targets_dict(targets),
+        "plan": plan,
+    }
+
+
+@router.patch("/profile/prefs")
+def save_prefs(body: PrefsIn, db: Session = Depends(get_db)) -> dict:
+    profile = services.get_profile(db)
+    if profile is None:
+        raise HTTPException(409, "Completa primero tu perfil.")
+    profile.weight_unit = body.weight_unit
+    db.commit()
+    return services.profile_dict(profile)
+
+
+@router.put("/targets")
+def save_targets(body: TargetsIn, db: Session = Depends(get_db)) -> dict:
+    profile, targets = services.get_profile(db), services.get_targets(db)
+    if profile is None or targets is None:
+        raise HTTPException(409, "Completa primero tu perfil.")
+    targets.kcal, targets.protein, targets.carbs, targets.fat = body.kcal, body.protein, body.carbs, body.fat
+    targets.custom = True
+    db.commit()
+    return {
+        "targets": services.targets_dict(targets),
+        "warnings": validate_custom_targets(sex=profile.sex, kcal=body.kcal, tdee_kcal=targets.tdee),
+    }
+
+
+@router.post("/targets/recalculate")
+def recalculate_targets(db: Session = Depends(get_db)) -> dict:
+    profile = services.get_profile(db)
+    if profile is None:
+        raise HTTPException(409, "Completa primero tu perfil.")
+    targets, plan = services.apply_plan(db, profile)
+    db.commit()
+    return {"targets": services.targets_dict(targets), "plan": plan}

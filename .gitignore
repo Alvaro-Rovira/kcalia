@@ -1,0 +1,35 @@
+# Secretos y datos: nunca al repositorio
+.env
+.env.*
+!.env.example
+*.db
+*.db-shm
+*.db-wal
+*.db.gz
+data/
+backups/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+frontend/dist/
+frontend/dev-dist/
+*.tsbuildinfo
+
+# Pruebas end-to-end
+e2e/.artifacts/
+test-results/
+playwright-report/
+
+# Sistema y editores
+.DS_Store
+.idea/
+.vscode/
+.claude/
+.tools/

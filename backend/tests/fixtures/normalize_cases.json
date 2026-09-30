@@ -1,0 +1,292 @@
+{
+  "normalize": [
+    [
+      "Un café con leche",
+      "cafe con leche"
+    ],
+    [
+      "café con leche",
+      "cafe con leche"
+    ],
+    [
+      "  CAFÉ   con  LECHE!! ",
+      "cafe con leche"
+    ],
+    [
+      "Dos huevos revueltos con una tostada de pan integral y aceite",
+      "2 huevos revueltos con tostada pan integral y aceite"
+    ],
+    [
+      "2 huevos revueltos, tostada de pan integral y aceite",
+      "2 huevos revueltos tostada pan integral y aceite"
+    ],
+    [
+      "1 huevo",
+      "huevo"
+    ],
+    [
+      "un huevo",
+      "huevo"
+    ],
+    [
+      "1 kg de arroz",
+      "1 kg arroz"
+    ],
+    [
+      "200g de arroz cocido",
+      "200 g arroz cocido"
+    ],
+    [
+      "200 gramos de arroz cocido",
+      "200 g arroz cocido"
+    ],
+    [
+      "200 gr. arroz cocido",
+      "200 g arroz cocido"
+    ],
+    [
+      "1,5 litros de agua",
+      "1.5 l agua"
+    ],
+    [
+      "1/2 aguacate",
+      "0.5 aguacate"
+    ],
+    [
+      "medio aguacate",
+      "0.5 aguacate"
+    ],
+    [
+      "½ aguacate",
+      "0.5 aguacate"
+    ],
+    [
+      "Piña natural",
+      "piña natural"
+    ],
+    [
+      "Pingüino de chocolate",
+      "pinguino chocolate"
+    ],
+    [
+      "un par de tostadas",
+      "2 tostadas"
+    ],
+    [
+      "Las lentejas del martes",
+      "lentejas martes"
+    ],
+    [
+      "3 cucharadas de aceite",
+      "3 cda aceite"
+    ],
+    [
+      "2.0 yogures",
+      "2 yogures"
+    ],
+    [
+      "pollo (a la plancha) + ensalada",
+      "pollo a plancha ensalada"
+    ],
+    [
+      "",
+      ""
+    ],
+    [
+      "¿¡...!?",
+      ""
+    ]
+  ],
+  "food_key": [
+    [
+      "Huevos",
+      "huevo"
+    ],
+    [
+      "huevo",
+      "huevo"
+    ],
+    [
+      "Nueces",
+      "nuez"
+    ],
+    [
+      "yogures naturales",
+      "yogur natural"
+    ],
+    [
+      "Arroz blanco cocido",
+      "arroz blanco cocido"
+    ],
+    [
+      "tostadas de pan integral",
+      "tostada pan integral"
+    ],
+    [
+      "el pan",
+      "pan"
+    ]
+  ],
+  "parse_part": [
+    [
+      "200 g de arroz",
+      [
+        200,
+        "g",
+        "arroz"
+      ]
+    ],
+    [
+      "dos huevos",
+      [
+        2,
+        null,
+        "huevo"
+      ]
+    ],
+    [
+      "un vaso de leche",
+      [
+        1,
+        "vaso",
+        "leche"
+      ]
+    ],
+    [
+      "arroz 150 g",
+      [
+        150,
+        "g",
+        "arroz"
+      ]
+    ],
+    [
+      "una tostada de pan integral",
+      [
+        1,
+        null,
+        "tostada pan integral"
+      ]
+    ],
+    [
+      "aceite",
+      [
+        1,
+        null,
+        "aceite"
+      ]
+    ],
+    [
+      "1,5 kg de patatas",
+      [
+        1.5,
+        "kg",
+        "patata"
+      ]
+    ],
+    [
+      "3 cucharadas de aceite de oliva",
+      [
+        3,
+        "cda",
+        "aceite oliva"
+      ]
+    ],
+    [
+      "medio aguacate",
+      [
+        0.5,
+        null,
+        "aguacate"
+      ]
+    ]
+  ],
+  "split_parts": [
+    [
+      "dos huevos, una tostada y aceite",
+      [
+        "dos huevos",
+        "una tostada",
+        "aceite"
+      ]
+    ],
+    [
+      "café con leche",
+      [
+        "café con leche"
+      ]
+    ],
+    [
+      "pollo + arroz; ensalada",
+      [
+        "pollo",
+        "arroz",
+        "ensalada"
+      ]
+    ],
+    [
+      "yogur más nueces",
+      [
+        "yogur",
+        "nueces"
+      ]
+    ]
+  ],
+  "similar": [
+    [
+      "tostada con tomate y aceite",
+      "tostadas con tomate y aceite",
+      true
+    ],
+    [
+      "tostada con tomate y aceite",
+      "tomate con tostada y aceite",
+      true
+    ],
+    [
+      "macarrones con tomate",
+      "macarones con tomate",
+      true
+    ],
+    [
+      "2 huevos revueltos",
+      "3 huevos revueltos",
+      false
+    ],
+    [
+      "cafe con leche",
+      "lentejas con chorizo",
+      false
+    ],
+    [
+      "pechuga pollo con arroz",
+      "pechuga pavo con arroz",
+      false
+    ],
+    [
+      "cafe con leche sin azucar",
+      "cafe con leche",
+      false
+    ],
+    [
+      "yogur griego con nueces",
+      "yogur griego con nuezes",
+      true
+    ],
+    [
+      "ensalada de pasta",
+      "ensalada de patata",
+      false
+    ],
+    [
+      "tortilla francesa",
+      "tortilla francesa 2 huevos",
+      false
+    ],
+    [
+      "bocadillo jamon serrano",
+      "bocadillo jamon serano",
+      true
+    ]
+  ]
+}
