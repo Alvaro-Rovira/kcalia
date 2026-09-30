@@ -33,3 +33,6 @@ playwright-report/
 .vscode/
 .claude/
 .tools/
+
+# Capturas sueltas de comprobaciones manuales
+/shots/
