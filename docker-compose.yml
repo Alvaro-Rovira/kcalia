@@ -1,0 +1,59 @@
+# Kcalia: la app (API + frontend) y un servicio de voz propio, en su propia red y con sus propios volúmenes.
+# No abre nada al exterior: el HTTPS lo pone el Caddy del host, que llega a 127.0.0.1:${APP_PORT}.
+name: kcalia
+
+services:
+  app:
+    build: .
+    image: kcalia-app
+    container_name: kcalia-app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Por defecto, el Whisper propio; en .env puede apuntarse a otro servicio compatible con OpenAI.
+      STT_BASE_URL: ${STT_BASE_URL:-http://stt:8000/v1}
+      TZ: ${TZ:-Europe/Madrid}
+    ports:
+      - "127.0.0.1:${APP_PORT:-8095}:8000"
+    volumes:
+      - kcalia-data:/data
+      - kcalia-backups:/backups
+    networks: [kcalia]
+    depends_on: [stt]
+    mem_limit: 384m
+    cpus: 1.0
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    logging: &logging
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  stt:
+    build:
+      context: ./stt
+      args:
+        WHISPER_MODEL: ${WHISPER_MODEL:-small}
+    image: kcalia-stt
+    container_name: kcalia-stt
+    restart: unless-stopped
+    environment:
+      WHISPER_MODEL: ${WHISPER_MODEL:-small}
+      WHISPER_THREADS: ${WHISPER_THREADS:-3}
+    networks: [kcalia]
+    mem_limit: 1536m
+    cpus: 3.0
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
+
+volumes:
+  kcalia-data:
+  kcalia-backups:
+
+networks:
+  kcalia:
+    name: kcalia_net
