@@ -399,7 +399,15 @@ make e2e
 
 La prueba de extremo a extremo levanta la app real con una IA simulada (`e2e/fake_ai.py`) y recorre: acceso y creación de cuenta, cuestionario inicial, registrar una comida con IA, repetirla sin gastar IA, confirmar una parecida, apuntar el peso, ver el resumen, trabajar sin conexión y sincronizar al volver la red, y cerrar sesión. Comprueba además que la IA se llama exactamente las veces esperadas.
 
-**Lighthouse** (móvil simulado con red lenta y CPU ×4, sin caché, con sesión iniciada y datos): rendimiento entre 90 y 93 según la pantalla, accesibilidad 100 y buenas prácticas 100. El SEO no se persigue: es una app privada y se excluye de los buscadores a propósito.
+**Lighthouse**, siempre en primera visita y sin caché:
+
+| Medición | Rendimiento | Accesibilidad | Buenas prácticas |
+|---|---|---|---|
+| Las cinco pantallas con sesión y datos, móvil simulado (red lenta, CPU ×4), en local | 90 – 93 | 100 | 100 |
+| Pantalla de acceso en producción, móvil simulado | 88 – 97 según la pasada | 100 | 100 |
+| Pantalla de acceso en producción, escritorio | 98 | 100 | 100 |
+
+El rendimiento en móvil varía entre pasadas porque lo que pesa es ejecutar el JavaScript con la CPU frenada. A partir de la segunda visita el service worker lo sirve todo desde el dispositivo. El SEO no se persigue: es una app privada y se excluye de los buscadores a propósito.
 
 ## Roadmap
 
