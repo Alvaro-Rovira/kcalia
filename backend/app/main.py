@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .ai import AiError
@@ -90,7 +90,7 @@ async def unexpected_error(_: Request, exc: Exception):
     )
 
 
-@app.get("/api/health")
+@app.api_route("/api/health", methods=["GET", "HEAD"])
 def health() -> dict:
     return {"status": "ok"}
 
@@ -99,7 +99,7 @@ for module in (auth, profile, meals, weight, summary, account):
     app.include_router(module.router)
 
 
-@app.api_route("/api/{rest:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"], include_in_schema=False)
+@app.api_route("/api/{rest:path}", methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"], include_in_schema=False)
 def api_not_found(rest: str):
     raise HTTPException(404, "Esa ruta de la API no existe.")
 
@@ -110,6 +110,11 @@ def _mount_frontend() -> None:
     if not index.exists():
         log.warning("No hay frontend compilado en %s: solo se sirve la API", static_dir)
         return
+
+    # Las metas Open Graph necesitan URL absoluta: se rellenan con DOMAIN, el único sitio donde vive el dominio.
+    settings = get_settings()
+    origin = "" if settings.domain in ("", "localhost") else f"https://{settings.domain}"
+    index_html = index.read_text().replace("__ORIGIN__", origin)
 
     assets = static_dir / "assets"
     if assets.is_dir():
@@ -122,10 +127,11 @@ def _mount_frontend() -> None:
             response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
         return response
 
-    @app.get("/{path:path}", include_in_schema=False)
+    # HEAD también: monitores y `curl -I` lo usan.
+    @app.api_route("/{path:path}", methods=["GET", "HEAD"], include_in_schema=False)
     def spa(path: str):
         candidate = (static_dir / path).resolve()
-        if path and candidate.is_file() and static_dir in candidate.parents:
+        if path and path != "index.html" and candidate.is_file() and static_dir in candidate.parents:
             headers = (
                 {"Cache-Control": "no-cache"}
                 if candidate.name in NO_CACHE_FILES
@@ -133,7 +139,7 @@ def _mount_frontend() -> None:
             )
             return FileResponse(candidate, headers=headers)
         # Cualquier otra ruta es de la SPA: el router del cliente decide (incluida la 404).
-        return FileResponse(index, headers={"Cache-Control": "no-cache"})
+        return HTMLResponse(index_html, headers={"Cache-Control": "no-cache"})
 
 
 _mount_frontend()

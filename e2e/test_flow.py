@@ -4,6 +4,7 @@ onboarding -> registrar comidas (IA, historial, aproximada, caché) -> resumen -
 Es un único recorrido en orden porque cada paso parte del estado que dejó el anterior.
 """
 
+import httpx
 import pytest
 from playwright.sync_api import Page, expect
 
@@ -43,6 +44,21 @@ def add_meal(page: Page, text: str) -> None:
     page.get_by_role("button", name="Añadir comida").last.click()
     page.locator("#meal-text").fill(text)
     page.get_by_role("button", name="Analizar comida").click()
+
+
+def test_00_cabeceras_y_head(servers):
+    for method in ("GET", "HEAD"):
+        page = httpx.request(method, servers["app"] + "/")
+        assert page.status_code == 200, method
+        assert "default-src 'self'" in page.headers["content-security-policy"]
+        assert page.headers["cache-control"] == "no-cache"
+    # Las metas Open Graph salen con URL absoluta y sin marcadores sin sustituir.
+    assert "__ORIGIN__" not in httpx.get(servers["app"] + "/").text
+    assert httpx.head(servers["app"] + "/api/health").status_code == 200
+    assert httpx.head(servers["app"] + "/sw.js").headers["cache-control"] == "no-cache"
+    manifest = httpx.get(servers["app"] + "/manifest.webmanifest").json()
+    assert manifest["display"] == "standalone" and manifest["lang"] == "es-ES"
+    assert any(icon["purpose"] == "maskable" for icon in manifest["icons"])
 
 
 def test_01_registro_y_onboarding(page: Page):
