@@ -348,7 +348,20 @@ docker compose exec app python -m app.bench --model otro-modelo --price-in 0.25 
 
 Usa la clave que ya está en el contenedor y no la muestra.
 
-**Límites del proveedor.** Muchas cuentas nuevas traen un tope de peticiones por minuto (la de Moonshot de esta instalación permite 3). Si lo alcanzas, Kcalia espera un instante y reintenta una vez; si sigue, te lo explica en lugar de mostrar un error genérico. Para medir un modelo con una cuenta así, añade `--rpm 3` y la herramienta espaciará las llamadas (unos 8 minutos en total):
+**Medido con la clave real** (Kimi K2.6, 30 de septiembre de 2026, 21 comidas de referencia):
+
+| | Resultado |
+|---|---|
+| Calorías con cantidades explícitas (15 comidas) | error medio 0,9 %, las 15 dentro de ±12 % |
+| Macros (proteínas, hidratos, grasas) | error medio 0,1 g por macro |
+| Comidas sin cantidades (6, con rango aceptable) | 5 de 6 en rango; la sexta, a un 3 % del límite |
+| Latencia | mediana 2,9 s, p95 6,5 s |
+| Tokens por comida | ≈ 2.500 de entrada, 110 de salida |
+| Coste | ≈ 0,28 $ cada 100 comidas sin caché; 5 $/mes en el peor caso de 60 al día |
+
+Las comidas sin cantidades varían de una pasada a otra (el modelo decide cuánto aceite supone), por eso se ve el desglose editable antes de guardar.
+
+**Límites del proveedor.** Muchas cuentas nuevas traen un tope de peticiones por minuto. Las de Moonshot con 1 $ recargado (nivel 0) permiten 3 por minuto y una simultánea; con 10 $ recargados (nivel 1), 100 por minuto. Si lo alcanzas, Kcalia espera un instante y reintenta una vez; si sigue, te lo explica en lugar de mostrar un error genérico. Para medir un modelo con una cuenta así, añade `--rpm 3` y la herramienta espaciará las llamadas (unos 8 minutos en total):
 
 ```bash
 docker compose exec app python -m app.bench --rpm 3 --price-in 0.95 --price-out 4.00
