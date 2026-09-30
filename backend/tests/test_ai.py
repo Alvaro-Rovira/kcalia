@@ -69,3 +69,43 @@ def test_el_alcohol_puede_superar_los_macros():
     }
     meal = check_consistency(AiMeal.model_validate({**VALID, "items": [beer]}))
     assert meal.items[0].kcal == 142 and meal.confidence == 0.9
+
+
+def test_las_fotos_pueden_usar_otro_proveedor():
+    import httpx
+
+    from app.ai import AiClient
+    from app.config import Settings
+
+    seen: list[tuple[str, str, str]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content)
+        seen.append((str(request.url), request.headers["authorization"], body["model"]))
+        return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(VALID)}}], "usage": {}})
+
+    settings = Settings(
+        _env_file=None,
+        ai_base_url="https://texto.example/v1",
+        ai_api_key="clave-texto",
+        ai_model="modelo-texto",
+        ai_vision_base_url="https://fotos.example/v1",
+        ai_vision_api_key="clave-fotos",
+        ai_vision_model="modelo-fotos",
+    )
+    client = AiClient(settings, http=httpx.Client(transport=httpx.MockTransport(handler)))
+    client.analyze_text("un yogur")
+    client.analyze_photo(b"\xff\xd8\xff", "image/jpeg")
+    assert seen[0] == ("https://texto.example/v1/chat/completions", "Bearer clave-texto", "modelo-texto")
+    assert seen[1] == ("https://fotos.example/v1/chat/completions", "Bearer clave-fotos", "modelo-fotos")
+
+
+def test_las_fotos_heredan_la_configuracion_del_texto():
+    from app.config import Settings
+
+    settings = Settings(_env_file=None, ai_base_url="https://a.example/v1", ai_api_key="k", ai_model="m")
+    assert (settings.vision_base_url, settings.vision_api_key, settings.vision_model) == (
+        "https://a.example/v1",
+        "k",
+        "m",
+    )

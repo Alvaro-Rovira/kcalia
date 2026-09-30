@@ -174,17 +174,18 @@ class AiClient:
     def configured(self) -> bool:
         return bool(self.settings.ai_api_key)
 
-    def _post(self, body: dict) -> dict:
+    def _post(self, body: dict, *, base_url: str | None = None, api_key: str | None = None) -> dict:
         s = self.settings
-        if not s.ai_api_key:
+        api_key = s.ai_api_key if api_key is None else api_key
+        if not api_key:
             raise AiError(
                 "no_key",
                 "La IA todavía no está configurada en el servidor. Mientras tanto puedes "
                 "añadir comidas de tu historial.",
                 503,
             )
-        url = s.ai_base_url.rstrip("/") + "/chat/completions"
-        headers = {"Authorization": f"Bearer {s.ai_api_key}"}
+        url = (base_url or s.ai_base_url).rstrip("/") + "/chat/completions"
+        headers = {"Authorization": f"Bearer {api_key}"}
         try:
             resp = self.http.post(url, json=body, headers=headers)
             if resp.status_code == 400:
@@ -206,7 +207,9 @@ class AiClient:
             raise AiError("upstream", "La IA ha devuelto un error. Inténtalo de nuevo en un momento.")
         return resp.json()
 
-    def analyze(self, user_content: str | list, *, model: str) -> tuple[AiMeal, dict]:
+    def analyze(
+        self, user_content: str | list, *, model: str, base_url: str | None = None, api_key: str | None = None
+    ) -> tuple[AiMeal, dict]:
         """Devuelve la comida validada y el uso (llamadas y tokens). Un reintento si el JSON falla."""
         messages: list[dict] = [
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -221,7 +224,7 @@ class AiClient:
                 "response_format": {"type": "json_object"},
                 **_provider_params(model),
             }
-            data = self._post(body)
+            data = self._post(body, base_url=base_url, api_key=api_key)
             usage["calls"] += 1
             reported = data.get("usage") or {}
             usage["prompt_tokens"] += int(reported.get("prompt_tokens") or 0)
@@ -259,7 +262,12 @@ class AiClient:
             {"type": "image_url", "image_url": {"url": data_uri}},
             {"type": "text", "text": prompt},
         ]
-        return self.analyze(content, model=self.settings.vision_model)
+        return self.analyze(
+            content,
+            model=self.settings.vision_model,
+            base_url=self.settings.vision_base_url,
+            api_key=self.settings.vision_api_key,
+        )
 
 
 STT_PROMPT = (

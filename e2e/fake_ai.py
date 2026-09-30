@@ -7,7 +7,9 @@ sin clave, sin coste y con respuestas deterministas.
 """
 
 import argparse
+import asyncio
 import json
+import os
 import unicodedata
 
 import uvicorn
@@ -93,6 +95,17 @@ MEALS = [
         "confidence": 0.9,
         "assumptions": ["Un cazo de 30 g con agua"],
     }),
+    (("bocadillo",), {
+        "name": "Bocadillo de jamón serrano",
+        "items": [
+            item("pan blanco de barra", 1, "pieza", 110, 291.5, 9.9, 56.1, 3.3),
+            item("jamón serrano", 4, "loncha", 40, 96, 12.4, 0, 5.2),
+            item("tomate", 60, "g", 60, 10.8, 0.5, 2.3, 0.1),
+            item("aceite de oliva", 8, "g", 8, 70.7, 0, 0, 8),
+        ],
+        "confidence": 0.83,
+        "assumptions": ["Medio pan de barra de 110 g", "Cuatro lonchas de jamón serrano (40 g)", "Un chorrito de aceite (8 g)"],
+    }),
     (("ensalada",), {
         "name": "Ensalada de atún",
         "items": [
@@ -164,6 +177,8 @@ def answer(messages: list[dict]) -> dict:
 async def chat(request: Request):
     body = await request.json()
     CALLS["chat"] += 1
+    # FAKE_AI_DELAY simula la latencia de un modelo real (para capturar la animación de "analizando").
+    await asyncio.sleep(float(os.environ.get("FAKE_AI_DELAY", "0")))
     return {
         "id": "fake",
         "model": body.get("model"),
