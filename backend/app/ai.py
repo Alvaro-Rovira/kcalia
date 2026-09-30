@@ -7,7 +7,7 @@ import re
 import time
 
 import httpx
-from pydantic import BaseModel, Field, ValidationError, field_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
 from .config import Settings
 
@@ -27,11 +27,11 @@ ESQUEMA (todos los campos obligatorios):
       "name": string,        // alimento en minúsculas y singular, con la preparación si cambia los macros ("arroz blanco cocido")
       "qty": number,         // cantidad en la unidad indicada
       "unit": string,        // una de: {UNIT_ENUM}
-      "grams": number,       // peso total comestible en gramos (para líquidos, ml ≈ g)
-      "kcal": number,
-      "protein": number,     // gramos
-      "carbs": number,       // gramos de hidratos disponibles
-      "fat": number          // gramos
+      "grams": number,       // peso TOTAL comestible del ingrediente en gramos, con todas sus unidades juntas ("2 huevos" -> 110; líquidos: ml ≈ g)
+      "kcal100": number,     // valores POR CADA 100 g de ese alimento (nunca del total)
+      "protein100": number,  // gramos de proteína por 100 g
+      "carbs100": number,    // gramos de hidratos disponibles por 100 g
+      "fat100": number       // gramos de grasa por 100 g
     }}
   ],
   "confidence": number,      // 0 a 1: 0.9+ si hay cantidades explícitas, 0.6-0.8 si has estimado raciones, <0.5 si es muy ambiguo
@@ -45,7 +45,9 @@ REGLAS
 - Arroz, pasta y legumbres: si no se dice "en crudo" o "en seco", asume peso ya cocido.
 - Carnes y pescados: asume peso cocinado salvo que se diga "en crudo".
 - Frito, rebozado, revuelto, salteado, a la plancha: añade el aceite absorbido como ingrediente aparte si el usuario no lo menciona (plancha 3 g, revuelto/salteado 5 g, frito 10 g) y anótalo en "assumptions". Si el usuario menciona aceite sin cantidad, asume 10 g (una cucharada); "un chorrito" son 5 g.
-- Las kcal de cada ingrediente deben ser coherentes con 4·proteína + 4·hidratos + 9·grasa (el alcohol aporta 7 kcal/g y es la única excepción).
+- NO calcules totales ni multipliques: da solo los valores por 100 g y el peso total en "grams"; el sistema hace la cuenta. Ejemplo: «2 huevos» -> qty 2, unit "pieza", grams 110, kcal100 143, protein100 12.6, carbs100 0.7, fat100 9.5.
+- Un solo elemento por alimento: si el mismo alimento sale varias veces (p. ej. aceite en el revuelto y en la tostada), súmalo en uno.
+- Las kcal por 100 g deben ser coherentes con 4·proteína + 4·hidratos + 9·grasa (el alcohol aporta 7 kcal/g y es la única excepción).
 - No inventes ingredientes que el texto no sugiera. No añadas bebida, pan ni postre por tu cuenta.
 - Pide aclaración ("clarification") SOLO si es imposible identificar qué se ha comido ("he comido algo", "lo de siempre"). En ese caso devuelve "items": [] y "confidence": 0. Si solo falta la cantidad, NO preguntes: estima y anótalo.
 - Si el texto no describe comida o bebida, devuelve "items": [] y una "clarification" amable.
@@ -96,7 +98,14 @@ class AiError(Exception):
         self.status = status
 
 
+PER100_KEYS = ("kcal100", "protein100", "carbs100", "fat100")
+MAX_KCAL_PER_100G = 950  # el aceite puro ronda 884
+
+
 class AiItem(BaseModel):
+    """Un ingrediente. El modelo da los valores por 100 g y el peso total; los totales los calcula el código,
+    porque escalar a mano falla (dos huevos salieron como 314 kcal en lugar de 157)."""
+
     name: str = Field(min_length=1, max_length=120)
     qty: float = Field(default=1, ge=0, le=10000)
     unit: str = Field(default="g", max_length=16)
@@ -105,6 +114,31 @@ class AiItem(BaseModel):
     protein: float = Field(ge=0, le=600)
     carbs: float = Field(ge=0, le=1200)
     fat: float = Field(ge=0, le=600)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _totals_from_per100(cls, data):
+        if not isinstance(data, dict) or not all(key in data for key in PER100_KEYS):
+            return data  # respuesta con totales (modelos que ignoran el esquema): se acepta tal cual
+        try:
+            grams = float(data["grams"])
+            kcal, protein, carbs, fat = (float(data[key]) for key in PER100_KEYS)
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError("los valores por 100 g y los gramos deben ser números") from exc
+        if not 0 < grams <= 5000:
+            raise ValueError("los gramos totales están fuera de rango")
+        if min(kcal, protein, carbs, fat) < 0 or kcal > MAX_KCAL_PER_100G:
+            raise ValueError(f"kcal100 debe estar entre 0 y {MAX_KCAL_PER_100G}: son kcal por 100 g, no del total")
+        if protein + carbs + fat > 105:
+            raise ValueError("proteína, hidratos y grasa por 100 g suman más de 100 g: no son valores por 100 g")
+        factor = grams / 100
+        return {
+            **data,
+            "kcal": kcal * factor,
+            "protein": protein * factor,
+            "carbs": carbs * factor,
+            "fat": fat * factor,
+        }
 
     @field_validator("name")
     @classmethod
@@ -123,6 +157,30 @@ class AiMeal(BaseModel):
     confidence: float = Field(default=0.7, ge=0, le=1)
     assumptions: list[str] = Field(default_factory=list, max_length=12)
     clarification: str | None = None
+
+
+def merge_duplicates(meal: AiMeal) -> AiMeal:
+    """Un solo elemento por alimento, aunque el modelo repita el aceite del revuelto y el de la tostada."""
+    merged: dict[str, AiItem] = {}
+    for item in meal.items:
+        first = merged.get(item.name)
+        if first is None:
+            merged[item.name] = item.model_copy()
+            continue
+        if first.unit == item.unit:
+            first.qty = round(first.qty + item.qty, 1)
+        else:
+            first.unit, first.qty = "g", 0  # cantidades en unidades distintas: se deja el total en gramos
+        first.grams = round(first.grams + item.grams, 1)
+        first.kcal = round(first.kcal + item.kcal, 1)
+        first.protein = round(first.protein + item.protein, 1)
+        first.carbs = round(first.carbs + item.carbs, 1)
+        first.fat = round(first.fat + item.fat, 1)
+    for item in merged.values():
+        if item.unit == "g" and item.qty == 0:
+            item.qty = item.grams
+    meal.items = list(merged.values())
+    return meal
 
 
 def check_consistency(meal: AiMeal) -> AiMeal:
@@ -155,7 +213,7 @@ def parse_meal(content: str) -> AiMeal:
     meal = AiMeal.model_validate(extract_json(content))
     if not meal.items and not meal.clarification:
         raise ValueError('"items" está vacío y no hay "clarification"')
-    return check_consistency(meal)
+    return check_consistency(merge_duplicates(meal))
 
 
 def _provider_params(model: str) -> dict:

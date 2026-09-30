@@ -210,3 +210,92 @@ def test_429_por_saldo_agotado_se_distingue_del_limite_de_ritmo():
     with pytest.raises(AiError) as caught:
         _client([_limit("1", body), _limit("1", body)], []).analyze_text("un yogur")
     assert caught.value.code == "quota" and "saldo" in caught.value.message
+
+
+def _item(**extra):
+    base = {
+        "name": "huevo",
+        "qty": 2,
+        "unit": "pieza",
+        "grams": 110,
+        "kcal100": 143,
+        "protein100": 12.6,
+        "carbs100": 0.7,
+        "fat100": 9.5,
+    }
+    return {**base, **extra}
+
+
+def _meal(*items):
+    return json.dumps(
+        {"name": "Huevos", "items": list(items), "confidence": 0.9, "assumptions": [], "clarification": None}
+    )
+
+
+def test_los_totales_los_calcula_el_codigo_a_partir_de_los_valores_por_100_g():
+    """Regresión: con la clave real, dos huevos salieron como 314 kcal (el modelo escaló dos veces)."""
+    meal = parse_meal(_meal(_item()))
+    egg = meal.items[0]
+    assert (egg.kcal, egg.protein, egg.carbs, egg.fat) == (157.3, 13.9, 0.8, 10.5)
+
+
+def test_un_modelo_que_devuelve_totales_sigue_funcionando():
+    legacy = {
+        "name": "yogur",
+        "qty": 1,
+        "unit": "pieza",
+        "grams": 125,
+        "kcal": 150,
+        "protein": 7.5,
+        "carbs": 5,
+        "fat": 11.3,
+    }
+    assert parse_meal(_meal(legacy)).items[0].kcal == 150
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        {"kcal100": 1400},  # son kcal del total, no por 100 g
+        {"protein100": 60, "carbs100": 40, "fat100": 30},  # suman más de 100 g
+        {"kcal100": -3},
+        {"grams": 0},
+    ],
+)
+def test_valores_por_100_g_imposibles_se_rechazan_para_pedir_correccion(bad):
+    with pytest.raises(ValueError):
+        parse_meal(_meal(_item(**bad)))
+
+
+def test_un_alimento_repetido_se_junta_en_uno():
+    oil = {
+        "name": "aceite de oliva",
+        "qty": 5,
+        "unit": "g",
+        "grams": 5,
+        "kcal100": 884,
+        "protein100": 0,
+        "carbs100": 0,
+        "fat100": 100,
+    }
+    other = {**oil, "qty": 3, "grams": 3}
+    merged = parse_meal(_meal(_item(), oil, other))
+    assert [i.name for i in merged.items] == ["huevo", "aceite de oliva"]
+    aceite = merged.items[1]
+    assert (aceite.grams, aceite.qty, aceite.kcal, aceite.fat) == (8, 8, 70.7, 8)
+
+
+def test_juntar_con_unidades_distintas_deja_los_gramos():
+    a = {
+        "name": "aceite de oliva",
+        "qty": 1,
+        "unit": "cda",
+        "grams": 10,
+        "kcal100": 884,
+        "protein100": 0,
+        "carbs100": 0,
+        "fat100": 100,
+    }
+    b = {**a, "qty": 5, "unit": "g", "grams": 5}
+    oil = parse_meal(_meal(a, b)).items[0]
+    assert (oil.unit, oil.grams, oil.qty) == ("g", 15, 15)

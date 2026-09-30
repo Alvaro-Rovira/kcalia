@@ -20,7 +20,12 @@ CALLS = {"chat": 0, "stt": 0}
 
 
 def item(name, qty, unit, grams, kcal, protein, carbs, fat):
-    return {"name": name, "qty": qty, "unit": unit, "grams": grams, "kcal": kcal, "protein": protein, "carbs": carbs, "fat": fat}
+    """Como el modelo real: valores por 100 g y peso total (los totales los calcula la app)."""
+    per100 = lambda value: round(value / grams * 100, 2)  # noqa: E731
+    return {
+        "name": name, "qty": qty, "unit": unit, "grams": grams,
+        "kcal100": per100(kcal), "protein100": per100(protein), "carbs100": per100(carbs), "fat100": per100(fat),
+    }
 
 
 # (palabras clave, respuesta). Gana la primera cuyas palabras estén todas en el texto.
