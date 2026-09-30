@@ -66,9 +66,20 @@ def test_00_cabeceras_y_head(servers):
 
 
 def test_01_registro_y_onboarding(page: Page):
-    expect(page.get_by_role("heading", name="Crea tu cuenta")).to_be_visible()
+    # La puerta de entrada es el inicio de sesión; crear cuenta es una opción mientras no exista ninguna.
+    expect(page.get_by_role("heading", name="Inicia sesión")).to_be_visible()
     page.locator("input[name=username]").fill("alvaro")
     page.locator("input[name=password]").fill(PASSWORD)
+    page.get_by_role("button", name="Entrar").click()
+    expect(page.get_by_text("Todavía no existe ninguna cuenta")).to_be_visible()
+
+    page.get_by_role("button", name="Créala ahora").click()
+    expect(page.get_by_role("heading", name="Crea tu cuenta")).to_be_visible()
+    # Se puede volver atrás sin perder lo escrito.
+    page.get_by_role("button", name="Inicia sesión").click()
+    expect(page.get_by_role("heading", name="Inicia sesión")).to_be_visible()
+    expect(page.locator("input[name=username]")).to_have_value("alvaro")
+    page.get_by_role("button", name="Créala ahora").click()
     page.get_by_role("button", name="Crear cuenta").click()
 
     page.get_by_role("button", name="Empezar", exact=True).click()
@@ -187,6 +198,8 @@ def test_08_cerrar_sesion_y_volver_a_entrar(page: Page):
     page.get_by_role("link", name="Ajustes").click()
     page.get_by_role("button", name="Cerrar sesión").click()
     expect(page.get_by_role("heading", name="Hola de nuevo")).to_be_visible()
+    # Con la cuenta ya creada el registro está cerrado: no se ofrece crear otra.
+    expect(page.get_by_role("button", name="Créala ahora")).to_have_count(0)
     page.locator("input[name=username]").fill("alvaro")
     page.locator("input[name=password]").fill("incorrecta-123")
     page.get_by_role("button", name="Entrar").click()

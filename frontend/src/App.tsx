@@ -102,7 +102,7 @@ export default function App() {
     // Lo guardado dice "sin sesión": se confirma antes de enseñar el login.
     screen = <Splash />
   } else if (!auth.data.authenticated) {
-    screen = <Auth mode={auth.data.registered ? 'login' : 'register'} expired={expired} />
+    screen = <Auth registered={auth.data.registered} expired={expired} />
   } else {
     screen = <AuthedApp />
   }

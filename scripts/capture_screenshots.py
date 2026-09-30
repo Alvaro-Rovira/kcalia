@@ -70,8 +70,15 @@ def start_servers() -> tuple[dict, list[subprocess.Popen], Path]:
 def onboard(page: Page, base: str, out: Path) -> None:
     """Registro y onboarding por la interfaz; de paso captura la pantalla del plan."""
     page.goto(base)
+    page.get_by_role("heading", name="Inicia sesión").wait_for()
+    page.wait_for_timeout(900)
+    page.screenshot(path=str(out / "00-acceso.png"))
     page.locator("input[name=username]").fill("demo")
     page.locator("input[name=password]").fill(PASSWORD)
+    page.get_by_role("button", name="Créala ahora").click()
+    page.get_by_role("heading", name="Crea tu cuenta").wait_for()
+    page.wait_for_timeout(700)
+    page.screenshot(path=str(out / "00-crear-cuenta.png"))
     page.get_by_role("button", name="Crear cuenta").click()
     page.get_by_role("button", name="Empezar", exact=True).click()
     page.get_by_role("radio", name="Hombre").click()

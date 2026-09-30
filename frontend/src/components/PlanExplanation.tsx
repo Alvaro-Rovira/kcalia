@@ -29,7 +29,10 @@ function Row({ step, title, value, text }: { step: number; title: string; value:
 /** Cómo se han calculado los objetivos, paso a paso y sin cajas negras. */
 export function PlanExplanation({ plan, targetWeight, className }: Props) {
   const factor = String(plan.activity_factor).replace('.', ',')
-  const adjustment = Number(plan.adjustment_pct.toFixed(1))
+  // Las kcal se redondean a la decena, así que el ajuste real sale como −15,1 %: si está a menos de
+  // 0,3 puntos de un múltiplo de 0,5, se enseña el nominal (−15 %).
+  const nearest = Math.round(plan.adjustment_pct * 2) / 2
+  const adjustment = Math.abs(plan.adjustment_pct - nearest) <= 0.3 ? nearest : Number(plan.adjustment_pct.toFixed(1))
   const weekly = plan.weekly_kg
   const stable = Math.abs(weekly) < 0.05
   return (
