@@ -22,7 +22,6 @@ fi
 docker compose up -d --build
 chmod +x deploy/*.sh scripts/*.sh
 ./deploy/caddy-site.sh
-docker image prune -f >/dev/null
 REMOTE
 
 DOMAIN="$(ssh "$HOST" "grep -E '^DOMAIN=' $DIR/.env | cut -d= -f2-")"
