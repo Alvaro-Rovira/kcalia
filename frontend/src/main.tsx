@@ -3,7 +3,7 @@ import { MotionConfig } from 'motion/react'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router'
-import App from './App'
+import App, { preloadRoute } from './App'
 import { outbox, type Op } from './offline/outbox'
 import { CACHE_BUSTER, CACHE_MAX_AGE, keys, persister, queryClient } from './offline/queryClient'
 import './styles/index.css'
@@ -18,6 +18,8 @@ const REJECTED: Record<Op['type'], string> = {
   'weight.delete': 'No se ha podido borrar un peso',
   'dish.patch': 'No se ha podido actualizar un favorito',
 }
+
+preloadRoute(location.pathname)
 
 outbox.init({
   // Lo que acaba de llegar al servidor puede cambiar totales, racha, resúmenes e historial.

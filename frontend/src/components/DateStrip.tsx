@@ -83,7 +83,6 @@ export function DateStrip({ date, onChange, targetKcal }: Props) {
                     onChange(day)
                   }
                 }}
-                aria-label={`${fmtLong(day)}${day === today ? ', hoy' : ''}, ${STATUS_TEXT[status]}`}
                 aria-current={selected ? 'date' : undefined}
                 className="relative flex h-[62px] w-full max-w-[46px] flex-col items-center justify-center gap-1 rounded-md disabled:opacity-30"
               >
@@ -107,6 +106,11 @@ export function DateStrip({ date, onChange, targetKcal }: Props) {
                   {parseISO(day).getDate()}
                 </span>
                 <span className={clsx('relative size-1.5 rounded-full', DOT[status])} aria-hidden />
+                {/* El nombre accesible empieza por lo que se ve ("L 28") y añade la fecha completa y el estado. */}
+                <span className="sr-only">
+                  , {fmtLong(day)}
+                  {day === today ? ', hoy' : ''}, {STATUS_TEXT[status]}
+                </span>
               </button>
             </li>
           )

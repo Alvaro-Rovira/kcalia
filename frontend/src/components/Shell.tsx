@@ -179,6 +179,16 @@ export function Shell({ children }: { children: (location: Location) => ReactNod
   const [params, setParams] = useSearchParams()
   const [sheet, setSheet] = useState<{ open: boolean; date: string; slot?: Slot }>({ open: false, date: todayISO() })
   const [confetti, setConfetti] = useState(0)
+  // La hoja de añadir comida se descarga en un momento ocioso: no compite con el primer contenido.
+  const [sheetReady, setSheetReady] = useState(false)
+  useEffect(() => {
+    // Safari (iOS) no tiene requestIdleCallback: se cae a un temporizador corto.
+    const hasIdle = 'requestIdleCallback' in window
+    const handle = hasIdle
+      ? window.requestIdleCallback(() => setSheetReady(true), { timeout: 2500 })
+      : window.setTimeout(() => setSheetReady(true), 1200)
+    return () => (hasIdle ? window.cancelIdleCallback(handle) : window.clearTimeout(handle))
+  }, [])
 
   const viewedDate = location.pathname === '/' && isValidISO(params.get('fecha')) ? params.get('fecha')! : todayISO()
 
@@ -258,16 +268,18 @@ export function Shell({ children }: { children: (location: Location) => ReactNod
 
       <BottomNav />
       <Suspense fallback={null}>
-        {/* Se carga en segundo plano al arrancar: al pulsar "+" ya está lista. */}
-        <AddMealSheet
-          open={sheet.open}
-          date={sheet.date}
-          slot={sheet.slot}
-          onClose={() => setSheet((s) => ({ ...s, open: false }))}
-          onSaved={(date) => {
-            if (location.pathname !== '/' || date !== viewedDate) navigate(date === todayISO() ? '/' : `/?fecha=${date}`)
-          }}
-        />
+        {/* Se carga en un momento ocioso: al pulsar "+" ya suele estar lista, y si no, se monta al pulsar. */}
+        {(sheetReady || sheet.open) && (
+          <AddMealSheet
+            open={sheet.open}
+            date={sheet.date}
+            slot={sheet.slot}
+            onClose={() => setSheet((s) => ({ ...s, open: false }))}
+            onSaved={(date) => {
+              if (location.pathname !== '/' || date !== viewedDate) navigate(date === todayISO() ? '/' : `/?fecha=${date}`)
+            }}
+          />
+        )}
       </Suspense>
       <Confetti run={confetti} />
     </Context.Provider>

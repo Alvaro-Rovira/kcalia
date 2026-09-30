@@ -6,6 +6,8 @@
     <title>Kcalia · Calorías y macros con calma</title>
     <meta name="description" content="Apunta lo que comes en una frase, una foto o un audio. Kcalia calcula calorías y macros y recuerda tus comidas para no gastar IA." />
     <meta name="theme-color" content="#0b0c0e" />
+    <!-- App personal con login: fuera de los buscadores. -->
+    <meta name="robots" content="noindex, nofollow" />
     <meta name="color-scheme" content="dark light" />
     <meta name="format-detection" content="telephone=no" />
 
@@ -48,10 +50,29 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="__ORIGIN__/og-image.png" />
 
+    <style>
+      /* Críticos: la pantalla de arranque pinta antes de que llegue el JavaScript. */
+      html[data-theme='dark'] { background: #0b0c0e }
+      html[data-theme='light'] { background: #f6f5f1 }
+      body { margin: 0 }
+      #boot { min-height: 100dvh; display: grid; place-items: center }
+      #boot svg { animation: boot-pulse 2.2s ease-in-out infinite }
+      @keyframes boot-pulse { 0%, 100% { opacity: .55; transform: scale(.96) } 50% { opacity: 1; transform: scale(1) } }
+      @media (prefers-reduced-motion: reduce) { #boot svg { animation: none } }
+    </style>
     <script src="/theme.js"></script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="boot" role="status" aria-label="Cargando Kcalia">
+        <svg width="72" height="72" viewBox="0 0 64 64" aria-hidden="true">
+          <defs><linearGradient id="boot-g" x1="12%" y1="88%" x2="88%" y2="12%"><stop offset="0%" stop-color="#ff8a3d" /><stop offset="100%" stop-color="#34d399" /></linearGradient></defs>
+          <circle cx="32" cy="32" r="24" fill="none" stroke="#8b919c" stroke-opacity=".25" stroke-width="7" />
+          <circle cx="32" cy="32" r="24" fill="none" stroke="url(#boot-g)" stroke-width="7" stroke-linecap="round" stroke-dasharray="116 151" transform="rotate(-90 32 32)" />
+          <path d="M27 22v20M27 34l9-8M30.5 31.5 37 42" fill="none" stroke="#8b919c" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+    </div>
     <noscript>Kcalia necesita JavaScript para funcionar.</noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>

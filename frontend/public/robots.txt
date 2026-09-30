@@ -1,0 +1,3 @@
+# Aplicación personal con acceso privado: no se indexa.
+User-agent: *
+Disallow: /

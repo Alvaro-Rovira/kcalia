@@ -260,6 +260,8 @@ export default function Today() {
               )}
             </section>
 
+            {/* Misma altura que el aviso ya cargado: la lista de comidas no se desplaza al llegar. */}
+            {loading && <Skeleton className="mt-3 h-[68px] !rounded-[22px]" />}
             {!loading && (
               <motion.p
                 key={tip.text}

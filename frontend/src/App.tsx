@@ -14,11 +14,24 @@ import { Button } from './ui/Button'
 import { EmptyState } from './ui/EmptyState'
 import { Toaster } from './ui/toast'
 
+const loaders = {
+  '/historial': () => import('./pages/History'),
+  '/resumen': () => import('./pages/Summary'),
+  '/peso': () => import('./pages/Weight'),
+  '/ajustes': () => import('./pages/Settings'),
+}
+
+/** Empieza a descargar la pantalla de la URL actual en paralelo con la sesión y los datos. */
+export function preloadRoute(pathname: string): void {
+  const loader = loaders[pathname as keyof typeof loaders]
+  if (loader) void loader()
+}
+
 const Onboarding = lazy(() => import('./pages/Onboarding'))
-const History = lazy(() => import('./pages/History'))
-const Summary = lazy(() => import('./pages/Summary'))
-const WeightPage = lazy(() => import('./pages/Weight'))
-const Settings = lazy(() => import('./pages/Settings'))
+const History = lazy(loaders['/historial'])
+const Summary = lazy(loaders['/resumen'])
+const WeightPage = lazy(loaders['/peso'])
+const Settings = lazy(loaders['/ajustes'])
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 function CannotConnect({ onRetry }: { onRetry: () => void }) {

@@ -2,10 +2,9 @@ import { useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { AnimatePresence, motion } from 'motion/react'
 import { ChevronRight, Plus, Search, Star, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import CaloriesChart, { type CaloriesPoint } from '@/components/charts/CaloriesChart'
-import MacroDonut from '@/components/charts/MacroDonut'
+import type { CaloriesPoint } from '@/components/charts/CaloriesChart'
 import { ItemList, Totals } from '@/components/MealBreakdown'
 import { useShell } from '@/components/Shell'
 import { useApp, useDays, useDishActions, useMealActions } from '@/hooks/data'
@@ -25,6 +24,10 @@ import { Segmented } from '@/ui/Segmented'
 import { Sheet } from '@/ui/Sheet'
 import { Skeleton } from '@/ui/Skeleton'
 import { toast } from '@/ui/toast'
+
+// Recharts pesa ~100 KB gzip: se descarga aparte para no retrasar el primer contenido de la pantalla.
+const CaloriesChart = lazy(() => import('@/components/charts/CaloriesChart'))
+const MacroDonut = lazy(() => import('@/components/charts/MacroDonut'))
 
 type Range = '7' | '14' | '30'
 
@@ -108,11 +111,13 @@ export default function History() {
           </h2>
           <div className="mt-3">
             {days.isPending ? (
-              <Skeleton className="h-[236px]" />
+              <Skeleton className="h-[241px]" />
             ) : logged.length === 0 ? (
               <EmptyState art="chart" title="Aún no hay datos" text="Cuando apuntes tus comidas verás aquí cómo van los días." compact />
             ) : (
-              <CaloriesChart data={points} target={targets.kcal} />
+              <Suspense fallback={<Skeleton className="h-[241px]" />}>
+                <CaloriesChart data={points} target={targets.kcal} />
+              </Suspense>
             )}
           </div>
         </section>
@@ -122,7 +127,15 @@ export default function History() {
             Reparto de macros
           </h2>
           <p className="mt-0.5 text-[13px] text-text-3">Media de los días registrados frente a tu plan</p>
-          <div className="mt-4">{days.isPending ? <Skeleton className="h-[132px]" /> : <MacroDonut average={average} targets={targets} />}</div>
+          <div className="mt-4">
+            {days.isPending ? (
+              <Skeleton className="h-[135px]" />
+            ) : (
+              <Suspense fallback={<Skeleton className="h-[135px]" />}>
+                <MacroDonut average={average} targets={targets} />
+              </Suspense>
+            )}
+          </div>
         </section>
       </div>
 

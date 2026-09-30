@@ -60,14 +60,8 @@ export default defineConfig({
   build: {
     target: 'es2022',
     sourcemap: false,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-') || id.includes('node_modules/victory-vendor')) return 'charts'
-          if (id.includes('node_modules/motion') || id.includes('node_modules/framer-motion') || id.includes('node_modules/motion-dom') || id.includes('node_modules/motion-utils')) return 'motion'
-        },
-      },
-    },
+    // Sin manualChunks a propósito: forzar un chunk "charts" lo convertía en dependencia común de todas las
+    // pantallas y se descargaba (400 KB) en Hoy, que no lo usa. Las páginas ya se cargan con import() dinámico.
   },
   test: { environment: 'node', include: ['src/**/*.test.ts'] },
 })

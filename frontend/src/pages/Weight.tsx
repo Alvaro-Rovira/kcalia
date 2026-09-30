@@ -1,8 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'motion/react'
 import { Plus, RefreshCw, Trash2, TrendingDown, TrendingUp } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import WeightChart from '@/components/charts/WeightChart'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { useApp, useOnline, useWeightActions, useWeights } from '@/hooks/data'
 import { api, errorMessage } from '@/lib/api'
 import { addDays, relativeDay, todayISO } from '@/lib/dates'
@@ -18,6 +17,8 @@ import { Segmented } from '@/ui/Segmented'
 import { Sheet } from '@/ui/Sheet'
 import { Skeleton } from '@/ui/Skeleton'
 import { toast } from '@/ui/toast'
+
+const WeightChart = lazy(() => import('@/components/charts/WeightChart'))
 
 type Range = '30' | '90' | 'all'
 
@@ -204,7 +205,9 @@ export default function Weight() {
               />
             </div>
             <div className="mt-3">
-              <WeightChart entries={visible} target={target} unit={unit} convert={convert} />
+              <Suspense fallback={<Skeleton className="h-[261px]" />}>
+                <WeightChart entries={visible} target={target} unit={unit} convert={convert} />
+              </Suspense>
             </div>
           </section>
 

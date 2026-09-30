@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -13,6 +14,7 @@ from .config import get_settings
 from .db import init_db
 from .jobs import start_scheduler
 from .routers import account, auth, meals, profile, summary, weight
+from .spa import render_index
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("kcalia")
@@ -44,6 +46,10 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="Kcalia", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+
+
+if get_settings().gzip:
+    app.add_middleware(GZipMiddleware, minimum_size=500)
 
 
 @app.middleware("http")
@@ -114,7 +120,12 @@ def _mount_frontend() -> None:
     # Las metas Open Graph necesitan URL absoluta: se rellenan con DOMAIN, el único sitio donde vive el dominio.
     settings = get_settings()
     origin = "" if settings.domain in ("", "localhost") else f"https://{settings.domain}"
-    index_html = index.read_text().replace("__ORIGIN__", origin)
+    rendered = render_index(static_dir, origin)
+    index_headers = {"Cache-Control": "no-cache"}
+    if rendered.script_hash:
+        index_headers["Content-Security-Policy"] = CSP.replace(
+            "script-src 'self'", f"script-src 'self' '{rendered.script_hash}'"
+        )
 
     assets = static_dir / "assets"
     if assets.is_dir():
@@ -139,7 +150,7 @@ def _mount_frontend() -> None:
             )
             return FileResponse(candidate, headers=headers)
         # Cualquier otra ruta es de la SPA: el router del cliente decide (incluida la 404).
-        return HTMLResponse(index_html, headers={"Cache-Control": "no-cache"})
+        return HTMLResponse(rendered.html, headers=index_headers)
 
 
 _mount_frontend()

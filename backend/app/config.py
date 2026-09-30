@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     backup_keep: int = 7
 
     session_days: int = 180
+    # Comprime respuestas desde la propia app. Detrás de Caddy sobra (comprime él, con zstd); útil sin proxy.
+    gzip: bool = False
     cookie_secure: bool = True
 
     ai_base_url: str = "https://api.moonshot.ai/v1"

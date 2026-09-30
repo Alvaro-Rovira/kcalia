@@ -210,6 +210,8 @@ export default function Summary() {
         </div>
       </header>
 
+      {/* Reserva el hueco de la racha (104 px): al llegar las estadísticas nada se desplaza. */}
+      {!streak && stats.isPending && <Skeleton className="mt-4 h-[104px] !rounded-[22px]" />}
       {streak && (
         <section className="card mt-4 flex items-center gap-4 overflow-hidden p-4" aria-label="Racha">
           <motion.div

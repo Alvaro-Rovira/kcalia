@@ -66,7 +66,6 @@ export function MealRow({ meal, onOpen, onDelete, index = 0 }: Props) {
         onKeyDown={(event) => {
           if (event.key === 'Delete' || event.key === 'Backspace') onDelete(meal)
         }}
-        aria-label={`${meal.name}, ${fmt(meal.kcal)} kilocalorías. Abrir detalle`}
         className="relative flex min-h-[60px] w-full items-center gap-3 rounded-md border border-border bg-surface px-3.5 py-2.5 text-left"
       >
         <div className="min-w-0 flex-1">

@@ -52,6 +52,10 @@ def test_00_cabeceras_y_head(servers):
         assert page.status_code == 200, method
         assert "default-src 'self'" in page.headers["content-security-policy"]
         assert page.headers["cache-control"] == "no-cache"
+    # El HTML lleva el CSS y el tema en línea (con hash en la CSP) para pintar sin más viajes a la red.
+    root = httpx.get(servers["app"] + "/")
+    assert "<style>" in root.text and 'href="/assets/index-' not in root.text.split("</head>")[0].replace('rel="modulepreload"', "")
+    assert "'sha256-" in root.headers["content-security-policy"]
     # Las metas Open Graph salen con URL absoluta y sin marcadores sin sustituir.
     assert "__ORIGIN__" not in httpx.get(servers["app"] + "/").text
     assert httpx.head(servers["app"] + "/api/health").status_code == 200
