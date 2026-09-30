@@ -43,6 +43,10 @@ export function Sheet({ open, onClose, title, hideTitle, children, footer, tall 
   const controls = useDragControls()
   const reduce = useReducedMotion()
   useKeyboardInset(open, panel)
+  // onClose suele ser una función nueva en cada render del padre. Si el efecto dependiera de
+  // ella, cada tecla pulsada dentro de la hoja le quitaría el foco al campo.
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
 
   useEffect(() => {
     if (!open) return
@@ -52,7 +56,7 @@ export function Sheet({ open, onClose, title, hideTitle, children, footer, tall 
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.stopPropagation()
-        onClose()
+        onCloseRef.current()
         return
       }
       if (event.key !== 'Tab' || !panel.current) return
@@ -79,7 +83,7 @@ export function Sheet({ open, onClose, title, hideTitle, children, footer, tall 
       document.body.style.overflow = overflow
       previous?.focus?.()
     }
-  }, [open, onClose])
+  }, [open])
 
   return createPortal(
     <AnimatePresence>

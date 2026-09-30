@@ -48,14 +48,16 @@ function AuthedApp() {
   }
   return (
     <Shell>
-      <Routes>
-        <Route path="/" element={<Today />} />
-        <Route path="/historial" element={<History />} />
-        <Route path="/resumen" element={<Summary />} />
-        <Route path="/peso" element={<WeightPage />} />
-        <Route path="/ajustes" element={<Settings />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      {(location) => (
+        <Routes location={location}>
+          <Route path="/" element={<Today />} />
+          <Route path="/historial" element={<History />} />
+          <Route path="/resumen" element={<Summary />} />
+          <Route path="/peso" element={<WeightPage />} />
+          <Route path="/ajustes" element={<Settings />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      )}
     </Shell>
   )
 }

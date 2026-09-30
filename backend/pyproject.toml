@@ -20,6 +20,9 @@ dev = [
     "pytest>=8.3",
     "ruff>=0.6",
 ]
+e2e = [
+    "playwright>=1.48",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -2,7 +2,7 @@ import clsx from 'clsx'
 import { AnimatePresence, motion } from 'motion/react'
 import { CalendarDays, ChartColumn, CloudOff, House, Plus, Scale, Settings, type LucideIcon } from 'lucide-react'
 import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { NavLink, useLocation, useNavigate, useSearchParams } from 'react-router'
+import { NavLink, useLocation, useNavigate, useSearchParams, type Location } from 'react-router'
 import { useOnline, usePendingCount } from '@/hooks/data'
 import { isValidISO, todayISO } from '@/lib/dates'
 import { plural } from '@/lib/format'
@@ -168,7 +168,12 @@ function PageFallback() {
   )
 }
 
-export function Shell({ children }: { children: ReactNode }) {
+/**
+ * `children` recibe la ubicación de su propio contenedor. Mientras una página sale con su animación,
+ * su <Routes> debe seguir en la ruta antigua: si leyera la nueva, la página nueva se montaría dos
+ * veces (una dentro del contenedor que sale y otra en el que entra).
+ */
+export function Shell({ children }: { children: (location: Location) => ReactNode }) {
   const location = useLocation()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
@@ -223,7 +228,7 @@ export function Shell({ children }: { children: ReactNode }) {
             exit={{ opacity: 0, transition: { duration: 0.1 } }}
             transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
           >
-            <Suspense fallback={<PageFallback />}>{children}</Suspense>
+            <Suspense fallback={<PageFallback />}>{children(location)}</Suspense>
           </motion.div>
         </AnimatePresence>
       </div>
