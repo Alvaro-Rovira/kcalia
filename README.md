@@ -348,6 +348,14 @@ docker compose exec app python -m app.bench --model otro-modelo --price-in 0.25 
 
 Usa la clave que ya está en el contenedor y no la muestra.
 
+**Límites del proveedor.** Muchas cuentas nuevas traen un tope de peticiones por minuto (la de Moonshot de esta instalación permite 3). Si lo alcanzas, Kcalia espera un instante y reintenta una vez; si sigue, te lo explica en lugar de mostrar un error genérico. Para medir un modelo con una cuenta así, añade `--rpm 3` y la herramienta espaciará las llamadas (unos 8 minutos en total):
+
+```bash
+docker compose exec app python -m app.bench --rpm 3 --price-in 0.95 --price-out 4.00
+```
+
+**Por qué el modelo da valores «por 100 g».** En la primera prueba real, un modelo escaló dos veces el huevo (314 kcal en lugar de 157). Multiplicar es justo lo que un modelo hace mal y un programa nunca, así que el modelo aporta el conocimiento (calorías y macros por cada 100 g, y el peso del ingrediente) y el código hace la cuenta.
+
 ## Copias de seguridad
 
 Cada noche se guarda una copia consistente de la base de datos, comprimida, en el volumen `kcalia-backups`. Se conservan las siete últimas.
