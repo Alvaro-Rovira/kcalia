@@ -25,6 +25,7 @@ const SOURCE_TEXT: Record<Meal['source'], string> = {
   favorite: 'Favorita, sin IA',
   recent: 'Reciente, sin IA',
   manual: 'Añadida a mano',
+  product: 'Con la etiqueta de tu producto, sin IA',
 }
 
 /** Detalle de una comida ya guardada: raciones, momento, día e ingredientes. */

@@ -12,6 +12,7 @@ import {
   Sparkles,
   Square,
   Star,
+  Tag,
   WifiOff,
   X,
   Zap,
@@ -24,16 +25,18 @@ import { relativeDay, todayISO } from '@/lib/dates'
 import { capitalize, fmt } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
 import { downscaleImage } from '@/lib/image'
-import { GRAM_MACROS, itemsTotal } from '@/lib/macros'
+import { itemsTotal } from '@/lib/macros'
+import { draftFromProducts, resolveText, singleItem } from '@/lib/products'
 import { draftFromDish, matchLocally, suggestDishes } from '@/lib/resolve'
 import { slotForTime } from '@/lib/slots'
-import type { Dish, Draft, Item, Meal, ResolveResult, Slot, Source, Via } from '@/lib/types'
+import type { Dish, Draft, Item, Meal, Product, ResolveResult, Slot, Source, Via } from '@/lib/types'
 import { keys } from '@/offline/queryClient'
 import { Button } from '@/ui/Button'
 import { MacroBar, MacroInline } from '@/ui/MacroBar'
 import { Notice } from '@/ui/Notice'
 import { Sheet } from '@/ui/Sheet'
 import { toast } from '@/ui/toast'
+import { Analyzing } from './Analyzing'
 import { ItemList, ServingsPicker, SlotPicker, Totals } from './MealBreakdown'
 
 interface Props {
@@ -42,6 +45,8 @@ interface Props {
   slot?: Slot
   onClose: () => void
   onSaved: (date: string) => void
+  /** Abre la hoja para guardar la etiqueta de un producto nuevo. */
+  onNewProduct: () => void
 }
 
 type Phase =
@@ -51,12 +56,6 @@ type Phase =
   | { kind: 'result'; draft: Draft; via: Via }
   | { kind: 'clarify'; question: string }
   | { kind: 'offline' }
-
-const BUSY_TEXT: Record<'text' | 'photo' | 'voice', string[]> = {
-  text: ['Buscando en tu historial…', 'Consultando a la IA…', 'Pesando los ingredientes…', 'Sumando los macros…'],
-  photo: ['Mirando tu plato…', 'Identificando los alimentos…', 'Estimando las cantidades…', 'Sumando los macros…'],
-  voice: ['Escuchando tu audio…', 'Pasándolo a texto…'],
-}
 
 const RECORDER_ERRORS: Record<RecorderError, [string, string]> = {
   denied: ['No tengo permiso para usar el micrófono', 'Actívalo en los ajustes del navegador para este sitio.'],
@@ -70,75 +69,13 @@ const SOURCE_BADGE: Partial<Record<Source, { label: string; Icon: typeof Zap; sa
   cache: { label: 'Sin IA · ingredientes conocidos', Icon: Zap, saved: true },
   exact: { label: 'Sin IA · de tu historial', Icon: History, saved: true },
   fuzzy: { label: 'Sin IA · de tu historial', Icon: History, saved: true },
+  product: { label: 'Sin IA · con tu etiqueta', Icon: Tag, saved: true },
 }
 
 function confidenceLabel(value: number): { text: string; level: number } {
   if (value >= 0.8) return { text: 'Confianza alta', level: 3 }
   if (value >= 0.55) return { text: 'Confianza media', level: 2 }
   return { text: 'Confianza baja: revisa las cantidades', level: 1 }
-}
-
-function Analyzing({ mode, preview }: { mode: 'text' | 'photo' | 'voice'; preview?: string }) {
-  const messages = BUSY_TEXT[mode]
-  const [index, setIndex] = useState(0)
-  useEffect(() => {
-    const timer = setInterval(() => setIndex((i) => Math.min(i + 1, messages.length - 1)), 1500)
-    return () => clearInterval(timer)
-  }, [messages.length])
-
-  return (
-    <div role="status" aria-live="polite" className="flex flex-col items-center py-10">
-      <div className="relative grid size-[132px] place-items-center">
-        {preview ? (
-          <div className="relative size-[132px] overflow-hidden rounded-xl border border-border">
-            <img src={preview} alt="" className="size-full object-cover" />
-            <motion.div
-              className="absolute inset-x-0 h-10 bg-gradient-to-b from-transparent via-accent/40 to-transparent"
-              animate={{ top: ['-30%', '100%'] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-            />
-          </div>
-        ) : (
-          <>
-            <motion.div
-              className="absolute inset-0 rounded-full"
-              style={{ background: 'conic-gradient(from 0deg, transparent 0 55%, var(--kcal-from), var(--kcal))', mask: 'radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px))', WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px))' }}
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1.3, repeat: Infinity, ease: 'linear' }}
-            />
-            {GRAM_MACROS.map((m, i) => (
-              <motion.div
-                key={m.key}
-                className="absolute"
-                style={{ inset: 20 + i * 11 }}
-                animate={{ rotate: i % 2 ? -360 : 360 }}
-                transition={{ duration: 2.2 + i * 0.7, repeat: Infinity, ease: 'linear' }}
-              >
-                <span className="absolute -top-1 left-1/2 size-2 -translate-x-1/2 rounded-full" style={{ background: m.color }} />
-              </motion.div>
-            ))}
-            <motion.div animate={{ scale: [1, 1.12, 1] }} transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}>
-              {mode === 'voice' ? <Mic className="size-8 text-accent-text" aria-hidden /> : <Sparkles className="size-8 text-accent-text" aria-hidden />}
-            </motion.div>
-          </>
-        )}
-      </div>
-      <div className="mt-6 h-6 overflow-hidden">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.p
-            key={index}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.22 }}
-            className="text-[15.5px] font-medium text-text"
-          >
-            {messages[index]}
-          </motion.p>
-        </AnimatePresence>
-      </div>
-    </div>
-  )
 }
 
 function RecordingPanel({ seconds, level, max, onStop, onCancel }: { seconds: number; level: number; max: number; onStop: () => void; onCancel: () => void }) {
@@ -188,12 +125,13 @@ function QuickChip({ dish, onPick }: { dish: Dish; onPick: (dish: Dish) => void 
   )
 }
 
-export default function AddMealSheet({ open, date: initialDate, slot: initialSlot, onClose, onSaved }: Props) {
+export default function AddMealSheet({ open, date: initialDate, slot: initialSlot, onClose, onSaved, onNewProduct }: Props) {
   const client = useQueryClient()
   const { data: bootstrap } = useBootstrap()
   const online = useOnline()
   const meals = useMealActions()
   const dishes = useMemo(() => bootstrap?.dishes ?? [], [bootstrap?.dishes])
+  const products = useMemo(() => bootstrap?.products ?? [], [bootstrap?.products])
 
   const [phase, setPhase] = useState<Phase>({ kind: 'input' })
   const [text, setText] = useState('')
@@ -258,7 +196,7 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
       toast({
         tone: 'success',
         title: `${meal.name} · ${fmt(total.kcal)} kcal`,
-        description: withoutAi ? 'Añadida desde tu historial, sin gastar IA' : `Añadida a ${relativeDay(date).toLowerCase()}`,
+        description: options.source === 'product' ? 'Con la etiqueta de tu producto, sin gastar IA' : withoutAi ? 'Añadida desde tu historial, sin gastar IA' : `Añadida a ${relativeDay(date).toLowerCase()}`,
         action: { label: 'Deshacer', onClick: () => meals.remove(meal) },
       })
       onSaved(date)
@@ -280,6 +218,16 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
         const local = matchLocally(query, dishes)
         if (local?.status === 'exact') return save(local.draft, { source: 'exact' })
         if (local?.status === 'fuzzy') return setPhase({ kind: 'fuzzy', candidates: local.candidates })
+      }
+      if (!options.forceAi && products.length) {
+        // Productos con etiqueta guardada: «dos yogures ligeros» sale de sus cifras, al instante y sin red.
+        const found = resolveText(query, products)
+        if (found.items.length && !found.rest.length) {
+          setServings(1)
+          setPhase({ kind: 'result', draft: draftFromProducts(query, found.items), via: via.current })
+          haptic('success')
+          return
+        }
       }
       if (!navigator.onLine) return setPhase({ kind: 'offline' })
 
@@ -306,7 +254,7 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
         haptic('error')
       }
     },
-    [dishes, save, client],
+    [dishes, products, save, client],
   )
 
   const recorder = useRecorder(
@@ -356,6 +304,12 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
       setNotice(error instanceof ApiError ? error.message : 'No he podido leer esa imagen. Prueba con otra foto.')
       setPhase({ kind: 'input' })
     }
+  }
+
+  const quickProduct = (product: Product) => {
+    setServings(1)
+    setPhase({ kind: 'result', draft: draftFromProducts(product.alias || product.name, [singleItem(product)]), via: 'tap' })
+    haptic('select')
   }
 
   const quickAdd = (dish: Dish) => save(draftFromDish(dish, dish.favorite ? 'favorite' : 'recent'), { source: dish.favorite ? 'favorite' : 'recent', via: 'tap' })
@@ -547,6 +501,34 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
                   </div>
                 </div>
               )}
+              {products.length > 0 && (
+                <div className="mt-5">
+                  <p className="eyebrow">Mis productos</p>
+                  <div className="no-scrollbar -mx-5 mt-2 flex gap-2 overflow-x-auto px-5">
+                    {products.slice(0, 12).map((product) => (
+                      <motion.button
+                        key={product.id}
+                        type="button"
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => quickProduct(product)}
+                        aria-label={`Añadir ${product.alias || product.name}`}
+                        className="flex h-11 max-w-[220px] shrink-0 items-center gap-2 rounded-full border border-border bg-surface-2 pr-3.5 pl-3 text-[14px] font-medium text-text"
+                      >
+                        <Tag className="size-3.5 shrink-0 text-accent-text" aria-hidden />
+                        <span className="truncate">{product.alias || product.name}</span>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={onNewProduct}
+                className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-dashed border-border-strong px-3 text-[14px] font-medium text-text-2 transition-colors hover:bg-surface-2 hover:text-text"
+              >
+                <Camera className="size-[17px]" aria-hidden />
+                {products.length ? 'Guardar la etiqueta de otro producto' : '¿Un producto envasado? Guarda su etiqueta'}
+              </button>
               {recents.length > 0 && (
                 <div className="mt-5">
                   <p className="eyebrow">Recientes</p>
@@ -646,7 +628,7 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
               slot={slot}
               onSlot={setSlot}
               onDraft={(draft) => setPhase({ kind: 'result', draft, via: phase.via })}
-              onReanalyze={phase.draft.source === 'cache' ? () => void analyze(text, { forceAi: true }) : undefined}
+              onReanalyze={phase.draft.source === 'cache' || phase.draft.source === 'product' ? () => void analyze(text, { forceAi: true }) : undefined}
               onDiscard={() => setPhase({ kind: 'input' })}
             />
           )}

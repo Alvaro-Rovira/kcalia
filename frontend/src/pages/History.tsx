@@ -6,6 +6,7 @@ import { lazy, Suspense, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import type { CaloriesPoint } from '@/components/charts/CaloriesChart'
 import { ItemList, Totals } from '@/components/MealBreakdown'
+import { ProductsLibrary } from '@/components/ProductList'
 import { useShell } from '@/components/Shell'
 import { useApp, useDays, useDishActions, useMealActions } from '@/hooks/data'
 import { errorMessage } from '@/lib/api'
@@ -15,7 +16,7 @@ import { haptic } from '@/lib/haptics'
 import { ZERO } from '@/lib/macros'
 import { slotForTime } from '@/lib/slots'
 import { normalize } from '@/lib/textnorm'
-import type { DayStatus, Dish, Macros } from '@/lib/types'
+import type { DayStatus, Dish, Macros, Product } from '@/lib/types'
 import { keys } from '@/offline/queryClient'
 import { Button } from '@/ui/Button'
 import { EmptyState } from '@/ui/EmptyState'
@@ -173,8 +174,27 @@ export default function History() {
         </section>
       )}
 
-      <Library dishes={app.dishes} />
+      <Collection dishes={app.dishes} products={app.products} />
     </main>
+  )
+}
+
+/** Lo que la app recuerda: comidas del historial y productos con su etiqueta. */
+function Collection({ dishes, products }: { dishes: Dish[]; products: Product[] }) {
+  const [tab, setTab] = useState<'dishes' | 'products'>('dishes')
+  return (
+    <section className="mt-7" aria-label="Lo que recuerda Kcalia">
+      <Segmented
+        label="Comidas o productos"
+        value={tab}
+        onChange={setTab}
+        options={[
+          { value: 'dishes', label: `Comidas · ${dishes.length}` },
+          { value: 'products', label: `Productos · ${products.length}` },
+        ]}
+      />
+      <div className="mt-5">{tab === 'dishes' ? <Library dishes={dishes} /> : <ProductsLibrary products={products} />}</div>
+    </section>
   )
 }
 
@@ -238,7 +258,7 @@ function Library({ dishes }: { dishes: Dish[] }) {
   }
 
   return (
-    <section className="mt-7" aria-labelledby="h-library">
+    <section aria-labelledby="h-library">
       <div className="flex items-end justify-between gap-3">
         <div>
           <h2 id="h-library" className="text-[19px] font-semibold tracking-[-0.02em] text-text">

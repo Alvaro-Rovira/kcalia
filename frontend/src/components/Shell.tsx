@@ -7,11 +7,12 @@ import { useOnline, usePendingCount } from '@/hooks/data'
 import { isValidISO, todayISO } from '@/lib/dates'
 import { plural } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
-import type { Slot } from '@/lib/types'
+import type { Product, Slot } from '@/lib/types'
 import { Confetti } from '@/ui/Confetti'
 import { Logo, Wordmark } from './Logo'
 
 const AddMealSheet = lazy(() => import('./AddMealSheet'))
+const ProductSheet = lazy(() => import('./ProductSheet'))
 
 interface AddMealOptions {
   date?: string
@@ -20,10 +21,12 @@ interface AddMealOptions {
 
 interface ShellContext {
   openAddMeal: (options?: AddMealOptions) => void
+  /** Guardar un producto nuevo desde la foto de su etiqueta, o editar uno existente. */
+  openProduct: (product?: Product | null) => void
   celebrate: () => void
 }
 
-const Context = createContext<ShellContext>({ openAddMeal: () => undefined, celebrate: () => undefined })
+const Context = createContext<ShellContext>({ openAddMeal: () => undefined, openProduct: () => undefined, celebrate: () => undefined })
 export const useShell = () => useContext(Context)
 
 const NAV: { to: string; label: string; Icon: LucideIcon }[] = [
@@ -179,6 +182,8 @@ export function Shell({ children }: { children: (location: Location) => ReactNod
   const [params, setParams] = useSearchParams()
   const [sheet, setSheet] = useState<{ open: boolean; date: string; slot?: Slot }>({ open: false, date: todayISO() })
   const [confetti, setConfetti] = useState(0)
+  const [productSheet, setProductSheet] = useState<{ open: boolean; product: Product | null }>({ open: false, product: null })
+  const [productEver, setProductEver] = useState(false)
   // La hoja de añadir comida se descarga en un momento ocioso: no compite con el primer contenido.
   const [sheetReady, setSheetReady] = useState(false)
   useEffect(() => {
@@ -199,11 +204,16 @@ export function Shell({ children }: { children: (location: Location) => ReactNod
     },
     [viewedDate],
   )
+  const openProduct = useCallback((product?: Product | null) => {
+    haptic('tap')
+    setProductEver(true)
+    setProductSheet({ open: true, product: product ?? null })
+  }, [])
   const celebrate = useCallback(() => {
     haptic('success')
     setConfetti((n) => n + 1)
   }, [])
-  const value = useMemo(() => ({ openAddMeal, celebrate }), [openAddMeal, celebrate])
+  const value = useMemo(() => ({ openAddMeal, openProduct, celebrate }), [openAddMeal, openProduct, celebrate])
 
   // Cada pantalla empieza arriba, venga de donde venga.
   useEffect(() => {
@@ -275,10 +285,19 @@ export function Shell({ children }: { children: (location: Location) => ReactNod
             date={sheet.date}
             slot={sheet.slot}
             onClose={() => setSheet((s) => ({ ...s, open: false }))}
+            onNewProduct={() => {
+              setSheet((s) => ({ ...s, open: false }))
+              openProduct(null)
+            }}
             onSaved={(date) => {
               if (location.pathname !== '/' || date !== viewedDate) navigate(date === todayISO() ? '/' : `/?fecha=${date}`)
             }}
           />
+        )}
+      </Suspense>
+      <Suspense fallback={null}>
+        {(productEver || productSheet.open) && (
+          <ProductSheet open={productSheet.open} product={productSheet.product} onClose={() => setProductSheet((p) => ({ ...p, open: false }))} />
         )}
       </Suspense>
       <Confetti run={confetti} />

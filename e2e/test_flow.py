@@ -208,3 +208,60 @@ def test_08_cerrar_sesion_y_volver_a_entrar(page: Page):
     page.get_by_role("button", name="Entrar").click()
     expect(page.get_by_role("button", name="Pechuga de pollo con arroz").first).to_be_visible()
     assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_09_producto_desde_la_foto_de_su_etiqueta(page: Page, ai_calls, tmp_path):
+    """Foto de una etiqueta -> producto guardado -> «dos yogures ligeros» multiplica sus cifras, sin IA."""
+    data_url = page.evaluate(
+        """() => { const c = document.createElement('canvas'); c.width = 600; c.height = 420
+          const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 600, 420); x.fillStyle = '#111'
+          x.font = '28px sans-serif'; x.fillText('Información nutricional por 100 g', 24, 60)
+          x.fillText('Energía 187 kJ / 44 kcal', 24, 120); return c.toDataURL('image/jpeg', 0.9) }"""
+    )
+    import base64
+
+    photo = tmp_path / "etiqueta.jpg"
+    photo.write_bytes(base64.b64decode(data_url.split(",", 1)[1]))
+
+    page.get_by_role("link", name="Historial").click()
+    page.get_by_role("radio", name="Productos").click()
+    expect(page.get_by_text("Aún no tienes productos")).to_be_visible()
+    page.get_by_role("button", name="Guardar una etiqueta").click()
+    page.locator("input[type=file]:not([capture])").set_input_files(str(photo))
+
+    # La IA (simulada) lee la tabla; se revisa antes de guardar.
+    expect(page.get_by_role("heading", name="Revisa la etiqueta")).to_be_visible()
+    expect(page.get_by_role("textbox", name="Calorías")).to_have_value("44")
+    expect(page.get_by_label("Cómo lo escribirás al apuntar")).to_have_value("yogur ligero")
+    expect(page.get_by_text("«2 yogur ligero» =")).to_be_visible()
+    expect(page.get_by_text("110 kcal").first).to_be_visible()
+    page.get_by_role("button", name="Guardar producto").click()
+    expect(page.get_by_text("Guardado: yogur ligero")).to_be_visible()
+    expect(page.get_by_role("button", name="Yogur desnatado ligero sabor limón").first).to_be_visible()
+
+    # Escribir «dos yogures ligeros» usa la etiqueta: ni una consulta a la IA.
+    before = ai_calls()
+    page.get_by_role("link", name="Hoy").click()
+    add_meal(page, "dos yogures ligeros")
+    expect(page.get_by_text("Sin IA · con tu etiqueta")).to_be_visible()
+    expect(page.get_by_role("button", name="Guardar · 110 kcal")).to_be_visible()
+    page.get_by_role("button", name="×1,5", exact=True).click()
+    expect(page.get_by_role("button", name="Guardar · 165 kcal")).to_be_visible()
+    page.get_by_role("button", name="Guardar · 165 kcal").click()
+    expect(page.get_by_role("button", name="Deshacer").first).to_be_visible()
+    assert ai_calls() == before
+
+    # También sin conexión: el producto ya está en el móvil.
+    page.wait_for_timeout(1500)
+    page.context.set_offline(True)
+    add_meal(page, "un yogur ligero")
+    expect(page.get_by_text("Sin IA · con tu etiqueta")).to_be_visible()
+    page.get_by_role("button", name="Guardar · 55 kcal").click()
+    expect(page.get_by_text("cambio pendiente").first).to_be_visible()
+    page.context.set_offline(False)
+    expect(page.get_by_text("cambio pendiente")).to_have_count(0, timeout=20_000)
+
+    # Cuenta como consulta ahorrada y el producto sabe cuántas veces se ha usado.
+    stats = page.request.get(page.url.split("/")[0] + "//" + page.url.split("/")[2] + "/api/stats").json()
+    assert stats["ai"]["saved"]["saved_product"] == 2
+    assert not page.errors  # type: ignore[attr-defined]

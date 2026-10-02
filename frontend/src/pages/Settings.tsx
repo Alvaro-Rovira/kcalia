@@ -214,6 +214,7 @@ export default function Settings() {
                 <Row label="Del historial, texto idéntico" value={saved.saved.saved_exact} />
                 <Row label="Del historial, texto parecido" value={saved.saved.saved_fuzzy} />
                 <Row label="Con ingredientes conocidos" value={saved.saved.saved_cache} />
+                <Row label="Con tus productos guardados" value={saved.saved.saved_product ?? 0} />
                 <Row label="Favoritos y recientes, a un toque" value={saved.saved.saved_quick} />
               </>
             )}

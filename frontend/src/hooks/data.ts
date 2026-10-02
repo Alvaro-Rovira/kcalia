@@ -35,7 +35,8 @@ export function useBootstrap(enabled = true) {
 export function useApp(): Bootstrap & { profile: NonNullable<Bootstrap['profile']>; targets: NonNullable<Bootstrap['targets']> } {
   const { data } = useBootstrap()
   if (!data?.profile || !data.targets) throw new Error('useApp fuera de la app')
-  return data as ReturnType<typeof useApp>
+  // La caché guardada en el móvil por una versión anterior no trae los productos hasta que llegan datos nuevos.
+  return { ...data, products: data.products ?? [] } as ReturnType<typeof useApp>
 }
 
 export function useMeals(date: string) {

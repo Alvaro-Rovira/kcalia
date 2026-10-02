@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-type Art = 'plate' | 'chart' | 'scale' | 'book' | 'offline' | 'lost'
+type Art = 'plate' | 'chart' | 'scale' | 'book' | 'offline' | 'lost' | 'label'
 
 /** Ilustraciones de línea hechas con los colores de los macros. */
 function Illustration({ art }: { art: Art }) {
@@ -53,6 +53,18 @@ function Illustration({ art }: { art: Art }) {
           <path d="M68 80a17 17 0 0 1 24 0" stroke="var(--kcal)" />
           <circle cx="80" cy="92" r="3" fill="var(--kcal)" stroke="none" />
           <path d="M48 34l64 64" stroke="var(--fat)" />
+        </g>
+      )}
+      {art === 'label' && (
+        <g {...common}>
+          <rect x="52" y="22" width="56" height="74" rx="9" stroke="var(--border-strong)" />
+          <path d="M62 36h24" stroke="var(--text-3)" />
+          <path d="M62 48h36M62 58h36M62 68h36" stroke="var(--border-strong)" />
+          <path d="M62 48h14" stroke="var(--protein)" />
+          <path d="M62 58h22" stroke="var(--carbs)" />
+          <path d="M62 68h10" stroke="var(--fat)" />
+          <path d="M62 82h20" stroke="var(--kcal)" />
+          <path d="M112 30l10-6M112 40h12M112 50l10 6" stroke="var(--kcal-from)" />
         </g>
       )}
       {art === 'lost' && (

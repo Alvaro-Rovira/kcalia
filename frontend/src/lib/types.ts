@@ -2,7 +2,7 @@ export type Sex = 'hombre' | 'mujer'
 export type Activity = 'sedentario' | 'ligero' | 'moderado' | 'alto' | 'muy_alto'
 export type Goal = 'definicion_ligera' | 'definicion_agresiva' | 'volumen' | 'mantenimiento' | 'recomposicion'
 export type Slot = 'desayuno' | 'comida' | 'merienda' | 'cena' | 'snack'
-export type Source = 'ai' | 'exact' | 'fuzzy' | 'cache' | 'favorite' | 'recent' | 'manual' | 'photo'
+export type Source = 'ai' | 'exact' | 'fuzzy' | 'cache' | 'favorite' | 'recent' | 'manual' | 'photo' | 'product'
 export type Via = 'text' | 'voice' | 'photo' | 'tap'
 export type MacroKey = 'kcal' | 'protein' | 'carbs' | 'fat'
 export type ThemePref = 'dark' | 'light' | 'auto'
@@ -19,6 +19,48 @@ export interface Item extends Macros {
   qty: number
   unit: string
   grams: number
+  /** Si sale de la etiqueta de un producto guardado. */
+  product_id?: number | null
+}
+
+/** Producto envasado con las cifras de su etiqueta (por 100 g o 100 ml). */
+export interface Product {
+  id: number
+  name: string
+  alias: string
+  basis: 'g' | 'ml'
+  kcal100: number
+  protein100: number
+  carbs100: number
+  fat100: number
+  fiber100: number | null
+  sugars100: number | null
+  salt100: number | null
+  unit_label: string
+  unit_grams: number | null
+  has_image: boolean
+  use_count: number
+  last_used_at: string
+  created_at: string
+}
+
+/** Lo que la IA ha leído de la foto de una etiqueta: se revisa antes de guardar. */
+export interface LabelDraft {
+  name: string
+  alias: string
+  basis: 'g' | 'ml'
+  kcal100: number | null
+  protein100: number | null
+  carbs100: number | null
+  fat100: number | null
+  fiber100: number | null
+  sugars100: number | null
+  salt100: number | null
+  unit_label: string
+  unit_grams: number | null
+  confidence: number
+  warnings: string[]
+  missing: string[]
 }
 
 export interface Draft extends Macros {
@@ -129,6 +171,7 @@ export interface Bootstrap {
   targets: Targets | null
   plan: Plan | null
   dishes: Dish[]
+  products: Product[]
   ai: { configured: boolean; model: string; used_today: number; limit: number }
   server_date: string
 }
@@ -140,7 +183,7 @@ export interface AuthStatus {
 }
 
 export type ResolveResult =
-  | { status: 'exact' | 'cache' | 'ai'; draft: Draft }
+  | { status: 'exact' | 'cache' | 'ai' | 'product'; draft: Draft }
   | { status: 'fuzzy'; candidates: Draft[] }
   | { status: 'clarify'; question: string }
 
@@ -227,7 +270,7 @@ export interface Stats {
     used_today: number
     limit: number
     saved_total: number
-    saved: { saved_exact: number; saved_fuzzy: number; saved_cache: number; saved_quick: number }
+    saved: { saved_exact: number; saved_fuzzy: number; saved_cache: number; saved_quick: number; saved_product: number }
     calls_total: number
   }
   counts: { meals: number; weights: number; days: number }

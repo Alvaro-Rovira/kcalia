@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import { AnimatePresence, motion } from 'motion/react'
-import { Minus, Plus, X } from 'lucide-react'
+import { Minus, Plus, Tag, X } from 'lucide-react'
 import { capitalize, fmt, fmtSmart } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
 import { GRAM_MACROS, itemsTotal } from '@/lib/macros'
@@ -140,7 +140,10 @@ export function ItemList({ items, onChange }: { items: Item[]; onChange?: (items
             >
               <div className="flex items-center gap-2 py-2 pr-1.5 pl-3.5">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[14.5px] font-medium text-text">{capitalize(item.name)}</p>
+                  <p className="flex items-center gap-1.5 text-[14.5px] font-medium text-text">
+                    <span className="truncate">{capitalize(item.name)}</span>
+                    {item.product_id ? <Tag className="size-3.5 shrink-0 text-accent-text" aria-label="De la etiqueta de tu producto" /> : null}
+                  </p>
                   <p className="mt-0.5 text-[12px] text-text-3" data-num>
                     {fmt(item.kcal)} kcal ·{' '}
                     {GRAM_MACROS.map((m, i) => (

@@ -152,7 +152,18 @@ def plain(text: str) -> str:
     return "".join(c for c in text if unicodedata.category(c) != "Mn")
 
 
+LABEL = {
+    "is_label": True, "name": "Yogur desnatado ligero sabor limón", "short_name": "yogur ligero", "basis": "g",
+    "kcal100": 44, "energy_kj100": 187, "protein100": 4.1, "carbs100": 6.5, "fat100": 0.1, "fiber100": None,
+    "sugars100": 6.2, "salt100": 0.12, "serving_g": 125, "serving_label": "yogur", "per_serving": None,
+    "confidence": 0.93, "notes": [],
+}
+
+
 def answer(messages: list[dict]) -> dict:
+    # La lectura de etiquetas usa otro prompt de sistema: responde con la tabla de un yogur ligero.
+    if messages and messages[0]["role"] == "system" and "etiquetas nutricionales" in str(messages[0]["content"]):
+        return LABEL
     content = messages[-1]["content"]
     # La petición de reintento ("no cumple el esquema") se responde con la comida original.
     for message in reversed(messages):

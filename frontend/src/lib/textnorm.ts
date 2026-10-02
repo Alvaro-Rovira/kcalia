@@ -43,7 +43,7 @@ const UNIT_GROUPS: Record<string, string[]> = {
   bol: ['bol', 'boles', 'cuenco', 'cuencos'],
   cazo: ['cazo', 'cazos', 'scoop', 'scoops'],
 }
-const UNITS = new Map<string, string>()
+export const UNITS = new Map<string, string>()
 for (const [unit, aliases] of Object.entries(UNIT_GROUPS)) for (const alias of aliases) UNITS.set(alias, unit)
 
 const VULGAR: Record<string, string> = { '½': ' 0.5 ', '¼': ' 0.25 ', '¾': ' 0.75 ' }
@@ -68,7 +68,7 @@ function formatNumber(value: number): string {
     .replace(/\.$/, '')
 }
 
-const isNumber = (token: string) => NUMBER.test(token)
+export const isNumber = (token: string) => NUMBER.test(token)
 
 function baseTokens(input: string): string[] {
   let text = input.toLowerCase()
@@ -105,7 +105,7 @@ export function numbersIn(norm: string): string[] {
   return norm.split(' ').filter(isNumber).sort()
 }
 
-function singular(token: string): string {
+export function singular(token: string): string {
   if (token.length <= 3 || isNumber(token)) return token
   if (token.endsWith('ces')) return token.slice(0, -3) + 'z'
   if (token.endsWith('es') && 'lrndjsz'.includes(token[token.length - 3])) return token.slice(0, -2)
@@ -166,7 +166,7 @@ function lcs(a: string, b: string): number {
 }
 
 /** Igual que rapidfuzz.fuzz.ratio: similitud Indel normalizada, 0..1. */
-function ratio(a: string, b: string): number {
+export function ratio(a: string, b: string): number {
   const total = a.length + b.length
   return total === 0 ? 1 : (2 * lcs(a, b)) / total
 }
