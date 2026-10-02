@@ -156,7 +156,7 @@ def test_solo_kj_y_solo_por_porcion_se_convierten_con_aviso(client, fake):
             "per_serving": {"kcal": 120, "protein": 3, "carbs": 18, "fat": 4},
         },
     )["draft"]
-    assert (porcion["kcal100"], porcion["protein100"], porcion["carbs100"], porcion["fat100"]) == (400, 10, 60, 13.3)
+    assert (porcion["kcal100"], porcion["protein100"], porcion["carbs100"], porcion["fat100"]) == (400, 10, 60, 13.33)
     assert any("por porción" in w for w in porcion["warnings"])
 
 

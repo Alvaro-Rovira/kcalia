@@ -23,6 +23,33 @@ PRODUCTS = {
         ],
         "extra": "1 yogur = 125 g",
     },
+    "leche": {
+        "title": "Leche semidesnatada",
+        "per": "100 ml",
+        "rows": [
+            ("Valor energético", "192 kJ / 46 kcal"),
+            ("Grasas", "1,6 g"),
+            ("  de las cuales saturadas", "1,1 g"),
+            ("Hidratos de carbono", "4,7 g"),
+            ("  de los cuales azúcares", "4,7 g"),
+            ("Proteínas", "3,2 g"),
+            ("Sal", "0,10 g"),
+        ],
+        "extra": "1 vaso = 200 ml",
+    },
+    "queso": {
+        "title": "Queso fresco batido 0 %",
+        "rows": [
+            ("Valor energético", "192 kJ / 46 kcal"),
+            ("Grasas", "0,2 g"),
+            ("  de las cuales saturadas", "0,1 g"),
+            ("Hidratos de carbono", "3,5 g"),
+            ("  de los cuales azúcares", "3,5 g"),
+            ("Proteínas", "8,0 g"),
+            ("Sal", "0,18 g"),
+        ],
+        "extra": "Tarrina: 250 g",
+    },
     "galletas": {
         "title": "Galletas integrales con avena",
         "rows": [
@@ -58,7 +85,7 @@ def make(kind: str = "yogur", seed: int = 4) -> bytes:
     d = ImageDraw.Draw(box)
     d.rectangle((60, 60, w - 60, h - 60), fill=(252, 251, 247), outline=(30, 30, 30), width=5)
     d.text((100, 100), "INFORMACIÓN NUTRICIONAL", font=font(46, True), fill=(20, 20, 20))
-    d.text((100, 168), "Valores medios por 100 g", font=font(34), fill=(40, 40, 40))
+    d.text((100, 168), f"Valores medios por {spec.get('per', '100 g')}", font=font(34), fill=(40, 40, 40))
     d.line((100, 224, w - 100, 224), fill=(20, 20, 20), width=6)
     y = 250
     for label, value in spec["rows"]:

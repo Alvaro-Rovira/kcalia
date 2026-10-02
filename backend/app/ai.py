@@ -172,7 +172,7 @@ def finalize_label(draft: LabelDraft) -> dict:
     basis = draft.basis if draft.basis in ("g", "ml") else "g"
 
     if per100["kcal100"] is None and draft.energy_kj100:
-        per100["kcal100"] = draft.energy_kj100 / KCAL_PER_KJ
+        per100["kcal100"] = round(draft.energy_kj100 / KCAL_PER_KJ)  # las etiquetas imprimen kcal enteras
         warnings.append("Las calorías se han calculado a partir de los kJ de la etiqueta.")
 
     serving = draft.per_serving or {}
@@ -198,7 +198,8 @@ def finalize_label(draft: LabelDraft) -> dict:
             draft.confidence = min(draft.confidence, 0.55)
 
     def clean(value):
-        return None if value is None else round(float(value), 1)
+        # Dos decimales: las etiquetas traen cifras como 0,12 g de sal o 0,07 g de grasa.
+        return None if value is None else round(float(value), 2)
 
     label = (draft.serving_label or "").strip().lower()
     unit_grams = clean(draft.serving_g) if draft.serving_g and draft.serving_g > 0 else None

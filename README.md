@@ -26,6 +26,7 @@ Cuenta lo que comes con una frase, una foto o un audio. Lo que repites se recuer
 Kcalia es una PWA para uso personal, en español y pensada primero para el móvil. Se instala en el iPhone o en Android como una app más, funciona sin conexión para lo que ya conoce y vive en tu propio servidor: tus datos no salen de ahí.
 
 <div align="center">
+<img src="docs/demo-etiqueta.gif" width="280" alt="Animación: se fotografía la etiqueta de unas galletas, la app la lee, se guarda y «tres galletas integrales» se calcula con esas cifras sin consultar a la IA" />
 <img src="docs/demo.gif" width="300" alt="Animación: se escribe «bocadillo de jamón serrano con tomate y aceite», la IA devuelve el desglose, se sube la ración a ×1,5 y se guarda" />
 </div>
 
@@ -55,6 +56,7 @@ Kcalia es una PWA para uso personal, en español y pensada primero para el móvi
 - **Texto libre.** «Dos huevos revueltos con una tostada de pan integral y aceite» se convierte en ingredientes con gramos, calorías, proteínas, hidratos y grasas. Antes de guardar ves el desglose y puedes corregir cualquier cantidad.
 - **Foto.** La imagen se reduce en el móvil y el modelo de visión estima el plato. Puedes añadir una nota («era media ración»).
 - **Voz.** Grabas, se transcribe con un Whisper propio que corre en tu servidor (unos 4-5 segundos por frase en CPU) y el texto sigue el mismo camino que si lo hubieras escrito.
+- **Productos con etiqueta.** Haces una foto a la tabla nutricional de un envase (yogures, galletas, una bebida…). La IA la lee, la revisas con la foto al lado y queda guardada. Desde entonces «dos yogures ligeros» usa sus calorías y macros exactos multiplicados por dos. Cada producto guarda lo que pesa una unidad, así que «tres galletas» también cuadra.
 - **Momento del día** detectado por la hora (desayuno, comida, merienda, cena, snack) y editable.
 - **Raciones** ×0,5, ×1, ×1,5, ×2 o a medida, y gramos por ingrediente: todo se recalcula en el móvil, sin IA.
 - **Favoritos y recientes** a un toque.
@@ -73,7 +75,7 @@ Kcalia es una PWA para uso personal, en español y pensada primero para el móvi
 - **PWA**: instalable, con iconos y pantallas de arranque para iOS, tema claro, oscuro o automático, y áreas seguras del notch.
 - **Sin conexión**: el diario, el historial y los resúmenes se ven igual. Las comidas que ya conoce se añaden y se sincronizan al volver la red; las nuevas avisan de que necesitan conexión.
 - **Una sola cuenta**: inicio de sesión con contraseña cifrada (Argon2) y registro que se cierra al crear la cuenta.
-- **Tus datos son tuyos**: exportación a JSON y CSV, y borrado de datos o de la cuenta desde Ajustes.
+- **Tus datos son tuyos**: exportación a JSON y CSV, y borrado de datos o de la cuenta desde Ajustes. Las fotos de las etiquetas se guardan en tu propia base de datos (y en sus copias de seguridad); la exportación JSON incluye los productos pero no las fotos.
 
 ## Capturas
 
@@ -83,14 +85,19 @@ Kcalia es una PWA para uso personal, en español y pensada primero para el móvi
 | **Revisar y guardar** | <img src="docs/screenshots/dark/03-resultado.png" width="240" alt="Desglose de una comida en modo oscuro" /> | <img src="docs/screenshots/light/03-resultado.png" width="240" alt="Desglose de una comida en modo claro" /> |
 | **Historial** | <img src="docs/screenshots/dark/04-historial.png" width="240" alt="Historial con gráficas en modo oscuro" /> | <img src="docs/screenshots/light/04-historial.png" width="240" alt="Historial con gráficas en modo claro" /> |
 | **Resumen semanal** | <img src="docs/screenshots/dark/05-resumen.png" width="240" alt="Resumen semanal en modo oscuro" /> | <img src="docs/screenshots/light/05-resumen.png" width="240" alt="Resumen semanal en modo claro" /> |
+| **Productos** | <img src="docs/screenshots/dark/09-productos.png" width="240" alt="Lista de productos con la foto de su etiqueta, en modo oscuro" /> | <img src="docs/screenshots/light/09-productos.png" width="240" alt="Lista de productos con la foto de su etiqueta, en modo claro" /> |
 | **Peso** | <img src="docs/screenshots/dark/06-peso.png" width="240" alt="Seguimiento de peso en modo oscuro" /> | <img src="docs/screenshots/light/06-peso.png" width="240" alt="Seguimiento de peso en modo claro" /> |
 
 <details>
-<summary>Más pantallas: acceso, plan, añadir comida y ajustes</summary>
+<summary>Más pantallas: acceso, plan, añadir comida, etiqueta de un producto y ajustes</summary>
 
 | Acceso | Tu plan | Añadir comida | Ajustes |
 |---|---|---|---|
-| <img src="docs/screenshots/dark/00-acceso.png" width="200" alt="Inicio de sesión con la opción de crear cuenta" /> | <img src="docs/screenshots/dark/08-plan.png" width="200" alt="Plan calculado tras el cuestionario inicial" /> | <img src="docs/screenshots/dark/02-anadir.png" width="200" alt="Hoja para añadir comida con favoritos y recientes" /> | <img src="docs/screenshots/dark/07-ajustes.png" width="200" alt="Ajustes" /> |
+| <img src="docs/screenshots/dark/00-acceso.png" width="200" alt="Inicio de sesión con la opción de crear cuenta" /> | <img src="docs/screenshots/dark/08-plan.png" width="200" alt="Plan calculado tras el cuestionario inicial" /> | <img src="docs/screenshots/dark/02-anadir.png" width="200" alt="Hoja para añadir comida con favoritos, productos y recientes" /> | <img src="docs/screenshots/dark/07-ajustes.png" width="200" alt="Ajustes" /> |
+
+| Etiqueta leída | «Dos yogures ligeros con una manzana» |
+|---|---|
+| <img src="docs/screenshots/dark/10-etiqueta.png" width="240" alt="Revisión de la etiqueta de un yogur con su foto, las cifras leídas y la vista previa de cómo contará dos unidades" /> | <img src="docs/screenshots/dark/11-dos-yogures.png" width="240" alt="Resultado de escribir dos yogures ligeros con una manzana: el yogur sale de la etiqueta guardada y la manzana de la IA" /> |
 
 </details>
 
@@ -108,8 +115,10 @@ flowchart TD
     B -- No --> C{"¿Se parece ≥ 0,85<br/>a alguna?"}
     C -- Sí --> Q["«¿Es esta comida?»"]
     Q -- "Sí, es esta" --> OK2["Se añade y se recuerda<br/>esa forma de escribirla"]
-    Q -- "No, es otra" --> D
-    C -- No --> D{"¿Todos los ingredientes<br/>están en la caché?"}
+    Q -- "No, es otra" --> P
+    C -- No --> P{"¿Alguna parte es un producto<br/>con etiqueta guardada?"}
+    P -- "Todo cubierto" --> OK4["Se multiplica la etiqueta<br/>por la cantidad"]
+    P -- "Solo parte, o nada" --> D{"¿Todos los ingredientes<br/>están en la caché?"}
     D -- Sí --> OK3["Se compone escalando<br/>cada ingrediente"]
     D -- No --> L{"¿Queda cupo<br/>diario de IA?"}
     L -- Sí --> IA["Consulta a la IA<br/>JSON validado, un reintento"]
@@ -119,10 +128,11 @@ flowchart TD
 
 1. **Coincidencia exacta.** El texto se normaliza (minúsculas, sin tildes, sin artículos ni signos, números y unidades en forma canónica) y se busca en tu historial. «Un café con leche» y «café con leche!» son la misma comida.
 2. **Coincidencia aproximada.** Si se parece mucho a algo que ya tienes (similitud ≥ 0,85), te lo pregunta con un toque. Hay dos salvaguardas para no confundir comidas distintas: las cantidades tienen que coincidir («2 huevos» no es «3 huevos») y cada palabra debe tener su pareja («pechuga de pollo» no es «pechuga de pavo»). Si dices que sí, esa forma de escribirla queda aprendida y la próxima vez es exacta.
-3. **Caché de ingredientes.** De cada respuesta de la IA se guardan los macros por 100 g de cada alimento y cuánto pesa su unidad habitual. Si ya se vio «2 huevos y una tostada de pan integral», «3 huevos» se resuelve escalando, sin preguntar.
-4. **IA**, solo si nada de lo anterior encaja, con un tope diario configurable (`AI_DAILY_LIMIT`).
+3. **Productos con etiqueta.** Si has guardado la etiqueta de «yogur ligero», «dos yogures ligeros» se calcula con sus cifras exactas por 2, sin IA. Si solo una parte es de un producto («dos yogures ligeros con una manzana»), lo del yogur sale de la etiqueta y a la IA solo va «una manzana». Esto también se resuelve en el móvil, sin conexión.
+4. **Caché de ingredientes.** De cada respuesta de la IA se guardan los macros por 100 g de cada alimento y cuánto pesa su unidad habitual. Si ya se vio «2 huevos y una tostada de pan integral», «3 huevos» se resuelve escalando, sin preguntar.
+5. **IA**, solo si nada de lo anterior encaja, con un tope diario configurable (`AI_DAILY_LIMIT`).
 
-Los pasos 1 y 2 también se hacen en el propio móvil, sobre el historial que ya tiene guardado: por eso son instantáneos y funcionan sin conexión. La normalización existe dos veces, en Python y en TypeScript, y ambas se prueban contra el mismo fichero de casos para que no diverjan.
+Los pasos 1, 2 y 3 también se hacen en el propio móvil, sobre el historial que ya tiene guardado: por eso son instantáneos y funcionan sin conexión. La normalización existe dos veces, en Python y en TypeScript, y ambas se prueban contra el mismo fichero de casos para que no diverjan.
 
 En **Ajustes** hay un contador de consultas ahorradas, desglosado por cada vía.
 
@@ -411,15 +421,17 @@ make e2e
 |---|---|---|
 | Metabolismo basal, objetivos, avisos de seguridad | `backend/tests/test_nutrition.py` | 24 |
 | Normalización, similitud y coincidencias | `backend/tests/test_textnorm.py`, `test_matching.py` | 69 |
+| Emparejar texto con productos de etiqueta y multiplicar | `backend/tests/test_products.py` | 33 |
+| API de productos: leer etiqueta, guardar con foto, usarla, borrar | `backend/tests/test_api_products.py` | 15 |
 | Resumen semanal, proyección, racha, media móvil, logros | `backend/tests/test_summary.py` | 12 |
-| Validación de la respuesta de la IA y cliente de voz | `backend/tests/test_ai.py` | 13 |
+| Validación de la IA (comidas y etiquetas), límites del proveedor y cliente de voz | `backend/tests/test_ai.py` | 25 |
 | API completa con IA simulada | `backend/tests/test_api.py` | 19 |
 | HTML servido y copias de seguridad | `backend/tests/test_spa.py`, `test_jobs.py` | 8 |
 | Audio de Chrome, Safari y Firefox decodificado para Whisper | `stt/test_audio.py` | 5 |
-| Formato es-ES, fechas, momentos del día, espejo de la normalización | `frontend/src/lib/*.test.ts` | 80 |
-| Flujo completo en un móvil de 390 px | `e2e/test_flow.py` | 9 |
+| Formato es-ES, fechas, momentos del día, espejo de la normalización y de los productos | `frontend/src/lib/*.test.ts` | 111 |
+| Flujo completo en un móvil de 390 px | `e2e/test_flow.py` | 10 |
 
-La prueba de extremo a extremo levanta la app real con una IA simulada (`e2e/fake_ai.py`) y recorre: acceso y creación de cuenta, cuestionario inicial, registrar una comida con IA, repetirla sin gastar IA, confirmar una parecida, apuntar el peso, ver el resumen, trabajar sin conexión y sincronizar al volver la red, y cerrar sesión. Comprueba además que la IA se llama exactamente las veces esperadas.
+La prueba de extremo a extremo levanta la app real con una IA simulada (`e2e/fake_ai.py`) y recorre: acceso y creación de cuenta, cuestionario inicial, registrar una comida con IA, repetirla sin gastar IA, confirmar una parecida, apuntar el peso, ver el resumen, trabajar sin conexión y sincronizar al volver la red, cerrar sesión y guardar el producto de una etiqueta para usarlo al apuntar (también sin conexión). Comprueba además que la IA se llama exactamente las veces esperadas.
 
 **Lighthouse**, siempre en primera visita y sin caché:
 

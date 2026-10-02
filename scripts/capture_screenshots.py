@@ -9,6 +9,7 @@ en un móvil de 390 px, en oscuro y en claro. Los datos de las capturas son de d
 y no salen de esta máquina: nada de esto se usa en producción.
 """
 
+import json
 import os
 import random
 import shutil
@@ -21,12 +22,16 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "e2e"))
+sys.path.insert(0, str(ROOT / "scripts"))
 
+import httpx  # noqa: E402
 from conftest import DIST, free_port, wait_for  # noqa: E402
+from make_label_photo import make as make_label  # noqa: E402
 from playwright.sync_api import Page, sync_playwright  # noqa: E402
 
 OUT = ROOT / "docs" / "screenshots"
 PASSWORD = "demo-password-1"
+AI_URL = ""  # se rellena al arrancar: la IA simulada que lee las etiquetas
 MOBILE = {"width": 390, "height": 844}
 
 # Comidas de la despensa de demostración: la IA simulada las conoce por palabras clave.
@@ -64,7 +69,7 @@ def start_servers() -> tuple[dict, list[subprocess.Popen], Path]:
     ]
     wait_for(f"http://127.0.0.1:{ai_port}/calls")
     wait_for(f"http://127.0.0.1:{app_port}/api/health")
-    return {"app": f"http://127.0.0.1:{app_port}"}, procs, data
+    return {"app": f"http://127.0.0.1:{app_port}", "ai": f"http://127.0.0.1:{ai_port}"}, procs, data
 
 
 def onboard(page: Page, base: str, out: Path) -> None:
@@ -151,6 +156,19 @@ def seed(page: Page, base: str) -> None:
     for dish in rq.get(f"{base}/api/dishes").json()["dishes"][:3]:
         rq.patch(f"{base}/api/dishes/{dish['id']}", data={"favorite": True})
     rq.post(f"{base}/api/targets/recalculate")
+    for kind in ("yogur", "leche", "queso"):
+        add_product(page, base, kind)
+
+
+def add_product(page: Page, base: str, kind: str) -> None:
+    """Lee la etiqueta (IA simulada) y guarda el producto con su foto, como hace la app."""
+    rq = page.request
+    httpx.post(f"{AI_URL}/next-label", params={"kind": kind})
+    photo = {"name": "etiqueta.jpg", "mimeType": "image/jpeg", "buffer": make_label(kind)}
+    draft = rq.post(f"{base}/api/products/scan", multipart={"image": photo}).json()["draft"]
+    fields = ("name", "alias", "basis", "kcal100", "protein100", "carbs100", "fat100", "fiber100", "sugars100", "salt100", "unit_label", "unit_grams")
+    created = rq.post(f"{base}/api/products", multipart={"data": json.dumps({k: draft[k] for k in fields}), "image": photo})
+    assert created.status == 201, created.text()
 
 
 def capture_theme(browser, base: str, theme: str) -> None:
@@ -184,6 +202,26 @@ def capture_theme(browser, base: str, theme: str) -> None:
         page.get_by_role("heading", name=name, exact=True).wait_for()
         page.wait_for_timeout(2400)
         page.screenshot(path=str(out / f"{file}.png"))
+
+    # Productos: la lista con la foto de cada etiqueta, la hoja de revisión y «dos yogures ligeros».
+    page.get_by_role("link", name="Historial").click()
+    page.get_by_role("radio", name="Productos").click()
+    page.get_by_text("Tus productos").wait_for()
+    page.wait_for_timeout(1800)
+    page.screenshot(path=str(out / "09-productos.png"))
+    page.get_by_text("Yogur desnatado ligero sabor limón").first.click()
+    page.get_by_role("heading", name="Editar producto").wait_for()
+    page.wait_for_timeout(1200)
+    page.screenshot(path=str(out / "10-etiqueta.png"))
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(500)
+    page.get_by_role("link", name="Hoy").click()
+    page.get_by_role("button", name="Añadir comida").last.click()
+    page.locator("#meal-text").fill("dos yogures ligeros con una manzana")
+    page.get_by_role("button", name="Analizar comida").click()
+    page.get_by_role("heading", name="Revisa y guarda").wait_for()
+    page.wait_for_timeout(1400)
+    page.screenshot(path=str(out / "11-dos-yogures.png"))
     context.close()
 
 
@@ -231,6 +269,68 @@ def record_gif(browser, base: str) -> None:
     print(f"· {gif.relative_to(ROOT)} ({gif.stat().st_size / 1024:.0f} KB)")
 
 
+def record_label_gif(browser, base: str) -> None:
+    """Graba el flujo de productos: foto de la etiqueta -> lectura -> revisión -> «tres galletas integrales»."""
+    video_dir = Path(tempfile.mkdtemp(prefix="kcalia-video-"))
+    photo = Path(tempfile.mkdtemp(prefix="kcalia-label-")) / "etiqueta.jpg"
+    photo.write_bytes(make_label("galletas"))
+    httpx.post(f"{AI_URL}/next-label", params={"kind": "galletas"})
+    context = browser.new_context(
+        viewport=MOBILE, device_scale_factor=1, is_mobile=True, has_touch=True, locale="es-ES", timezone_id="Europe/Madrid",
+        record_video_dir=str(video_dir), record_video_size=MOBILE,
+    )
+    context.set_default_timeout(20_000)
+    context.add_init_script("localStorage.setItem('kcalia:theme', 'dark')")
+    page = context.new_page()
+    page.goto(base)
+    page.locator("input[name=username]").fill("demo")
+    page.locator("input[name=password]").fill(PASSWORD)
+    page.get_by_role("button", name="Entrar").click()
+    page.locator("main").wait_for()
+    page.wait_for_timeout(1800)
+
+    page.get_by_role("link", name="Historial").click()
+    page.get_by_role("radio", name="Productos").click()
+    page.get_by_text("Tus productos").wait_for()
+    page.wait_for_timeout(1500)
+    page.get_by_role("button", name="Añadir", exact=True).click()
+    page.get_by_text("Hacer foto a la etiqueta").wait_for()
+    page.wait_for_timeout(1700)
+    page.locator("input[type=file]:not([capture])").set_input_files(str(photo))
+    page.get_by_role("heading", name="Revisa la etiqueta").wait_for()
+    page.wait_for_timeout(2800)
+    page.get_by_role("button", name="Guardar producto").click()
+    page.get_by_text("Guardado: galletas integrales").wait_for()
+    page.wait_for_timeout(1500)
+
+    page.get_by_role("link", name="Hoy").click()
+    page.wait_for_timeout(900)
+    page.get_by_role("button", name="Añadir comida").last.click()
+    page.locator("#meal-text").wait_for()
+    page.wait_for_timeout(500)
+    page.locator("#meal-text").press_sequentially("tres galletas integrales", delay=70)
+    page.wait_for_timeout(500)
+    page.get_by_role("button", name="Analizar comida").click()
+    page.get_by_text("Sin IA · con tu etiqueta").wait_for()
+    page.wait_for_timeout(2600)
+    page.get_by_role("button", name=" Guardar ·").click()
+    page.wait_for_timeout(2200)
+    context.close()
+
+    video = next(video_dir.glob("*.webm"))
+    gif = ROOT / "docs" / "demo-etiqueta.gif"
+    subprocess.run(
+        [
+            "ffmpeg", "-y", "-loglevel", "error", "-ss", "1.8", "-i", str(video),
+            "-vf", "fps=10,scale=280:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=80:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=5",
+            str(gif),
+        ],
+        check=True,
+    )
+    shutil.rmtree(video_dir, ignore_errors=True)
+    print(f"· {gif.relative_to(ROOT)} ({gif.stat().st_size / 1024:.0f} KB)")
+
+
 def build_hero() -> None:
     """Cuatro pantallas en oscuro y cuatro en claro, en una sola imagen para la cabecera del README."""
     from PIL import Image, ImageDraw, ImageFilter
@@ -267,8 +367,9 @@ def main() -> None:
         raise SystemExit("Falta el frontend compilado: cd frontend && npm run build")
     shutil.rmtree(OUT, ignore_errors=True)
     OUT.mkdir(parents=True, exist_ok=True)
+    global AI_URL
     servers, procs, data = start_servers()
-    base = servers["app"]
+    base, AI_URL = servers["app"], servers["ai"]
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch()
@@ -285,6 +386,7 @@ def main() -> None:
             capture_theme(browser, base, "light")
             # El GIF va al final para que "ensalada de atún" siga siendo nueva en las capturas.
             record_gif(browser, base)
+            record_label_gif(browser, base)
             browser.close()
         build_hero()
     finally:

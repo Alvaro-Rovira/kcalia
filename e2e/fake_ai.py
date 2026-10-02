@@ -152,18 +152,28 @@ def plain(text: str) -> str:
     return "".join(c for c in text if unicodedata.category(c) != "Mn")
 
 
-LABEL = {
-    "is_label": True, "name": "Yogur desnatado ligero sabor limón", "short_name": "yogur ligero", "basis": "g",
-    "kcal100": 44, "energy_kj100": 187, "protein100": 4.1, "carbs100": 6.5, "fat100": 0.1, "fiber100": None,
-    "sugars100": 6.2, "salt100": 0.12, "serving_g": 125, "serving_label": "yogur", "per_serving": None,
-    "confidence": 0.93, "notes": [],
+def label(name, short, basis, kcal, kj, protein, carbs, fat, fiber, sugars, salt, serving_g, serving_label):
+    return {
+        "is_label": True, "name": name, "short_name": short, "basis": basis, "kcal100": kcal, "energy_kj100": kj,
+        "protein100": protein, "carbs100": carbs, "fat100": fat, "fiber100": fiber, "sugars100": sugars,
+        "salt100": salt, "serving_g": serving_g, "serving_label": serving_label, "per_serving": None,
+        "confidence": 0.94, "notes": [],
+    }
+
+
+LABELS = {
+    "yogur": label("Yogur desnatado ligero sabor limón", "yogur ligero", "g", 44, 187, 4.1, 6.5, 0.1, None, 6.2, 0.12, 125, "yogur"),
+    "galletas": label("Galletas integrales con avena", "galletas integrales", "g", 440, 1850, 7.5, 68, 14, 6.4, 19, 0.68, 12, "galleta"),
+    "leche": label("Leche semidesnatada", "leche semidesnatada", "ml", 46, 192, 3.2, 4.7, 1.6, None, 4.7, 0.1, 200, "vaso"),
+    "queso": label("Queso fresco batido 0 %", "queso batido", "g", 46, 192, 8.0, 3.5, 0.2, None, 3.5, 0.18, 250, "tarrina"),
 }
+NEXT_LABEL = ["yogur"]  # qué etiqueta devuelve la siguiente lectura (POST /next-label?kind=galletas)
 
 
 def answer(messages: list[dict]) -> dict:
     # La lectura de etiquetas usa otro prompt de sistema: responde con la tabla de un yogur ligero.
     if messages and messages[0]["role"] == "system" and "etiquetas nutricionales" in str(messages[0]["content"]):
-        return LABEL
+        return LABELS[NEXT_LABEL[0]]
     content = messages[-1]["content"]
     # La petición de reintento ("no cumple el esquema") se responde con la comida original.
     for message in reversed(messages):
@@ -207,6 +217,12 @@ async def chat(request: Request):
 async def transcribe():
     CALLS["stt"] += 1
     return {"text": "Un yogur griego con nueces"}
+
+
+@app.post("/next-label")
+def next_label(kind: str = "yogur"):
+    NEXT_LABEL[0] = kind if kind in LABELS else "yogur"
+    return {"next": NEXT_LABEL[0]}
 
 
 @app.get("/calls")

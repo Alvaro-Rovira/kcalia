@@ -122,7 +122,7 @@ function NumberBox({
           invalid ? 'border-warn' : 'border-border',
         )}
       >
-        <NumberInput value={value} onChange={onChange} decimals={1} min={0} max={max} ariaLabel={label} className="h-full min-w-0 flex-1 text-text" />
+        <NumberInput value={value} onChange={onChange} decimals={2} min={0} max={max} ariaLabel={label} className="h-full min-w-0 flex-1 text-text" />
         <span className="ml-1.5 text-[13.5px] text-text-3">{suffix}</span>
       </span>
     </label>
