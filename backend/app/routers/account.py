@@ -43,6 +43,7 @@ def export_json(db: Session = Depends(get_db)) -> dict:
         "meals": [services.meal_dict(m) for m in _live_meals(db)],
         "weights": [{"date": w.date, "kg": w.kg} for w in db.scalars(select(Weight).order_by(Weight.date))],
         "dishes": services.all_dishes(db, limit=100000),
+        "products": [services.product_dict(p) for p in services.all_products(db)],
         "foods": [
             {
                 "name": f.name,

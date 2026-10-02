@@ -15,6 +15,8 @@ from .models import (
     DishAlias,
     Food,
     Meal,
+    Product,
+    ProductImage,
     Profile,
     Targets,
     WeeklySummary,
@@ -22,15 +24,17 @@ from .models import (
     utcnow,
 )
 from .nutrition import calculate_targets
+from .products import ProductInfo
 from .textnorm import normalize
 
-SAVED_KEYS = ("saved_exact", "saved_fuzzy", "saved_cache", "saved_quick")
+SAVED_KEYS = ("saved_exact", "saved_fuzzy", "saved_cache", "saved_quick", "saved_product")
 SAVED_BY_SOURCE = {
     "exact": "saved_exact",
     "fuzzy": "saved_fuzzy",
     "cache": "saved_cache",
     "favorite": "saved_quick",
     "recent": "saved_quick",
+    "product": "saved_product",
 }
 
 
@@ -305,6 +309,53 @@ def learn_from_meal(db: Session, text: str, items: list[dict]) -> None:
     store_foods(db, learn_foods(text, items))
 
 
+# ---------------------------------------------------------------- productos
+
+
+def product_dict(product: Product) -> dict:
+    return {
+        "id": product.id,
+        "name": product.name,
+        "alias": product.alias,
+        "basis": product.basis,
+        "kcal100": product.kcal100,
+        "protein100": product.protein100,
+        "carbs100": product.carbs100,
+        "fat100": product.fat100,
+        "fiber100": product.fiber100,
+        "sugars100": product.sugars100,
+        "salt100": product.salt100,
+        "unit_label": product.unit_label,
+        "unit_grams": product.unit_grams,
+        "has_image": product.has_image,
+        "use_count": product.use_count,
+        "last_used_at": product.last_used_at.isoformat() + "Z",
+        "created_at": product.created_at.isoformat() + "Z",
+    }
+
+
+def all_products(db: Session) -> list[Product]:
+    """Los más usados primero: al empatar al emparejar, gana el que más se usa."""
+    return list(db.scalars(select(Product).order_by(Product.use_count.desc(), Product.last_used_at.desc())))
+
+
+def product_infos(db: Session) -> list[ProductInfo]:
+    return [
+        ProductInfo(
+            p.id, p.name, p.alias, p.basis, p.kcal100, p.protein100, p.carbs100, p.fat100, p.unit_label, p.unit_grams
+        )
+        for p in all_products(db)
+    ]
+
+
+def touch_products(db: Session, items: list[dict]) -> None:
+    """Cuenta el uso de los productos que aparecen en una comida guardada."""
+    ids = {item.get("product_id") for item in items if item.get("product_id")}
+    for product in db.scalars(select(Product).where(Product.id.in_(ids))) if ids else []:
+        product.use_count += 1
+        product.last_used_at = utcnow()
+
+
 # ---------------------------------------------------------------- totales por día
 
 
@@ -474,6 +525,20 @@ def compute_stats(db: Session, today: date, ai_limit: int) -> dict:
 
 
 def wipe_data(db: Session) -> None:
-    for model in (Meal, DishAlias, Dish, Food, Weight, WeeklySummary, Achievement, Counter, AiUsage, Targets, Profile):
+    for model in (
+        Meal,
+        DishAlias,
+        Dish,
+        Food,
+        ProductImage,
+        Product,
+        Weight,
+        WeeklySummary,
+        Achievement,
+        Counter,
+        AiUsage,
+        Targets,
+        Profile,
+    ):
         db.execute(delete(model))
     db.commit()

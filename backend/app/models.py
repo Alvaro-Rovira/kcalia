@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Index, Integer, LargeBinary, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .db import Base
@@ -180,3 +180,39 @@ class AiUsage(Base):
     completion_tokens: Mapped[int] = mapped_column(Integer, default=0)
 
     __table_args__ = (Index("ux_ai_usage_date_kind", "date", "kind", unique=True),)
+
+
+class Product(Base):
+    """Producto envasado del usuario, con las cifras de su etiqueta nutricional."""
+
+    __tablename__ = "products"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(120))
+    # Cómo lo dirá el usuario al apuntar ("yogur ligero"). Es lo primero con lo que se empareja.
+    alias: Mapped[str] = mapped_column(String(60), default="")
+    basis: Mapped[str] = mapped_column(String(2), default="g")  # la tabla va por 100 g o por 100 ml
+    kcal100: Mapped[float] = mapped_column(Float)
+    protein100: Mapped[float] = mapped_column(Float)
+    carbs100: Mapped[float] = mapped_column(Float)
+    fat100: Mapped[float] = mapped_column(Float)
+    fiber100: Mapped[float | None] = mapped_column(Float, nullable=True)
+    sugars100: Mapped[float | None] = mapped_column(Float, nullable=True)
+    salt100: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # Lo que pesa UNA unidad ("yogur" = 125 g): con esto, «dos yogures» se multiplica solo.
+    unit_label: Mapped[str] = mapped_column(String(30), default="")
+    unit_grams: Mapped[float | None] = mapped_column(Float, nullable=True)
+    has_image: Mapped[bool] = mapped_column(Boolean, default=False)
+    use_count: Mapped[int] = mapped_column(Integer, default=0)
+    last_used_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class ProductImage(Base):
+    """Foto de la etiqueta. Aparte de Product para no arrastrarla en cada listado."""
+
+    __tablename__ = "product_images"
+
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id", ondelete="CASCADE"), primary_key=True)
+    mime: Mapped[str] = mapped_column(String(30))
+    data: Mapped[bytes] = mapped_column(LargeBinary)

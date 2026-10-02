@@ -226,7 +226,13 @@ def test_limite_diario_de_ia(client, fake_ai):
 def test_contador_de_ahorro_racha_y_logros(client):
     stats = client.get("/api/stats").json()
     # "3 huevos" salió de la caché la primera vez y del historial la segunda.
-    assert stats["ai"]["saved"] == {"saved_exact": 2, "saved_fuzzy": 1, "saved_cache": 1, "saved_quick": 0}
+    assert stats["ai"]["saved"] == {
+        "saved_exact": 2,
+        "saved_fuzzy": 1,
+        "saved_cache": 1,
+        "saved_quick": 0,
+        "saved_product": 0,
+    }
     assert stats["ai"]["saved_total"] == 4
     assert stats["ai"]["used_today"] == 5 and stats["ai"]["limit"] == 5
     unlocked = {a["key"] for a in stats["achievements"] if a["unlocked_at"]}

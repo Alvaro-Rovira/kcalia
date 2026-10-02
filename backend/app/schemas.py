@@ -1,13 +1,13 @@
 from datetime import date
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 Sex = Literal["hombre", "mujer"]
 Activity = Literal["sedentario", "ligero", "moderado", "alto", "muy_alto"]
 Goal = Literal["definicion_ligera", "definicion_agresiva", "volumen", "mantenimiento", "recomposicion"]
 Slot = Literal["desayuno", "comida", "merienda", "cena", "snack"]
-Source = Literal["ai", "exact", "fuzzy", "cache", "favorite", "recent", "manual", "photo"]
+Source = Literal["ai", "exact", "fuzzy", "cache", "favorite", "recent", "manual", "photo", "product"]
 Via = Literal["text", "voice", "photo", "tap"]
 
 
@@ -64,6 +64,8 @@ class Item(BaseModel):
     qty: float = Field(default=1, ge=0, le=10000)
     unit: str = Field(default="g", max_length=16)
     grams: float = Field(default=0, ge=0, le=5000)
+    # Si el ingrediente sale de la etiqueta de un producto guardado.
+    product_id: int | None = None
     kcal: float = Field(ge=0, le=6000)
     protein: float = Field(ge=0, le=600)
     carbs: float = Field(ge=0, le=1200)
@@ -113,3 +115,39 @@ class WeightIn(BaseModel):
     kg: float = Field(ge=30, le=300)
 
     _check_date = field_validator("date")(lambda cls, v: _iso_date(v))
+
+
+class ProductIn(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    alias: str = Field(default="", max_length=60)
+    basis: Literal["g", "ml"] = "g"
+    kcal100: float = Field(ge=0, le=950)
+    protein100: float = Field(ge=0, le=100)
+    carbs100: float = Field(ge=0, le=100)
+    fat100: float = Field(ge=0, le=100)
+    fiber100: float | None = Field(default=None, ge=0, le=100)
+    sugars100: float | None = Field(default=None, ge=0, le=100)
+    salt100: float | None = Field(default=None, ge=0, le=100)
+    unit_label: str = Field(default="", max_length=30)
+    unit_grams: float | None = Field(default=None, gt=0, le=5000)
+
+    @model_validator(mode="after")
+    def _plausible(self):
+        if self.protein100 + self.carbs100 + self.fat100 > 105:
+            raise ValueError("proteínas, hidratos y grasas por 100 g no pueden sumar más de 100 g")
+        return self
+
+
+class ProductPatch(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    alias: str | None = Field(default=None, max_length=60)
+    basis: Literal["g", "ml"] | None = None
+    kcal100: float | None = Field(default=None, ge=0, le=950)
+    protein100: float | None = Field(default=None, ge=0, le=100)
+    carbs100: float | None = Field(default=None, ge=0, le=100)
+    fat100: float | None = Field(default=None, ge=0, le=100)
+    fiber100: float | None = Field(default=None, ge=0, le=100)
+    sugars100: float | None = Field(default=None, ge=0, le=100)
+    salt100: float | None = Field(default=None, ge=0, le=100)
+    unit_label: str | None = Field(default=None, max_length=30)
+    unit_grams: float | None = Field(default=None, gt=0, le=5000)

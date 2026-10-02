@@ -11,8 +11,10 @@ from ..db import get_db
 from ..deps import get_ai_client, require_user, today_local
 from ..matching import totals
 from ..models import Dish, DishAlias, Meal, utcnow
+from ..products import resolve_text
 from ..schemas import DishPatch, MealIn, MealPatch, ResolveIn
 from ..textnorm import normalize
+from ..usage import check_ai_budget, run_ai
 
 router = APIRouter(prefix="/api", tags=["comidas"], dependencies=[Depends(require_user)])
 
@@ -21,15 +23,36 @@ MAX_AUDIO_BYTES = 12 * 1024 * 1024
 IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
 
-def _check_ai_budget(db: Session) -> None:
-    settings = get_settings()
-    if services.ai_calls_today(db, today_local(settings)) >= settings.ai_daily_limit:
-        raise AiError(
-            "limit",
-            f"Has llegado al límite de {settings.ai_daily_limit} consultas a la IA de hoy. "
-            "Las comidas de tu historial siguen funcionando.",
-            429,
-        )
+def _product_note(items: list[dict]) -> str:
+    names = ", ".join(dict.fromkeys(i["name"] for i in items if i.get("product_id")))
+    return f"Calculado con la etiqueta que guardaste de: {names}"
+
+
+def _draft_from_products(text: str, items: list[dict]) -> dict:
+    names = list(dict.fromkeys(i["name"] for i in items))
+    name = (" y ".join(names) if len(names) <= 2 else ", ".join(names))[:60]
+    return {
+        "name": name[:1].upper() + name[1:],
+        "text": text,
+        "items": items,
+        **totals(items),
+        "confidence": 0.9,
+        "assumptions": [_product_note(items), "Sin consultar a la IA"],
+        "source": "product",
+        "dish_id": None,
+        "favorite": False,
+    }
+
+
+def _with_products(draft: dict, product_items: list[dict]) -> dict:
+    """Une los ingredientes de etiquetas guardadas con los que ha estimado la IA para el resto."""
+    items = product_items + draft["items"]
+    return {
+        **draft,
+        "items": items,
+        **totals(items),
+        "assumptions": [_product_note(product_items), *draft["assumptions"]],
+    }
 
 
 def _draft_from_ai(meal: AiMeal, text: str, source: str) -> dict:
@@ -45,19 +68,6 @@ def _draft_from_ai(meal: AiMeal, text: str, source: str) -> dict:
         "dish_id": None,
         "favorite": False,
     }
-
-
-def _run_ai(db: Session, kind: str, call) -> AiMeal:
-    today = today_local()
-    try:
-        meal, usage = call()
-    except AiError as error:
-        usage = getattr(error, "usage", None)
-        if usage:
-            services.record_usage(db, today, kind, usage)
-        raise
-    services.record_usage(db, today, kind, usage)
-    return meal
 
 
 @router.post("/meals/resolve")
@@ -83,8 +93,21 @@ def resolve(body: ResolveIn, db: Session = Depends(get_db), ai: AiClient = Depen
                 ],
             }
 
+    product_items: list[dict] = []
+    leftover = [text]
     if not body.force_ai:
-        items = services.resolve_with_food_cache(db, text)
+        found = resolve_text(text, services.product_infos(db))
+        if found.items:
+            product_items, leftover = found.items, found.rest
+            if not leftover:
+                return {"status": "product", "draft": _draft_from_products(text, product_items)}
+
+    leftover_text = ", ".join(leftover)
+    if not body.force_ai:
+        items = services.resolve_with_food_cache(db, leftover_text)
+        if items and product_items:
+            # Productos de etiqueta + ingredientes ya conocidos: todo se resuelve sin IA.
+            return {"status": "product", "draft": _draft_from_products(text, product_items + items)}
         if items:
             return {
                 "status": "cache",
@@ -101,11 +124,15 @@ def resolve(body: ResolveIn, db: Session = Depends(get_db), ai: AiClient = Depen
                 },
             }
 
-    _check_ai_budget(db)
-    meal = _run_ai(db, "text", lambda: ai.analyze_text(text))
+    check_ai_budget(db)
+    # A la IA solo va lo que no es de un producto guardado: menos tokens y las cifras de la etiqueta, intactas.
+    meal = run_ai(db, "text", lambda: ai.analyze_text(leftover_text))
     if not meal.items:
         return {"status": "clarify", "question": meal.clarification}
-    return {"status": "ai", "draft": _draft_from_ai(meal, text, "ai")}
+    draft = _draft_from_ai(meal, text, "ai")
+    if product_items:
+        draft = _with_products(draft, product_items)
+    return {"status": "ai", "draft": draft}
 
 
 @router.post("/meals/photo")
@@ -121,8 +148,8 @@ def analyze_photo(
     data = image.file.read(MAX_IMAGE_BYTES + 1)
     if len(data) > MAX_IMAGE_BYTES:
         raise HTTPException(413, "La foto pesa demasiado. Prueba con una más pequeña.")
-    _check_ai_budget(db)
-    meal = _run_ai(db, "vision", lambda: ai.analyze_photo(data, mime, note))
+    check_ai_budget(db)
+    meal = run_ai(db, "vision", lambda: ai.analyze_photo(data, mime, note))
     if not meal.items:
         return {"status": "clarify", "question": meal.clarification}
     return {"status": "ai", "draft": _draft_from_ai(meal, "", "photo")}
@@ -175,6 +202,9 @@ def create_meal(body: MealIn, db: Session = Depends(get_db)) -> dict:
     macro = totals(items, body.servings)
     text = body.text.strip()
 
+    from_products_only = all(item.get("product_id") for item in items)
+    services.touch_products(db, items)
+
     dish: Dish | None = None
     if body.source in ("exact", "fuzzy", "favorite", "recent") and body.dish_id:
         dish = db.get(Dish, body.dish_id)
@@ -190,6 +220,9 @@ def create_meal(body: MealIn, db: Session = Depends(get_db)) -> dict:
             norm = normalize(text)
             if norm and norm != dish.norm and db.get(DishAlias, norm) is None:
                 db.add(DishAlias(norm=norm, dish_id=dish.id))
+    elif from_products_only:
+        # Los productos ya son la memoria: no se duplican en el historial, y así editarlos cambia lo que sale.
+        dish = None
     else:
         dish = services.upsert_dish(
             db,
@@ -203,7 +236,12 @@ def create_meal(body: MealIn, db: Session = Depends(get_db)) -> dict:
         )
 
     if body.source in ("ai", "photo"):
-        services.learn_from_meal(db, text if body.source == "ai" else "", items)
+        # Lo que viene de una etiqueta no se aprende como ingrediente genérico.
+        learnable = [item for item in items if not item.get("product_id")]
+        if learnable:
+            services.learn_from_meal(
+                db, text if body.source == "ai" and len(learnable) == len(items) else "", learnable
+            )
     if body.source in services.SAVED_BY_SOURCE:
         services.bump(db, services.SAVED_BY_SOURCE[body.source])
     if body.via == "voice":
