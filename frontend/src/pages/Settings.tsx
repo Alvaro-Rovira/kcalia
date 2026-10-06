@@ -22,6 +22,7 @@ import {
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 import { DayTypeSettings } from '@/components/DayTypeSettings'
+import { RemindersSettings } from '@/components/RemindersSettings'
 import { Logo, Wordmark } from '@/components/Logo'
 import { PlanExplanation } from '@/components/PlanExplanation'
 import { useAdminOverview } from '@/hooks/admin'
@@ -192,6 +193,10 @@ export default function Settings() {
 
           <Section title="Entreno y descanso" id="a-daytypes">
             <DayTypeSettings />
+          </Section>
+
+          <Section title="Recordatorios" id="a-reminders">
+            <RemindersSettings />
           </Section>
         </div>
 

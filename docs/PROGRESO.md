@@ -41,11 +41,7 @@ Tras la fase 2: 347 pytest, 141 Vitest, 17 e2e en verde.
 Tras la fase 3: 383 pytest, 156 Vitest, 19 e2e en verde.
 
 ## Fase 4 · Constancia y utilidad
-- [ ] 4.1 Recordatorios con Web Push — BACKEND HECHO (commit «feat(push): …»): webpush.py (RFC 8291 probado con su
-      vector), push.py, reminders.py, notify.py (aviso al admin), routers/push.py, prefs de avisos, scripts/gen-vapid.py.
-      FALTA: frontend (public/push-sw.js con workbox.importScripts en vite.config.ts; sección «Recordatorios» en
-      Ajustes: activar notificaciones con pushManager.subscribe y VAPID de GET /api/push, horas de comidas y peso,
-      prueba, aviso de iOS 16.4+ con la PWA instalada), e2e, .env.example y README.
+- [x] 4.1 Recordatorios con Web Push
 - [ ] 4.2 Planificador semanal y lista de la compra
 - [ ] 4.3 Sugerencia para cerrar el día
 - [ ] 4.4 Compartir el resumen semanal como imagen

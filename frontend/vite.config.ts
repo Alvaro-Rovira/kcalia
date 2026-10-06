@@ -22,7 +22,7 @@ export default defineConfig({
       // "prompt": la versión nueva espera a que el usuario pulse "Actualizar".
       registerType: 'prompt',
       injectRegister: false,
-      includeAssets: ['favicon.svg', 'favicon-32.png', 'apple-touch-icon.png', 'theme.js'],
+      includeAssets: ['favicon.svg', 'favicon-32.png', 'apple-touch-icon.png', 'theme.js', 'push-sw.js'],
       manifest: {
         id: '/',
         name: 'Kcalia',
@@ -52,6 +52,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,woff2}', 'icons/icon-*.png', 'favicon-32.png', 'apple-touch-icon.png'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
+        // Recibir y abrir las notificaciones (recordatorios y avisos al admin).
+        importScripts: ['/push-sw.js'],
         cleanupOutdatedCaches: true,
         // El lector de códigos de respaldo (iPhone) no va en la precarga: se guarda la primera vez que se usa.
         runtimeCaching: [{ urlPattern: /\/assets\/.*\.wasm$/, handler: 'CacheFirst', options: { cacheName: 'kcalia-wasm', expiration: { maxEntries: 2 } } }],

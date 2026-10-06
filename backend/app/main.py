@@ -36,7 +36,7 @@ SECURITY_HEADERS = {
     "X-Frame-Options": "DENY",
 }
 # Ficheros que no deben quedarse en caché: de ellos depende que llegue una versión nueva.
-NO_CACHE_FILES = {"index.html", "sw.js", "registerSW.js", "manifest.webmanifest"}
+NO_CACHE_FILES = {"index.html", "sw.js", "push-sw.js", "registerSW.js", "manifest.webmanifest"}
 
 
 @asynccontextmanager

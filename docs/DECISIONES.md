@@ -55,3 +55,7 @@ Decisiones tomadas sin poder preguntar, con el motivo. La más reciente, abajo.
 19. **Calorías del entreno**: MET × peso × horas con MET de fuerza 3,5 / 5 / 6 (suave / moderada / intensa, del
     Compendium of Physical Activities). Solo informativas por defecto; si se activa sumarlas, entran en el objetivo de
     ese día como hidratos, con el mismo cálculo en el servidor y en el móvil.
+20. **Web Push propio** con `cryptography` (RFC 8291 + VAPID), probado con el vector de la RFC: `pywebpush` arrastra
+    aiohttp y requests. Los recordatorios se revisan cada minuto en el propio proceso; cada aviso tiene una franja de
+    45 minutos y se anota para no repetirlo. Vienen apagados: el usuario los activa en Ajustes. Las suscripciones que
+    responden 404/410 se borran al momento; las que fallan 5 veces seguidas, también.

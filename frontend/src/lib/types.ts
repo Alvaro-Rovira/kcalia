@@ -212,6 +212,17 @@ export interface Prefs {
   rest_targets?: DayTargetsValues | null
   add_exercise_kcal?: boolean
   rest_seconds?: number
+  reminders?: boolean
+  meal_reminders?: MealReminder[]
+  /** Hora del aviso para pesarse («08:30») o null si está apagado. */
+  weigh_reminder?: string | null
+  weigh_days?: number[]
+}
+
+export interface MealReminder {
+  slot: Slot
+  time: string
+  enabled: boolean
 }
 
 export interface WaterEntry {

@@ -576,3 +576,22 @@ def test_18_entreno_con_plantilla_y_sin_conexion(page: Page, servers):
     page.get_by_role("link", name="Hoy").click()
     expect(page.get_by_text("solo referencia")).to_be_visible()
     assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_19_recordatorios(page: Page, servers):
+    # El service worker carga los manejadores de las notificaciones.
+    assert "push-sw.js" in httpx.get(servers["app"] + "/sw.js").text
+    assert "showNotification" in httpx.get(servers["app"] + "/push-sw.js").text
+    page.goto(servers["app"] + "/ajustes")
+    section = page.get_by_role("region", name="Recordatorios")
+    # En las pruebas no hay claves VAPID: se explica en lugar de fallar al activar.
+    expect(section.get_by_text("no están configuradas en este servidor")).to_be_visible()
+    section.get_by_role("switch", name="Recordatorios").click()
+    section.get_by_label("Hora del aviso de comida").fill("15:30")
+    wait_until(
+        lambda: api_get(page, servers, "/api/prefs")["reminders"] is True
+        and api_get(page, servers, "/api/prefs")["meal_reminders"][1]["time"] == "15:30"
+    )
+    section.get_by_role("button", name="sábado").click()
+    wait_until(lambda: 5 not in api_get(page, servers, "/api/prefs")["weigh_days"])
+    assert not page.errors  # type: ignore[attr-defined]
