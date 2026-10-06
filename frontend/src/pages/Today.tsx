@@ -1,16 +1,19 @@
 import clsx from 'clsx'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { Flame, Lightbulb, Plus } from 'lucide-react'
+import { CopyPlus, Flame, Lightbulb, Plus } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { CopyPanel } from '@/components/CopyPanel'
 import { DateStrip } from '@/components/DateStrip'
 import { MealRow } from '@/components/MealRow'
 import { MealSheet } from '@/components/MealSheet'
 import { useShell } from '@/components/Shell'
 import { useApp, useMealActions, useMeals, useStats } from '@/hooks/data'
 import { dailyTip } from '@/lib/coach'
+import { copyInputs } from '@/lib/copy'
 import { addDays, fmtLong, greeting, isValidISO, relativeDay, todayISO } from '@/lib/dates'
-import { capitalize, fmt } from '@/lib/format'
+import { capitalize, fmt, plural } from '@/lib/format'
+import { haptic } from '@/lib/haptics'
 import { GRAM_MACROS, sumMacros } from '@/lib/macros'
 import { SLOTS } from '@/lib/slots'
 import type { Meal } from '@/lib/types'
@@ -18,6 +21,7 @@ import { AnimatedNumber } from '@/ui/AnimatedNumber'
 import { Button } from '@/ui/Button'
 import { EmptyState } from '@/ui/EmptyState'
 import { Ring } from '@/ui/Ring'
+import { Sheet } from '@/ui/Sheet'
 import { Skeleton } from '@/ui/Skeleton'
 import { toast } from '@/ui/toast'
 
@@ -52,6 +56,7 @@ export default function Today() {
   const isToday = date === today
   const [direction, setDirection] = useState(0)
   const [detail, setDetail] = useState<Meal | null>(null)
+  const [copyDay, setCopyDay] = useState(false)
 
   const meals = useMeals(date)
   const stats = useStats()
@@ -86,6 +91,19 @@ export default function Today() {
       toast({ tone: 'success', title: 'Calorías en objetivo', description: 'Justo donde tenían que estar.' })
     }
   }, [loading, date, isToday, onTarget, proteinDone, celebrate])
+
+  function copyAll(target: { date: string }) {
+    const copies = copyInputs(list, target)
+    for (const input of copies) actions.add(input)
+    haptic('success')
+    setCopyDay(false)
+    toast({
+      tone: 'success',
+      title: `${copies.length} ${plural(copies.length, 'comida copiada', 'comidas copiadas')} a ${relativeDay(target.date).toLowerCase()}`,
+      description: 'Sin gastar IA',
+      action: target.date !== date ? { label: 'Ver', onClick: () => setDate(target.date) } : undefined,
+    })
+  }
 
   function remove(meal: Meal) {
     actions.remove(meal)
@@ -336,6 +354,9 @@ export default function Today() {
                     </div>
                   )
                 })}
+                <Button variant="ghost" size="sm" block onClick={() => setCopyDay(true)} icon={<CopyPlus className="size-4" aria-hidden />}>
+                  Copiar este día a otro
+                </Button>
               </div>
             )}
           </section>
@@ -343,6 +364,9 @@ export default function Today() {
       </AnimatePresence>
 
       <MealSheet meal={detail} onClose={() => setDetail(null)} onDelete={remove} />
+      <Sheet open={copyDay} onClose={() => setCopyDay(false)} title={`Copiar ${isToday ? 'hoy' : relativeDay(date).toLowerCase()}`}>
+        <CopyPanel sourceDate={date} count={list.length} kcal={eaten.kcal} onCopy={copyAll} onCancel={() => setCopyDay(false)} />
+      </Sheet>
     </main>
   )
 }

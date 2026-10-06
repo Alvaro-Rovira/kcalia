@@ -1,13 +1,16 @@
-import { CalendarDays, Copy, Star, Trash2 } from 'lucide-react'
+import { CalendarDays, Copy, CopyPlus, Star, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useBootstrap, useDishActions, useMealActions } from '@/hooks/data'
+import { copyInputs } from '@/lib/copy'
 import { relativeDay, todayISO } from '@/lib/dates'
 import { capitalize } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
+import { itemsTotal } from '@/lib/macros'
 import type { Item, Meal, Slot } from '@/lib/types'
 import { Button } from '@/ui/Button'
 import { Sheet } from '@/ui/Sheet'
 import { toast } from '@/ui/toast'
+import { CopyPanel } from './CopyPanel'
 import { ItemList, ServingsPicker, SlotPicker, Totals } from './MealBreakdown'
 
 interface Props {
@@ -28,6 +31,8 @@ const SOURCE_TEXT: Record<Meal['source'], string> = {
   product: 'Con la etiqueta de tu producto, sin IA',
 }
 
+const itemsTotalKcal = (items: Item[], servings: number) => itemsTotal(items, servings).kcal
+
 /** Detalle de una comida ya guardada: raciones, momento, día e ingredientes. */
 export function MealSheet({ meal, onClose, onDelete }: Props) {
   const actions = useMealActions()
@@ -38,6 +43,7 @@ export function MealSheet({ meal, onClose, onDelete }: Props) {
   const [servings, setServings] = useState(1)
   const [slot, setSlot] = useState<Slot>('comida')
   const [date, setDate] = useState(todayISO())
+  const [copying, setCopying] = useState(false)
   // Se conserva la última comida para que la hoja no se vacíe mientras se cierra.
   const [shown, setShown] = useState<Meal | null>(null)
 
@@ -49,6 +55,7 @@ export function MealSheet({ meal, onClose, onDelete }: Props) {
     setServings(meal.servings)
     setSlot(meal.slot)
     setDate(meal.date)
+    setCopying(false)
   }, [meal])
 
   const current = meal ?? shown
@@ -72,23 +79,13 @@ export function MealSheet({ meal, onClose, onDelete }: Props) {
     onClose()
   }
 
-  function duplicate() {
+  /** Copia lo que se ve en la hoja (con los cambios sin guardar) a otro día o momento. */
+  function copyTo(target: { date: string; slot?: Slot }) {
     if (!current) return
-    actions.add({
-      date: today,
-      slot,
-      name: current.name,
-      text: current.text,
-      items,
-      servings,
-      source: 'recent',
-      via: 'tap',
-      confidence: current.confidence,
-      assumptions: current.assumptions,
-      dish_id: current.dish_id,
-    })
+    const [input] = copyInputs([{ ...current, name: name.trim() || current.name, items, servings }], { date: target.date, slot: target.slot ?? slot })
+    actions.add(input)
     haptic('success')
-    toast.success(current.date === today ? 'Comida duplicada' : 'Añadida a hoy', 'Sin gastar IA')
+    toast.success(`Copiada a ${relativeDay(target.date).toLowerCase()}`, 'Sin gastar IA')
     onClose()
   }
 
@@ -148,8 +145,8 @@ export function MealSheet({ meal, onClose, onDelete }: Props) {
                 {dish.favorite ? 'Favorita' : 'Favorito'}
               </Button>
             )}
-            <Button variant="secondary" size="sm" onClick={duplicate} icon={<Copy className="size-4" aria-hidden />}>
-              {current.date === today ? 'Duplicar' : 'Repetir hoy'}
+            <Button variant="secondary" size="sm" onClick={() => copyTo({ date: today })} icon={<Copy className="size-4" aria-hidden />}>
+              Copiar a hoy
             </Button>
             <label className="relative flex h-11 items-center justify-center gap-1.5 rounded-sm border border-border bg-surface-2 px-4 text-[14px] font-semibold text-text focus-within:border-accent">
               <CalendarDays className="size-4" aria-hidden />
@@ -175,6 +172,16 @@ export function MealSheet({ meal, onClose, onDelete }: Props) {
               Borrar
             </Button>
           </div>
+
+          {copying ? (
+            <div className="rounded-md border border-border bg-surface p-3.5">
+              <CopyPanel sourceDate={current.date} count={1} kcal={itemsTotalKcal(items, servings)} slot={slot} onCopy={copyTo} onCancel={() => setCopying(false)} />
+            </div>
+          ) : (
+            <Button variant="ghost" size="sm" block onClick={() => setCopying(true)} icon={<CopyPlus className="size-4" aria-hidden />}>
+              Copiar a otro día o momento
+            </Button>
+          )}
 
           {current.assumptions.length > 0 && (
             <p className="text-[13px] leading-relaxed text-text-3">
