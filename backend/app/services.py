@@ -17,6 +17,7 @@ from .models import (
     DayType,
     Dish,
     DishAlias,
+    Exercise,
     Food,
     Meal,
     Product,
@@ -28,6 +29,9 @@ from .models import (
     WaterLog,
     WeeklySummary,
     Weight,
+    Workout,
+    WorkoutSet,
+    WorkoutTemplate,
     utcnow,
 )
 from .nutrition import calculate_targets
@@ -738,6 +742,10 @@ def wipe_data(db: Session) -> None:
     if tenancy.current_user_id(db) is None:
         raise tenancy.TenancyError("wipe_data necesita una sesión limitada a un usuario")
     for model in (
+        WorkoutSet,
+        Workout,
+        WorkoutTemplate,
+        Exercise,
         DayType,
         ProgressPhoto,
         BodyMeasurement,

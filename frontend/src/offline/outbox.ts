@@ -5,6 +5,7 @@
  */
 import { del, get, set } from 'idb-keyval'
 import { api, ApiError } from '@/lib/api'
+import type { Intensity, Muscle, TemplateExercise, ExerciseUnit } from '@/lib/training'
 import type { DayKind, Item, MealInput, Measurement, Prefs, Slot } from '@/lib/types'
 
 export interface MealPatch {
@@ -29,6 +30,25 @@ export type Op =
   | { id: string; type: 'measure.put'; body: Measurement }
   | { id: string; type: 'measure.delete'; date: string }
   | { id: string; type: 'daytype.put'; body: { date: string; kind: DayKind | null } }
+  | { id: string; type: 'exercise.create'; body: { client_id: string; name: string; muscle: Muscle; unit: ExerciseUnit } }
+  | { id: string; type: 'template.save'; body: { client_id: string; name: string; exercises: TemplateExercise[] } }
+  | { id: string; type: 'template.delete'; clientId: string }
+  | { id: string; type: 'workout.create'; body: { client_id: string; date: string; name: string; template_cid: string | null; started_at: string } }
+  | {
+      id: string
+      type: 'workout.patch'
+      clientId: string
+      body: { name?: string; notes?: string; ended_at?: string; duration_min?: number; intensity?: Intensity }
+    }
+  | { id: string; type: 'workout.delete'; clientId: string }
+  | {
+      id: string
+      type: 'set.create'
+      workoutId: string
+      body: { client_id: string; exercise: string; reps: number; weight: number; rpe: number | null; position: number }
+    }
+  | { id: string; type: 'set.patch'; clientId: string; body: { reps?: number; weight?: number; rpe?: number | null } }
+  | { id: string; type: 'set.delete'; clientId: string }
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never
 export type NewOp = DistributiveOmit<Op, 'id'>
@@ -95,6 +115,24 @@ function send(op: Op): Promise<unknown> {
       return api.delete(`/api/measurements/${op.date}`)
     case 'daytype.put':
       return api.put('/api/day-types', op.body)
+    case 'exercise.create':
+      return api.post('/api/exercises', op.body)
+    case 'template.save':
+      return api.put('/api/templates', op.body)
+    case 'template.delete':
+      return api.delete(`/api/templates/${op.clientId}`)
+    case 'workout.create':
+      return api.post('/api/workouts', op.body)
+    case 'workout.patch':
+      return api.patch(`/api/workouts/${op.clientId}`, op.body)
+    case 'workout.delete':
+      return api.delete(`/api/workouts/${op.clientId}`)
+    case 'set.create':
+      return api.post(`/api/workouts/${op.workoutId}/sets`, op.body)
+    case 'set.patch':
+      return api.patch(`/api/sets/${op.clientId}`, op.body)
+    case 'set.delete':
+      return api.delete(`/api/sets/${op.clientId}`)
   }
 }
 

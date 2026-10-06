@@ -211,6 +211,7 @@ export interface Prefs {
   training_targets?: DayTargetsValues | null
   rest_targets?: DayTargetsValues | null
   add_exercise_kcal?: boolean
+  rest_seconds?: number
 }
 
 export interface WaterEntry {
@@ -240,6 +241,8 @@ export interface Bootstrap {
   water_goal_ml?: number
   /** Días con el tipo cambiado a mano (fecha -> entreno o descanso). */
   day_types?: Record<string, DayKind>
+  /** Calorías estimadas de los entrenos de cada día (recientes). */
+  exercise_kcal?: Record<string, number>
   ai: {
     configured: boolean
     model: string

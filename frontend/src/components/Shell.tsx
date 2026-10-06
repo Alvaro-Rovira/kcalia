@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import { AnimatePresence, motion } from 'motion/react'
-import { CalendarDays, ChartColumn, CloudOff, House, Plus, Scale, Settings, ShieldCheck, type LucideIcon } from 'lucide-react'
+import { CalendarDays, ChartColumn, CloudOff, Dumbbell, House, Plus, Scale, Settings, ShieldCheck, type LucideIcon } from 'lucide-react'
 import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate, useSearchParams, type Location } from 'react-router'
 import { useAdminOverview } from '@/hooks/admin'
@@ -30,11 +30,30 @@ interface ShellContext {
 const Context = createContext<ShellContext>({ openAddMeal: () => undefined, openProduct: () => undefined, celebrate: () => undefined })
 export const useShell = () => useContext(Context)
 
-const NAV: { to: string; label: string; Icon: LucideIcon }[] = [
+interface NavItem {
+  to: string
+  label: string
+  Icon: LucideIcon
+  /** Otras rutas en las que esta pestaña cuenta como activa. */
+  also?: string[]
+}
+
+// En el móvil, cinco pestañas: «Progreso» agrupa el resumen semanal y el cuerpo (peso, medidas y fotos).
+const NAV: NavItem[] = [
   { to: '/', label: 'Hoy', Icon: House },
   { to: '/historial', label: 'Historial', Icon: CalendarDays },
+  { to: '/entreno', label: 'Entreno', Icon: Dumbbell },
+  { to: '/resumen', label: 'Progreso', Icon: ChartColumn, also: ['/peso'] },
+  { to: '/ajustes', label: 'Ajustes', Icon: Settings, also: ['/admin'] },
+]
+
+// En el escritorio hay sitio para todo.
+const SIDEBAR: NavItem[] = [
+  { to: '/', label: 'Hoy', Icon: House },
+  { to: '/historial', label: 'Historial', Icon: CalendarDays },
+  { to: '/entreno', label: 'Entreno', Icon: Dumbbell },
   { to: '/resumen', label: 'Resumen', Icon: ChartColumn },
-  { to: '/peso', label: 'Peso', Icon: Scale },
+  { to: '/peso', label: 'Cuerpo', Icon: Scale },
   { to: '/ajustes', label: 'Ajustes', Icon: Settings },
 ]
 
@@ -89,6 +108,7 @@ function Badge({ count, className }: { count: number; className?: string }) {
 
 function BottomNav() {
   const requests = usePendingRequests()
+  const { pathname } = useLocation()
   return (
     <nav
       aria-label="Principal"
@@ -96,7 +116,7 @@ function BottomNav() {
       style={{ paddingBottom: 'var(--safe-b)' }}
     >
       <ul className="mx-auto grid h-[var(--nav-h)] max-w-[520px] grid-cols-5 px-1.5">
-        {NAV.map(({ to, label, Icon }) => (
+        {NAV.map(({ to, label, Icon, also }) => (
           <li key={to} className="min-w-0">
             <NavLink
               to={to}
@@ -104,7 +124,9 @@ function BottomNav() {
               onClick={() => haptic('tap')}
               className="relative flex h-full flex-col items-center justify-center gap-1 rounded-md"
             >
-              {({ isActive }) => (
+              {({ isActive: exact }) => {
+                const isActive = exact || !!also?.some((path) => pathname.startsWith(path))
+                return (
                 <>
                   <span className="relative grid h-8 w-14 place-items-center">
                     {isActive && (
@@ -131,7 +153,8 @@ function BottomNav() {
                     {label}
                   </span>
                 </>
-              )}
+                )
+              }}
             </NavLink>
           </li>
         ))}
@@ -143,7 +166,7 @@ function BottomNav() {
 function Sidebar({ onAdd }: { onAdd: () => void }) {
   const { data } = useBootstrap()
   const requests = usePendingRequests()
-  const items = data?.user.is_admin ? [...NAV, { to: '/admin', label: 'Administración', Icon: ShieldCheck }] : NAV
+  const items = data?.user.is_admin ? [...SIDEBAR, { to: '/admin', label: 'Administración', Icon: ShieldCheck }] : SIDEBAR
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col border-r border-border bg-surface/60 px-4 py-7 backdrop-blur-xl lg:flex">
       <div className="flex items-center gap-2.5 px-2">

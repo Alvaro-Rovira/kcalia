@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { Plus, RefreshCw, Trash2, TrendingDown, TrendingUp } from 'lucide-react'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { ProgressTabs } from '@/components/ProgressTabs'
 import { MeasurementsPanel } from '@/components/body/MeasurementsPanel'
 import { PhotosPanel } from '@/components/body/PhotosPanel'
 import { useApp, useOnline, useWeightActions, useWeights } from '@/hooks/data'
@@ -104,6 +105,7 @@ export default function Weight() {
 
   return (
     <main className="page">
+      <ProgressTabs />
       <header className="flex items-end justify-between gap-3">
         <div>
           <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.035em] text-text">{VIEW_TITLE[view]}</h1>

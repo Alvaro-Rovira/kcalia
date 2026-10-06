@@ -136,7 +136,8 @@ def test_04_coincidencia_aproximada_pregunta(page: Page, ai_calls):
 
 
 def test_05_peso_y_resumen(page: Page):
-    page.get_by_role("link", name="Peso").click()
+    page.get_by_role("link", name="Progreso").click()
+    page.get_by_role("link", name="Cuerpo").click()
     page.get_by_role("button", name="Apuntar").first.click()
     page.get_by_role("button", name="Guardar", exact=True).click()
     expect(page.get_by_text("Media 7 días")).to_be_visible()
@@ -440,7 +441,7 @@ def test_14_agua_con_y_sin_conexion(page: Page, servers):
     page.get_by_role("status").filter(has_text="+250 ml de agua").get_by_role("button", name="Deshacer").last.click()
     expect(water.get_by_text("1,08 L", exact=True)).to_be_visible()
 
-    page.get_by_role("link", name="Resumen").click()
+    page.get_by_role("link", name="Progreso").click()
     expect(page.get_by_role("region", name="Agua de la semana")).to_be_visible()
     page.get_by_role("link", name="Hoy").click()
 
@@ -456,7 +457,7 @@ def test_15_bebida_con_alcohol_y_fibra(page: Page, servers):
     expect(page.get_by_text("Caña de cerveza · 87 kcal")).to_be_visible()
     expect(page.get_by_text("Alcohol 7,9 g")).to_be_visible()
     wait_until(lambda: any(m["source"] == "drink" for m in api_get(page, servers, f"/api/meals?date={today}")["meals"]))
-    page.get_by_role("link", name="Resumen").click()
+    page.get_by_role("link", name="Progreso").click()
     expect(page.get_by_role("region", name="Alcohol de la semana")).to_be_visible()
     expect(page.get_by_text("Fibra media")).to_be_visible()
     page.get_by_role("link", name="Hoy").click()
@@ -534,3 +535,41 @@ def test_17_dias_de_entreno_y_descanso(page: Page, servers):
     # Se deja como estaba para el resto de pruebas.
     page.request.patch(servers["app"] + "/api/prefs", data={"day_types": False}, headers={"Origin": servers["app"]})
     page.reload()
+
+
+def test_18_entreno_con_plantilla_y_sin_conexion(page: Page, servers):
+    page.goto(servers["app"])
+    page.get_by_role("link", name="Entreno").click()
+    expect(page.get_by_role("heading", name="Rutinas")).to_be_visible()
+    page.get_by_role("button", name="Empezar Empuje").click()
+    card = page.get_by_role("region", name="Press de banca")
+    expect(card.get_by_text("plan 4 × 8")).to_be_visible()
+    card.get_by_role("button", name="Peso: más").click()
+    card.get_by_role("button", name="Peso: más").click()  # 5 kg
+    weight = card.get_by_role("textbox", name="Peso", exact=True)
+    weight.fill("")
+    weight.fill("60")
+    expect(weight).to_have_value("60")
+    card.get_by_role("button", name="Serie 1").click()
+    expect(page.get_by_role("timer")).to_be_visible()  # descanso en marcha
+    page.get_by_role("button", name="Saltar el descanso").click()
+    # Sin red: la siguiente serie copia la anterior y queda en cola.
+    page.wait_for_timeout(800)
+    page.context.set_offline(True)
+    card.get_by_role("button", name="Repetir").click()
+    expect(card.get_by_text("2/4 series")).to_be_visible()
+    expect(page.get_by_text("cambio pendiente").first).to_be_visible()
+    page.context.set_offline(False)
+    wait_until(lambda: sum(len(w["sets"]) for w in api_get(page, servers, "/api/training")["workouts"]) == 2)
+
+    page.get_by_role("button", name="Terminar").click()
+    dialog = page.get_by_role("dialog")
+    dialog.get_by_role("radio", name="Intensa").click()
+    dialog.get_by_role("button", name="Guardar entreno").click()
+    expect(page.get_by_text("Entreno guardado")).to_be_visible()
+    expect(page.get_by_role("heading", name="Últimos entrenos")).to_be_visible()
+    wait_until(lambda: api_get(page, servers, "/api/training")["workouts"][0]["ended_at"] is not None)
+    last = api_get(page, servers, "/api/training")["last"]["ex-press-banca"]
+    assert last["weight"] == 60 and last["sets"] == 2
+    expect(page.get_by_role("heading", name="Progresión")).to_be_visible()
+    assert not page.errors  # type: ignore[attr-defined]

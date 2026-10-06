@@ -356,17 +356,18 @@ export function usePhotos() {
 }
 
 /** Objetivos de un día concreto según su tipo (entreno o descanso). Se calcula en el móvil: funciona sin red. */
-export function useDayTargets(): (iso: string) => { kind: DayKind | null; targets: DayTargetsValues; manual: boolean } {
+export function useDayTargets(): (iso: string) => { kind: DayKind | null; targets: DayTargetsValues; manual: boolean; exercise: number } {
   const { data } = useBootstrap()
   return useCallback(
     (iso: string) => {
       const base = data?.targets ?? { kcal: 2000, protein: 120, carbs: 220, fat: 65 }
       const overrides = data?.day_types ?? {}
       const kind = kindFor(iso, data?.prefs, overrides)
-      // El entreno sumado al objetivo llega con el registro de entrenos (ver useExerciseKcal).
-      return { kind, targets: targetsFor(base, data?.prefs, kind), manual: iso in overrides }
+      // Si se suman las calorías del entreno al objetivo, cuenta lo entrenado ese día.
+      const exercise = data?.exercise_kcal?.[iso] ?? 0
+      return { kind, targets: targetsFor(base, data?.prefs, kind, exercise), manual: iso in overrides, exercise }
     },
-    [data?.targets, data?.day_types, data?.prefs],
+    [data?.targets, data?.day_types, data?.prefs, data?.exercise_kcal],
   )
 }
 

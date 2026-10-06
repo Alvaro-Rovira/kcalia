@@ -24,6 +24,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
+import { ProgressTabs } from '@/components/ProgressTabs'
 import { WaterWeek } from '@/components/WaterWeek'
 import { useStats, useSummaries, useWeek } from '@/hooks/data'
 import { addDays, fmtRange, fmtWeekday, todayISO, weekdayInitial, weekStart } from '@/lib/dates'
@@ -196,6 +197,7 @@ export default function Summary() {
 
   return (
     <main className="page">
+      <ProgressTabs />
       <header className="flex items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.035em] text-text">Resumen</h1>

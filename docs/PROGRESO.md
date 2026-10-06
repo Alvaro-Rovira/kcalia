@@ -35,7 +35,7 @@ Tras la fase 2: 347 pytest, 141 Vitest, 17 e2e en verde.
 
 ## Fase 3 · Entrenamiento
 - [x] 3.1 Tipo de día entreno/descanso con objetivos propios
-- [ ] 3.2 Registro de entrenamientos `/entreno`
+- [x] 3.2 Registro de entrenamientos `/entreno`
 - [ ] 3.3 Estimación de calorías de entreno
 
 ## Fase 4 · Constancia y utilidad

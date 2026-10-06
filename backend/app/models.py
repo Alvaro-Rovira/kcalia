@@ -389,3 +389,75 @@ class DayType(TenantMixin, Base):
     kind: Mapped[str] = mapped_column(String(10))  # entreno | descanso
 
     __table_args__ = (Index("ux_day_types_user_date", "user_id", "date", unique=True),)
+
+
+class Exercise(TenantMixin, Base):
+    """Ejercicio del catálogo del usuario (se siembra con uno básico y se pueden crear más)."""
+
+    __tablename__ = "exercises"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # Generado en el móvil (o fijo en el catálogo inicial): permite crear y usar un ejercicio sin conexión.
+    client_id: Mapped[str] = mapped_column(String(40))
+    name: Mapped[str] = mapped_column(String(80))
+    muscle: Mapped[str] = mapped_column(String(20))
+    # reps, seg o min: qué se cuenta en cada serie (las planchas van por segundos, la cinta por minutos).
+    unit: Mapped[str] = mapped_column(String(4), default="reps")
+    custom: Mapped[bool] = mapped_column(Boolean, default=False)
+    archived: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    __table_args__ = (Index("ux_exercises_user_client", "user_id", "client_id", unique=True),)
+
+
+class WorkoutTemplate(TenantMixin, Base):
+    """Plantilla de rutina: ejercicios con series y repeticiones objetivo."""
+
+    __tablename__ = "workout_templates"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    client_id: Mapped[str] = mapped_column(String(40))
+    name: Mapped[str] = mapped_column(String(60))
+    # [{"exercise": client_id del ejercicio, "sets": 3, "reps": 10}]
+    exercises: Mapped[list] = mapped_column(JSON, default=list)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
+
+    __table_args__ = (Index("ux_templates_user_client", "user_id", "client_id", unique=True),)
+
+
+class Workout(TenantMixin, Base):
+    __tablename__ = "workouts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    client_id: Mapped[str] = mapped_column(String(40))
+    date: Mapped[str] = mapped_column(String(10))
+    name: Mapped[str] = mapped_column(String(60), default="Entreno")
+    notes: Mapped[str] = mapped_column(Text, default="")
+    template_cid: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    duration_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # suave, moderada o intensa: con la duración y el peso, da las calorías estimadas.
+    intensity: Mapped[str] = mapped_column(String(10), default="moderada")
+
+    __table_args__ = (
+        Index("ux_workouts_user_client", "user_id", "client_id", unique=True),
+        Index("ix_workouts_user_date", "user_id", "date"),
+    )
+
+
+class WorkoutSet(TenantMixin, Base):
+    __tablename__ = "workout_sets"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    client_id: Mapped[str] = mapped_column(String(40))
+    workout_id: Mapped[int] = mapped_column(ForeignKey("workouts.id", ondelete="CASCADE"), index=True)
+    exercise_id: Mapped[int] = mapped_column(ForeignKey("exercises.id", ondelete="CASCADE"), index=True)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    reps: Mapped[int] = mapped_column(Integer)
+    weight: Mapped[float] = mapped_column(Float, default=0)
+    rpe: Mapped[float | None] = mapped_column(Float, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    __table_args__ = (Index("ux_sets_user_client", "user_id", "client_id", unique=True),)

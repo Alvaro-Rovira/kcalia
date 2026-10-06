@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -190,6 +190,8 @@ class Prefs(BaseModel):
     rest_targets: DayTargetsIn | None = None
     # Sumar al objetivo del día las calorías estimadas del entrenamiento (si no, solo es informativo).
     add_exercise_kcal: bool = False
+    # Temporizador de descanso entre series, en segundos.
+    rest_seconds: int = Field(default=90, ge=15, le=600)
 
 
 class PrefsPatch(BaseModel):
@@ -203,6 +205,7 @@ class PrefsPatch(BaseModel):
     training_targets: DayTargetsIn | None = None
     rest_targets: DayTargetsIn | None = None
     add_exercise_kcal: bool | None = None
+    rest_seconds: int | None = Field(default=None, ge=15, le=600)
 
 
 class DayTypeIn(BaseModel):
@@ -230,3 +233,65 @@ class MeasurementIn(BaseModel):
     thigh: float | None = Field(default=None, ge=20, le=150)
 
     _check_date = field_validator("date")(lambda cls, v: _iso_date(v))
+
+
+Muscle = Literal["pecho", "espalda", "hombros", "biceps", "triceps", "piernas", "gluteos", "core", "cardio", "otro"]
+Intensity = Literal["suave", "moderada", "intensa"]
+
+
+class ExerciseIn(BaseModel):
+    client_id: str = Field(min_length=4, max_length=40)
+    name: str = Field(min_length=1, max_length=80)
+    muscle: Muscle = "otro"
+    unit: Literal["reps", "seg", "min"] = "reps"
+
+
+class ExercisePatch(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=80)
+    muscle: Muscle | None = None
+    archived: bool | None = None
+
+
+class TemplateExercise(BaseModel):
+    exercise: str = Field(min_length=4, max_length=40)
+    sets: int = Field(default=3, ge=1, le=20)
+    reps: int = Field(default=10, ge=1, le=600)
+
+
+class TemplateIn(BaseModel):
+    client_id: str = Field(min_length=4, max_length=40)
+    name: str = Field(min_length=1, max_length=60)
+    exercises: list[TemplateExercise] = Field(default_factory=list, max_length=30)
+
+
+class WorkoutIn(BaseModel):
+    client_id: str = Field(min_length=8, max_length=40)
+    date: str
+    name: str = Field(default="Entreno", min_length=1, max_length=60)
+    template_cid: str | None = Field(default=None, max_length=40)
+    started_at: datetime | None = None
+
+    _check_date = field_validator("date")(lambda cls, v: _iso_date(v))
+
+
+class WorkoutPatch(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=60)
+    notes: str | None = Field(default=None, max_length=1000)
+    ended_at: datetime | None = None
+    duration_min: int | None = Field(default=None, ge=1, le=600)
+    intensity: Intensity | None = None
+
+
+class SetIn(BaseModel):
+    client_id: str = Field(min_length=8, max_length=40)
+    exercise: str = Field(min_length=4, max_length=40)
+    reps: int = Field(ge=0, le=600)
+    weight: float = Field(default=0, ge=0, le=1000)
+    rpe: float | None = Field(default=None, ge=1, le=10)
+    position: int = Field(default=0, ge=0, le=1000)
+
+
+class SetPatch(BaseModel):
+    reps: int | None = Field(default=None, ge=0, le=600)
+    weight: float | None = Field(default=None, ge=0, le=1000)
+    rpe: float | None = Field(default=None, ge=1, le=10)

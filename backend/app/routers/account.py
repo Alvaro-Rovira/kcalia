@@ -7,9 +7,23 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .. import services
+from .. import workouts as training_lib
 from ..db import get_db
 from ..deps import require_approved_user, require_user
-from ..models import MEASURES, BodyMeasurement, Food, Meal, User, WaterLog, WeeklySummary, Weight
+from ..models import (
+    MEASURES,
+    BodyMeasurement,
+    Exercise,
+    Food,
+    Meal,
+    User,
+    WaterLog,
+    WeeklySummary,
+    Weight,
+    Workout,
+    WorkoutSet,
+    WorkoutTemplate,
+)
 from ..schemas import PasswordConfirm
 from ..security import SESSION_COOKIE, verify_password
 
@@ -60,6 +74,14 @@ def export_json(db: Session = Depends(get_db)) -> dict:
         "weekly_summaries": [s.data for s in db.scalars(select(WeeklySummary).order_by(WeeklySummary.week_start))],
         "prefs": services.get_prefs(db).model_dump(),
         "day_types": services.day_type_overrides(db),
+        "exercises": [training_lib.exercise_dict(e) for e in db.scalars(select(Exercise).order_by(Exercise.id))],
+        "workout_templates": [
+            training_lib.template_dict(t)
+            for t in db.scalars(select(WorkoutTemplate).order_by(WorkoutTemplate.position))
+        ],
+        "workouts": training_lib.workouts_payload(
+            db, list(db.scalars(select(Workout).order_by(Workout.date, Workout.started_at)))
+        ),
         "measurements": [
             {"date": m.date, **{key: getattr(m, key) for key in MEASURES}}
             for m in db.scalars(select(BodyMeasurement).order_by(BodyMeasurement.date))
@@ -148,6 +170,25 @@ def export_measurements_csv(db: Session = Depends(get_db)) -> Response:
     for row in db.scalars(select(BodyMeasurement).order_by(BodyMeasurement.date)):
         writer.writerow([row.date, *("" if getattr(row, m) is None else _es(getattr(row, m)) for m in MEASURES)])
     return _download("\ufeff" + out.getvalue(), f"kcalia-medidas-{_stamp()}.csv", "text/csv; charset=utf-8")
+
+
+@router.get("/export/workouts.csv")
+def export_workouts_csv(db: Session = Depends(get_db)) -> Response:
+    out = io.StringIO()
+    writer = csv.writer(out, delimiter=";")
+    writer.writerow(["fecha", "entreno", "ejercicio", "serie", "repeticiones", "peso_kg", "rpe", "duracion_min"])
+    rows = db.execute(
+        select(Workout.date, Workout.name, Exercise.name, WorkoutSet.position, WorkoutSet.reps, WorkoutSet.weight)
+        .add_columns(WorkoutSet.rpe, Workout.duration_min)
+        .join(Workout, Workout.id == WorkoutSet.workout_id)
+        .join(Exercise, Exercise.id == WorkoutSet.exercise_id)
+        .order_by(Workout.date, Workout.started_at, WorkoutSet.position, WorkoutSet.id)
+    )
+    for day, workout, exercise, position, reps, weight, rpe, minutes in rows:
+        writer.writerow(
+            [day, workout, exercise, position + 1, reps, _es(weight), "" if rpe is None else _es(rpe), minutes or ""]
+        )
+    return _download("\ufeff" + out.getvalue(), f"kcalia-entrenos-{_stamp()}.csv", "text/csv; charset=utf-8")
 
 
 def _confirm(user: User, body: PasswordConfirm) -> None:

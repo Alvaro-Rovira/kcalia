@@ -46,3 +46,9 @@ Decisiones tomadas sin poder preguntar, con el motivo. La más reciente, abajo.
     descanso, siempre a través de los hidratos (la proteína y la grasa no cambian). Cada tipo se puede fijar a mano y
     cada día concreto se cambia desde Hoy. El cálculo existe en Python y TS con casos compartidos y redondeo «mitad
     hacia arriba» en los dos (el `round` de Python redondea al par y daba resultados distintos).
+17. **Entrenos sin conexión de verdad**: ejercicios, plantillas, sesiones y series llevan `client_id` generado en el
+    móvil y las series apuntan al ejercicio por ese id, así que hasta un ejercicio creado sin red se puede usar al
+    momento. El catálogo inicial (40 ejercicios) y las rutinas Empuje, Tirón, Pierna y Cuerpo completo se siembran a
+    cada usuario la primera vez, con ids fijos. Los ejercicios no se borran, se archivan (conservan su historial).
+18. **Navegación móvil**: Hoy · Historial · Entreno · Progreso · Ajustes. «Progreso» agrupa el resumen semanal y el
+    cuerpo (peso, medidas y fotos) con dos pestañas; en escritorio la barra lateral muestra todo por separado.

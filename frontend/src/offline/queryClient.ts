@@ -76,5 +76,7 @@ export const keys = {
   water: (date: string) => ['water', date] as const,
   waterDays: (start: string, end: string) => ['water', 'days', start, end] as const,
   measurements: ['measurements'] as const,
+  training: ['training'] as const,
+  exerciseHistory: (cid: string) => ['training', 'history', cid] as const,
   photos: ['photos'] as const,
 }
