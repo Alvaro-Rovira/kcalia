@@ -56,7 +56,7 @@ Tras la fase 4: 413 pytest, 176 Vitest, 23 e2e en verde.
 Tras la fase 5: 431 pytest, 182 Vitest, 25 e2e en verde.
 
 ## Fase final
-- [ ] A Revisión global, README, .env.example, capturas, RESUMEN-FINAL
+- [x] A Revisión global, README, .env.example, capturas, RESUMEN-FINAL
 - [ ] B Merge en main y push
 - [ ] C Localizar servidor
 - [ ] D Copia previa y comprobaciones en el servidor
