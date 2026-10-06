@@ -5,18 +5,18 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .. import services
-from ..ai import AiClient, AiError, AiMeal, transcribe
+from ..ai import AiClient, AiMeal, transcribe
 from ..config import get_settings
 from ..db import get_db
-from ..deps import get_ai_client, require_user, today_local
-from ..matching import totals
-from ..models import Dish, DishAlias, Meal, utcnow
+from ..deps import get_ai_client, require_approved_user, require_user, today_local
+from ..matching import extras, totals
+from ..models import Dish, DishAlias, Meal, User, utcnow
 from ..products import resolve_text
 from ..schemas import DishPatch, MealIn, MealPatch, ResolveIn
 from ..textnorm import normalize
-from ..usage import check_ai_budget, run_ai
+from ..usage import check_ai_budget, check_stt_budget, run_ai
 
-router = APIRouter(prefix="/api", tags=["comidas"], dependencies=[Depends(require_user)])
+router = APIRouter(prefix="/api", tags=["comidas"], dependencies=[Depends(require_approved_user)])
 
 MAX_IMAGE_BYTES = 6 * 1024 * 1024
 MAX_AUDIO_BYTES = 12 * 1024 * 1024
@@ -71,7 +71,12 @@ def _draft_from_ai(meal: AiMeal, text: str, source: str) -> dict:
 
 
 @router.post("/meals/resolve")
-def resolve(body: ResolveIn, db: Session = Depends(get_db), ai: AiClient = Depends(get_ai_client)) -> dict:
+def resolve(
+    body: ResolveIn,
+    db: Session = Depends(get_db),
+    ai: AiClient = Depends(get_ai_client),
+    user: User = Depends(require_user),
+) -> dict:
     """Historial exacto -> historial aproximado -> caché de ingredientes -> IA."""
     text = body.text.strip()
     norm = normalize(text)
@@ -124,7 +129,7 @@ def resolve(body: ResolveIn, db: Session = Depends(get_db), ai: AiClient = Depen
                 },
             }
 
-    check_ai_budget(db)
+    check_ai_budget(db, user)
     # A la IA solo va lo que no es de un producto guardado: menos tokens y las cifras de la etiqueta, intactas.
     meal = run_ai(db, "text", lambda: ai.analyze_text(leftover_text))
     if not meal.items:
@@ -141,6 +146,7 @@ def analyze_photo(
     note: str = Form(default="", max_length=300),
     db: Session = Depends(get_db),
     ai: AiClient = Depends(get_ai_client),
+    user: User = Depends(require_user),
 ) -> dict:
     mime = (image.content_type or "").lower()
     if mime not in IMAGE_TYPES:
@@ -148,7 +154,7 @@ def analyze_photo(
     data = image.file.read(MAX_IMAGE_BYTES + 1)
     if len(data) > MAX_IMAGE_BYTES:
         raise HTTPException(413, "La foto pesa demasiado. Prueba con una más pequeña.")
-    check_ai_budget(db)
+    check_ai_budget(db, user)
     meal = run_ai(db, "vision", lambda: ai.analyze_photo(data, mime, note))
     if not meal.items:
         return {"status": "clarify", "question": meal.clarification}
@@ -156,11 +162,12 @@ def analyze_photo(
 
 
 @router.post("/transcribe")
-def transcribe_audio(audio: UploadFile = File(...), db: Session = Depends(get_db)) -> dict:
+def transcribe_audio(
+    audio: UploadFile = File(...), db: Session = Depends(get_db), user: User = Depends(require_user)
+) -> dict:
     settings = get_settings()
     today = today_local(settings)
-    if services.ai_calls_today(db, today, ("stt",)) >= settings.stt_daily_limit:
-        raise AiError("limit", "Has llegado al límite de audios de hoy. Puedes escribir la comida.", 429)
+    check_stt_budget(db, user)
     data = audio.file.read(MAX_AUDIO_BYTES + 1)
     if len(data) > MAX_AUDIO_BYTES:
         raise HTTPException(413, "El audio es demasiado largo. Con 20 o 30 segundos es suficiente.")
@@ -218,7 +225,7 @@ def create_meal(body: MealIn, db: Session = Depends(get_db)) -> dict:
             )
         if body.source == "fuzzy" and text:
             norm = normalize(text)
-            if norm and norm != dish.norm and db.get(DishAlias, norm) is None:
+            if norm and norm != dish.norm and services.find_alias(db, norm) is None:
                 db.add(DishAlias(norm=norm, dish_id=dish.id))
     elif from_products_only:
         # Los productos ya son la memoria: no se duplican en el historial, y así editarlos cambia lo que sale.
@@ -235,9 +242,10 @@ def create_meal(body: MealIn, db: Session = Depends(get_db)) -> dict:
             origin="photo" if body.source == "photo" else body.source,
         )
 
+    services.learn_manual_items(db, items)
     if body.source in ("ai", "photo"):
-        # Lo que viene de una etiqueta no se aprende como ingrediente genérico.
-        learnable = [item for item in items if not item.get("product_id")]
+        # Lo que viene de una etiqueta (o se añadió a mano) no se aprende como ingrediente de la IA.
+        learnable = [item for item in items if not item.get("product_id") and not item.get("manual")]
         if learnable:
             services.learn_from_meal(
                 db, text if body.source == "ai" and len(learnable) == len(items) else "", learnable
@@ -262,6 +270,7 @@ def create_meal(body: MealIn, db: Session = Depends(get_db)) -> dict:
         assumptions=body.assumptions,
         dish_id=dish.id if dish else None,
         **macro,
+        **extras(items, body.servings),
     )
     db.add(meal)
     db.commit()
@@ -290,10 +299,12 @@ def update_meal(client_id: str, body: MealPatch, db: Session = Depends(get_db)) 
         meal.name = body.name
     if body.items is not None:
         meal.items = [item.model_dump() for item in body.items]
+        services.learn_manual_items(db, meal.items)
     if body.servings is not None:
         meal.servings = body.servings
     macro = totals(meal.items, meal.servings)
     meal.kcal, meal.protein, meal.carbs, meal.fat = (macro[m] for m in ("kcal", "protein", "carbs", "fat"))
+    meal.fiber, meal.alcohol = (extras(meal.items, meal.servings)[e] for e in ("fiber", "alcohol"))
     db.commit()
     today = today_local()
     services.refresh_week_if_stored(db, meal.date, today)
@@ -319,6 +330,12 @@ def restore_meal(client_id: str, db: Session = Depends(get_db)) -> dict:
     db.commit()
     services.refresh_week_if_stored(db, meal.date, today_local())
     return services.meal_dict(meal)
+
+
+@router.get("/foods")
+def list_foods(db: Session = Depends(get_db)) -> dict:
+    """Caché de ingredientes, para autocompletar al añadir uno a mano."""
+    return {"foods": services.all_foods(db)}
 
 
 @router.get("/dishes")

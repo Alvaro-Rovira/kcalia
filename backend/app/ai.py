@@ -31,7 +31,9 @@ ESQUEMA (todos los campos obligatorios):
       "kcal100": number,     // valores POR CADA 100 g de ese alimento (nunca del total)
       "protein100": number,  // gramos de proteína por 100 g
       "carbs100": number,    // gramos de hidratos disponibles por 100 g
-      "fat100": number       // gramos de grasa por 100 g
+      "fat100": number,      // gramos de grasa por 100 g
+      "fiber100": number,    // gramos de fibra alimentaria por 100 g (0 si no tiene)
+      "alcohol100": number   // gramos de alcohol etílico por 100 g: 0 salvo en bebidas alcohólicas
     }}
   ],
   "confidence": number,      // 0 a 1: 0.9+ si hay cantidades explícitas, 0.6-0.8 si has estimado raciones, <0.5 si es muy ambiguo
@@ -245,6 +247,9 @@ class AiItem(BaseModel):
     protein: float = Field(ge=0, le=600)
     carbs: float = Field(ge=0, le=1200)
     fat: float = Field(ge=0, le=600)
+    # Opcionales: respuestas (y cachés) anteriores no los traen, y siguen siendo válidas.
+    fiber: float | None = Field(default=None, ge=0, le=300)
+    alcohol: float | None = Field(default=None, ge=0, le=500)
 
     @model_validator(mode="before")
     @classmethod
@@ -260,8 +265,17 @@ class AiItem(BaseModel):
             raise ValueError("los gramos totales están fuera de rango")
         if min(kcal, protein, carbs, fat) < 0 or kcal > MAX_KCAL_PER_100G:
             raise ValueError(f"kcal100 debe estar entre 0 y {MAX_KCAL_PER_100G}: son kcal por 100 g, no del total")
-        if protein + carbs + fat > 105:
-            raise ValueError("proteína, hidratos y grasa por 100 g suman más de 100 g: no son valores por 100 g")
+        try:
+            fiber = float(data["fiber100"]) if data.get("fiber100") is not None else None
+            alcohol = float(data["alcohol100"]) if data.get("alcohol100") is not None else None
+        except (TypeError, ValueError) as exc:
+            raise ValueError("fiber100 y alcohol100 deben ser números (0 si no hay)") from exc
+        if (fiber is not None and not 0 <= fiber <= 90) or (alcohol is not None and not 0 <= alcohol <= 60):
+            raise ValueError("fiber100 o alcohol100 fuera de rango: son gramos por 100 g")
+        if protein + carbs + fat + (alcohol or 0) > 105:
+            raise ValueError(
+                "proteína, hidratos, grasa y alcohol por 100 g suman más de 100 g: no son valores por 100 g"
+            )
         factor = grams / 100
         return {
             **data,
@@ -269,6 +283,8 @@ class AiItem(BaseModel):
             "protein": protein * factor,
             "carbs": carbs * factor,
             "fat": fat * factor,
+            "fiber": fiber * factor if fiber is not None else None,
+            "alcohol": alcohol * factor if alcohol else None,
         }
 
     @field_validator("name")
@@ -276,10 +292,10 @@ class AiItem(BaseModel):
     def _clean_name(cls, value: str) -> str:
         return value.strip().lower()
 
-    @field_validator("kcal", "protein", "carbs", "fat", "grams", "qty")
+    @field_validator("kcal", "protein", "carbs", "fat", "grams", "qty", "fiber", "alcohol")
     @classmethod
-    def _round(cls, value: float) -> float:
-        return round(value, 1)
+    def _round(cls, value: float | None) -> float | None:
+        return None if value is None else round(value, 1)
 
 
 class AiMeal(BaseModel):
@@ -307,6 +323,10 @@ def merge_duplicates(meal: AiMeal) -> AiMeal:
         first.protein = round(first.protein + item.protein, 1)
         first.carbs = round(first.carbs + item.carbs, 1)
         first.fat = round(first.fat + item.fat, 1)
+        for extra in ("fiber", "alcohol"):
+            a, b = getattr(first, extra), getattr(item, extra)
+            if a is not None or b is not None:
+                setattr(first, extra, round((a or 0) + (b or 0), 1))
     for item in merged.values():
         if item.unit == "g" and item.qty == 0:
             item.qty = item.grams
@@ -318,8 +338,8 @@ def check_consistency(meal: AiMeal) -> AiMeal:
     """Corrige kcal claramente incoherentes con los macros (4/4/9)."""
     adjusted = False
     for item in meal.items:
-        atwater = 4 * item.protein + 4 * item.carbs + 9 * item.fat
-        # Menos kcal de las que suman los macros es imposible; más puede ser alcohol.
+        atwater = 4 * item.protein + 4 * item.carbs + 9 * item.fat + 7 * (item.alcohol or 0)
+        # Menos kcal de las que suman los macros (y el alcohol) es imposible.
         if item.kcal < atwater * 0.8 - 10:
             item.kcal = round(atwater, 1)
             adjusted = True
@@ -327,6 +347,88 @@ def check_consistency(meal: AiMeal) -> AiMeal:
         meal.confidence = round(min(meal.confidence, 0.6), 2)
         meal.assumptions.append("Calorías recalculadas a partir de los macros por coherencia")
     return meal
+
+
+PLAN_PROMPT = """Eres un dietista-nutricionista español. Propones comidas sencillas, habituales en España y fáciles \
+de preparar para rellenar huecos de un plan semanal. Respondes SOLO con un objeto JSON válido, sin texto alrededor.
+
+ESQUEMA:
+{
+  "meals": [                  // una por hueco pedido, EN EL MISMO ORDEN
+    {
+      "date": "AAAA-MM-DD",
+      "slot": "desayuno" | "comida" | "merienda" | "cena" | "snack",
+      "name": string,          // título corto, sin cantidades
+      "items": [               // ingredientes, igual que al analizar una comida
+        {"name": string, "qty": number, "unit": string, "grams": number,
+         "kcal100": number, "protein100": number, "carbs100": number, "fat100": number,
+         "fiber100": number, "alcohol100": 0}
+      ]
+    }
+  ]
+}
+
+REGLAS
+- Valores POR CADA 100 g y el peso total en "grams": el sistema hace las cuentas. No calcules totales.
+- Ajusta las cantidades para acercarte a las calorías orientativas de cada hueco SIN pasarte.
+- Prioriza alimentos con proteína. Nada de alcohol.
+- Si la persona ya come ciertos platos, úsalos o propón algo parecido.
+- Valores de referencia: BEDCA y, si no está, USDA. Punto decimal y un decimal."""
+
+
+class PlanMeal(BaseModel):
+    date: str = Field(max_length=10)
+    slot: str = Field(max_length=12)
+    name: str = Field(default="", max_length=160)
+    items: list[AiItem] = Field(min_length=1, max_length=15)
+
+
+class PlanReply(BaseModel):
+    meals: list[PlanMeal] = Field(default_factory=list, max_length=14)
+
+
+def parse_plan(content: str) -> PlanReply:
+    reply = PlanReply.model_validate(extract_json(content))
+    if not reply.meals:
+        raise ValueError('"meals" está vacío')
+    for meal in reply.meals:
+        check_consistency(merge_duplicates(AiMeal(name=meal.name, items=meal.items)))
+    return reply
+
+
+SUGGEST_PROMPT = """Eres un dietista-nutricionista español. La persona ya ha comido hoy y le quedan unas calorías. \
+Propón 3 ideas sencillas y habituales en España para cerrar el día SIN SUPERAR las calorías que le quedan, priorizando \
+la proteína que le falta. Respondes SOLO con un objeto JSON válido, sin texto alrededor.
+
+ESQUEMA:
+{
+  "ideas": [
+    {"name": string, "items": [{"name": string, "qty": number, "unit": string, "grams": number,
+      "kcal100": number, "protein100": number, "carbs100": number, "fat100": number, "fiber100": number,
+      "alcohol100": 0}]}
+  ]
+}
+
+REGLAS
+- Valores POR CADA 100 g y la cantidad total en "grams": el sistema calcula los totales y descarta lo que se pase.
+- Nada de alcohol. Nada copioso si es tarde por la noche.
+- Cantidades realistas (una pieza de fruta, un yogur, una lata de atún...)."""
+
+
+class SuggestIdea(BaseModel):
+    name: str = Field(default="", max_length=160)
+    items: list[AiItem] = Field(min_length=1, max_length=8)
+
+
+class SuggestReply(BaseModel):
+    ideas: list[SuggestIdea] = Field(default_factory=list, max_length=5)
+
+
+def parse_suggestions(content: str) -> SuggestReply:
+    reply = SuggestReply.model_validate(extract_json(content))
+    if not reply.ideas:
+        raise ValueError('"ideas" está vacío')
+    return reply
 
 
 _FENCE = re.compile(r"^```(?:json)?\s*|\s*```$", re.MULTILINE)
@@ -500,6 +602,16 @@ class AiClient:
             model=self.settings.vision_model,
             base_url=self.settings.vision_base_url,
             api_key=self.settings.vision_api_key,
+        )
+
+    def suggest_plan(self, request: str) -> tuple[PlanReply, dict]:
+        return self._complete(
+            PLAN_PROMPT, request, parse_plan, model=self.settings.ai_model, base_url=None, api_key=None
+        )
+
+    def suggest_close(self, request: str) -> tuple[SuggestReply, dict]:
+        return self._complete(
+            SUGGEST_PROMPT, request, parse_suggestions, model=self.settings.ai_model, base_url=None, api_key=None
         )
 
     def analyze_text(self, text: str) -> tuple[AiMeal, dict]:

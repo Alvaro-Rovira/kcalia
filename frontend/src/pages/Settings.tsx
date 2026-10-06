@@ -3,24 +3,35 @@ import clsx from 'clsx'
 import {
   ChevronRight,
   Download,
+  Droplets,
   FileJson,
   FileSpreadsheet,
+  FileUp,
   LogOut,
+  Mic,
   Monitor,
   Moon,
   Pencil,
   PlusSquare,
   RefreshCw,
   Share,
+  ShieldCheck,
   Smartphone,
   Sun,
   Trash2,
   Zap,
 } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
+import { useNavigate } from 'react-router'
+import { DayTypeSettings } from '@/components/DayTypeSettings'
+import { ImportSheet } from '@/components/ImportSheet'
+import { RemindersSettings } from '@/components/RemindersSettings'
+import { SuggestSettings } from '@/components/SuggestSettings'
+import { VoiceShortcutSheet } from '@/components/VoiceShortcutSheet'
 import { Logo, Wordmark } from '@/components/Logo'
 import { PlanExplanation } from '@/components/PlanExplanation'
-import { useApp, useOnline, useStats } from '@/hooks/data'
+import { useAdminOverview } from '@/hooks/admin'
+import { useApp, useOnline, usePrefsActions, useStats } from '@/hooks/data'
 import { useInstall } from '@/hooks/useInstall'
 import { api, errorMessage } from '@/lib/api'
 import { fmt, kgTo, toKg } from '@/lib/format'
@@ -28,15 +39,17 @@ import { haptic } from '@/lib/haptics'
 import { GRAM_MACROS, KCAL_PER_GRAM, MACROS } from '@/lib/macros'
 import { ACTIVITIES, ACTIVITY_LABEL, GOAL_LABEL, GOALS } from '@/lib/options'
 import { getThemePref, setThemePref } from '@/lib/theme'
+import { autoWaterGoal, fmtWater } from '@/lib/water'
 import type { Activity, Bootstrap, Goal, Plan, Profile, Sex, Targets, ThemePref, Warning } from '@/lib/types'
 import { clearOutbox } from '@/offline/outbox'
 import { clearLocalData, keys } from '@/offline/queryClient'
 import { AnimatedNumber } from '@/ui/AnimatedNumber'
 import { Button } from '@/ui/Button'
-import { Field, NumberInput } from '@/ui/Field'
+import { Field, NumberInput, Stepper } from '@/ui/Field'
 import { Notice } from '@/ui/Notice'
 import { Segmented } from '@/ui/Segmented'
 import { Sheet } from '@/ui/Sheet'
+import { Switch } from '@/ui/Switch'
 import { toast } from '@/ui/toast'
 
 function Section({ title, children, id }: { title: string; children: ReactNode; id: string }) {
@@ -81,8 +94,11 @@ export default function Settings() {
   const online = useOnline()
   const install = useInstall()
   const [theme, setTheme] = useState<ThemePref>(getThemePref)
-  const [sheet, setSheet] = useState<'profile' | 'targets' | 'plan' | 'delete-data' | 'delete-account' | null>(null)
+  const [sheet, setSheet] = useState<'profile' | 'targets' | 'plan' | 'water' | 'import' | 'voice' | 'delete-data' | 'delete-account' | null>(null)
   const unit = profile.weight_unit
+  const isAdmin = !!app.user.is_admin
+  const admin = useAdminOverview(isAdmin)
+  const navigate = useNavigate()
 
   async function setUnit(next: 'kg' | 'lb') {
     client.setQueryData<Bootstrap>(keys.bootstrap, (old) => (old?.profile ? { ...old, profile: { ...old.profile, weight_unit: next } } : old))
@@ -126,6 +142,22 @@ export default function Settings() {
         <p className="mt-1 text-[14.5px] text-text-2">Sesión iniciada como {app.user.username}</p>
       </header>
 
+      {isAdmin && admin.data?.backup?.ok === false && (
+        <Notice level="danger" className="mt-4">
+          La última copia de seguridad externa no se pudo subir: {admin.data.backup.error}. Revísalo en Administración.
+        </Notice>
+      )}
+      {isAdmin && (
+        <Section title="Administración" id="a-admin">
+          <Row
+            label="Cuentas, solicitudes y gasto de IA"
+            value={admin.data?.pending ? `${admin.data.pending} ${admin.data.pending === 1 ? 'pendiente' : 'pendientes'}` : undefined}
+            onClick={() => navigate('/admin')}
+            icon={<ShieldCheck className="size-[18px]" aria-hidden />}
+          />
+        </Section>
+      )}
+
       <div className="lg:grid lg:grid-cols-2 lg:gap-x-6">
         <div>
           <Section title="Perfil" id="a-profile">
@@ -161,6 +193,24 @@ export default function Settings() {
             <Row label="Cómo se calculan" onClick={() => setSheet('plan')} />
             <Row label="Editar a mano" onClick={() => setSheet('targets')} icon={<Pencil className="size-[18px]" aria-hidden />} />
             <Row label="Recalcular con mi perfil" onClick={() => void recalculate()} icon={<RefreshCw className="size-[18px]" aria-hidden />} />
+            <Row
+              label="Objetivo de agua"
+              value={`${fmtWater(app.water_goal_ml ?? autoWaterGoal(profile.weight_kg))}${app.prefs?.water_goal_ml ? '' : ' · auto'}`}
+              onClick={() => setSheet('water')}
+              icon={<Droplets className="size-[18px]" aria-hidden />}
+            />
+          </Section>
+
+          <Section title="Entreno y descanso" id="a-daytypes">
+            <DayTypeSettings />
+          </Section>
+
+          <Section title="Recordatorios" id="a-reminders">
+            <RemindersSettings />
+          </Section>
+
+          <Section title="Cerrar el día" id="a-suggest">
+            <SuggestSettings />
           </Section>
         </div>
 
@@ -218,7 +268,13 @@ export default function Settings() {
                 <Row label="Favoritos y recientes, a un toque" value={saved.saved.saved_quick} />
               </>
             )}
+            {app.ai.paused && (
+              <div className="border-b border-border px-4 py-3 text-[13.5px] leading-relaxed text-warn-text">
+                La IA está en pausa por decisión del administrador. Tu historial y tus productos siguen funcionando.
+              </div>
+            )}
             <Row label="Consultas de hoy" value={`${saved?.used_today ?? app.ai.used_today} de ${app.ai.limit}`} />
+            {app.ai.stt_limit !== undefined && <Row label="Audios de hoy" value={`${app.ai.stt_used_today ?? 0} de ${app.ai.stt_limit}`} />}
             <Row label="Modelo" value={app.ai.configured ? app.ai.model : 'Sin configurar'} />
           </Section>
 
@@ -249,6 +305,14 @@ export default function Settings() {
             </Section>
           )}
 
+          <Section title="Atajos" id="a-shortcuts">
+            <p className="border-b border-border px-4 py-3 text-[13.5px] leading-relaxed text-text-2">
+              Con la app instalada en Android o en el ordenador, mantén pulsado su icono (o clic derecho) para ir directo a: añadir comida, un vaso de agua, entrenar
+              o apuntar el peso.
+            </p>
+            <Row label="Atajo de voz en iPhone" value="Siri" onClick={() => setSheet('voice')} icon={<Mic className="size-[18px]" aria-hidden />} />
+          </Section>
+
           <Section title="Tus datos" id="a-data">
             <a href="/api/export/json" download="kcalia-datos.json" className="flex min-h-[52px] items-center gap-3 border-b border-border px-4 py-2.5 transition-colors hover:bg-surface-2">
               <FileJson className="size-[18px] shrink-0 text-text-3" aria-hidden />
@@ -260,17 +324,32 @@ export default function Settings() {
               <span className="flex-1 text-[15px] text-text">Exportar comidas (CSV)</span>
               <Download className="size-4 text-text-3" aria-hidden />
             </a>
-            <a href="/api/export/weights.csv" download className="flex min-h-[52px] items-center gap-3 px-4 py-2.5 transition-colors hover:bg-surface-2">
-              <FileSpreadsheet className="size-[18px] shrink-0 text-text-3" aria-hidden />
-              <span className="flex-1 text-[15px] text-text">Exportar peso (CSV)</span>
-              <Download className="size-4 text-text-3" aria-hidden />
-            </a>
+            {(
+              [
+                ['/api/export/weights.csv', 'Exportar peso (CSV)'],
+                ['/api/export/measurements.csv', 'Exportar medidas (CSV)'],
+                ['/api/export/water.csv', 'Exportar agua (CSV)'],
+              ] as const
+            ).map(([href, label]) => (
+              <a key={href} href={href} download className="flex min-h-[52px] items-center gap-3 border-b border-border px-4 py-2.5 transition-colors hover:bg-surface-2">
+                <FileSpreadsheet className="size-[18px] shrink-0 text-text-3" aria-hidden />
+                <span className="flex-1 text-[15px] text-text">{label}</span>
+                <Download className="size-4 text-text-3" aria-hidden />
+              </a>
+            ))}
+            <Row label="Importar datos" value="CSV o JSON" onClick={() => setSheet('import')} icon={<FileUp className="size-[18px]" aria-hidden />} />
           </Section>
 
           <Section title="Cuenta" id="a-account">
             <Row label="Cerrar sesión" onClick={() => void logout()} icon={<LogOut className="size-[18px]" aria-hidden />} />
             <Row label="Borrar mis datos" onClick={() => setSheet('delete-data')} icon={<Trash2 className="size-[18px]" aria-hidden />} danger />
-            <Row label="Borrar mi cuenta" onClick={() => setSheet('delete-account')} icon={<Trash2 className="size-[18px]" aria-hidden />} danger />
+            {isAdmin ? (
+              <p className="px-4 py-3 text-[13px] leading-relaxed text-text-3">
+                Eres el administrador: para borrar tu cuenta, antes pasa el rol a otra con <code>scripts/make-admin.py</code> en el servidor.
+              </p>
+            ) : (
+              <Row label="Borrar mi cuenta" onClick={() => setSheet('delete-account')} icon={<Trash2 className="size-[18px]" aria-hidden />} danger />
+            )}
           </Section>
         </div>
       </div>
@@ -303,6 +382,9 @@ export default function Settings() {
           </div>
         )}
       </Sheet>
+      <WaterGoalSheet open={sheet === 'water'} onClose={() => setSheet(null)} current={app.prefs?.water_goal_ml ?? null} weightKg={profile.weight_kg} />
+      <ImportSheet open={sheet === 'import'} onClose={() => setSheet(null)} />
+      <VoiceShortcutSheet open={sheet === 'voice'} onClose={() => setSheet(null)} />
       <DeleteSheet kind={sheet === 'delete-data' ? 'data' : sheet === 'delete-account' ? 'account' : null} onClose={() => setSheet(null)} />
     </main>
   )
@@ -576,6 +658,52 @@ function DeleteSheet({ kind, onClose }: { kind: 'data' | 'account' | null; onClo
           onChange={(event) => setPassword(event.target.value)}
           error={error || undefined}
         />
+      </div>
+    </Sheet>
+  )
+}
+
+function WaterGoalSheet({ open, onClose, current, weightKg }: { open: boolean; onClose: () => void; current: number | null; weightKg: number }) {
+  const savePrefs = usePrefsActions()
+  const auto = autoWaterGoal(weightKg)
+  const [manual, setManual] = useState(current !== null)
+  const [value, setValue] = useState(current ?? auto)
+  useEffect(() => {
+    if (!open) return
+    setManual(current !== null)
+    setValue(current ?? auto)
+  }, [open, current, auto])
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title="Objetivo de agua"
+      footer={
+        <Button
+          size="lg"
+          block
+          onClick={() => {
+            savePrefs({ water_goal_ml: manual ? value : null })
+            haptic('success')
+            toast.success('Objetivo de agua guardado', fmtWater(manual ? value : auto))
+            onClose()
+          }}
+        >
+          Guardar
+        </Button>
+      }
+    >
+      <div className="space-y-5">
+        <div className="card overflow-hidden">
+          <Switch
+            label="Calcularlo con mi peso"
+            description={`35 ml por kilo: ${fmtWater(auto)} al día con tu peso actual.`}
+            checked={!manual}
+            onChange={(automatic) => setManual(!automatic)}
+          />
+        </div>
+        {manual && <Stepper label="Mililitros al día" value={value} onChange={setValue} step={250} min={500} max={8000} unit="ml" />}
+        <p className="text-[13px] leading-relaxed text-text-3">Es una referencia general: con calor o mucho deporte se necesita más. No es consejo médico.</p>
       </div>
     </Sheet>
   )

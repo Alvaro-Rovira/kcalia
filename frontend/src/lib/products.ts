@@ -15,7 +15,7 @@ const VOLUME: Record<string, number> = { ml: 1, cl: 10, l: 1000 }
 export type ProductMatchInfo = Pick<
   Product,
   'id' | 'name' | 'alias' | 'basis' | 'kcal100' | 'protein100' | 'carbs100' | 'fat100' | 'unit_label' | 'unit_grams'
->
+> & { fiber100?: number | null }
 
 /** Redondeo a un decimal igual que el del servidor (mitades hacia arriba). */
 export const round1 = (value: number): number => Math.floor(value * 10 + 0.5) / 10
@@ -74,7 +74,7 @@ export function itemFor(product: ProductMatchInfo, qty: number, unit: string | n
   }
   if (grams <= 0 || grams > 5000) return null
   const factor = grams / 100
-  return {
+  const item: Item = {
     name: product.name,
     qty,
     unit: unit ?? 'pieza',
@@ -85,6 +85,8 @@ export function itemFor(product: ProductMatchInfo, qty: number, unit: string | n
     fat: round1(product.fat100 * factor),
     product_id: product.id,
   }
+  if (product.fiber100 !== null && product.fiber100 !== undefined) item.fiber = round1(product.fiber100 * factor)
+  return item
 }
 
 function tryPiece(piece: string, products: ProductMatchInfo[]): Item | null {

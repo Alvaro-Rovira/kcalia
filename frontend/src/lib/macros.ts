@@ -96,3 +96,31 @@ export function macroSplit(m: Macros): Record<'protein' | 'carbs' | 'fat', numbe
   if (total <= 0) return { protein: 0, carbs: 0, fat: 0 }
   return { protein: p / total, carbs: c / total, fat: f / total }
 }
+
+export interface Extras {
+  fiber: number
+  alcohol: number
+}
+
+/** Fibra y alcohol: lo que no trae el dato cuenta como 0. */
+export function itemsExtras(items: Item[], servings = 1): Extras {
+  const round = (n: number) => Math.round(n * servings * 10) / 10
+  return {
+    fiber: round(items.reduce((sum, i) => sum + (i.fiber ?? 0), 0)),
+    alcohol: round(items.reduce((sum, i) => sum + (i.alcohol ?? 0), 0)),
+  }
+}
+
+/** Fibra y alcohol de una lista de comidas (las que vienen del servidor ya traen su total). */
+export function mealsExtras(meals: { items: Item[]; servings: number; fiber?: number; alcohol?: number }[]): Extras {
+  return meals.reduce(
+    (acc, meal) => {
+      const own = meal.fiber !== undefined && meal.alcohol !== undefined ? { fiber: meal.fiber, alcohol: meal.alcohol } : itemsExtras(meal.items, meal.servings)
+      return { fiber: acc.fiber + own.fiber, alcohol: acc.alcohol + own.alcohol }
+    },
+    { fiber: 0, alcohol: 0 },
+  )
+}
+
+/** Objetivo orientativo de fibra para adultos (EFSA): 25 g; muchas guías hablan de 25-30 g. */
+export const FIBER_TARGET = { min: 25, max: 30 }

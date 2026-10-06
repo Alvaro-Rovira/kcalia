@@ -25,8 +25,10 @@ import { relativeDay, todayISO } from '@/lib/dates'
 import { capitalize, fmt } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
 import { downscaleImage } from '@/lib/image'
+import { drinkItem, type Drink } from '@/lib/drinks'
 import { itemsTotal } from '@/lib/macros'
 import { draftFromProducts, resolveText, singleItem } from '@/lib/products'
+import { rankForSlot } from '@/lib/ranking'
 import { draftFromDish, matchLocally, suggestDishes } from '@/lib/resolve'
 import { slotForTime } from '@/lib/slots'
 import type { Dish, Draft, Item, Meal, Product, ResolveResult, Slot, Source, Via } from '@/lib/types'
@@ -37,12 +39,15 @@ import { Notice } from '@/ui/Notice'
 import { Sheet } from '@/ui/Sheet'
 import { toast } from '@/ui/toast'
 import { Analyzing } from './Analyzing'
+import { DrinkPicker } from './DrinkPicker'
 import { ItemList, ServingsPicker, SlotPicker, Totals } from './MealBreakdown'
 
 interface Props {
   open: boolean
   date: string
   slot?: Slot
+  /** Texto ya escrito al abrir (atajo de voz). Se muestra para revisarlo: no se analiza solo. */
+  text?: string
   onClose: () => void
   onSaved: (date: string) => void
   /** Abre la hoja para guardar la etiqueta de un producto nuevo. */
@@ -125,7 +130,7 @@ function QuickChip({ dish, onPick }: { dish: Dish; onPick: (dish: Dish) => void 
   )
 }
 
-export default function AddMealSheet({ open, date: initialDate, slot: initialSlot, onClose, onSaved, onNewProduct }: Props) {
+export default function AddMealSheet({ open, date: initialDate, slot: initialSlot, text: initialText, onClose, onSaved, onNewProduct }: Props) {
   const client = useQueryClient()
   const { data: bootstrap } = useBootstrap()
   const online = useOnline()
@@ -152,14 +157,14 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
       return
     }
     setPhase({ kind: 'input' })
-    setText('')
+    setText(initialText ?? '')
     setNotice('')
     setServings(1)
     setSaved(false)
     setDate(initialDate)
     setSlot(initialSlot ?? (initialDate === todayISO() ? slotForTime() : 'comida'))
-    via.current = 'text'
-  }, [open, initialDate, initialSlot])
+    via.current = initialText ? 'voice' : 'text'
+  }, [open, initialDate, initialSlot, initialText])
 
   useEffect(
     () => () => {
@@ -168,8 +173,10 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
     [],
   )
 
-  const favorites = useMemo(() => dishes.filter((d) => d.favorite).sort((a, b) => b.use_count - a.use_count), [dishes])
-  const recents = useMemo(() => dishes.filter((d) => !d.favorite).slice(0, 12), [dishes])
+  // Ordenados para el momento elegido (al abrir, el de la hora): el café arriba por la mañana, la cena por la noche.
+  const favorites = useMemo(() => rankForSlot(dishes.filter((d) => d.favorite), slot), [dishes, slot])
+  const recents = useMemo(() => rankForSlot(dishes.filter((d) => !d.favorite).slice(0, 30), slot).slice(0, 12), [dishes, slot])
+  const rankedProducts = useMemo(() => rankForSlot(products, slot), [products, slot])
   const suggestions = useMemo(() => suggestDishes(text, dishes), [text, dishes])
 
   /** Guarda y cierra. El aviso permite deshacer sin pedir confirmaciones. */
@@ -196,7 +203,7 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
       toast({
         tone: 'success',
         title: `${meal.name} · ${fmt(total.kcal)} kcal`,
-        description: options.source === 'product' ? 'Con la etiqueta de tu producto, sin gastar IA' : withoutAi ? 'Añadida desde tu historial, sin gastar IA' : `Añadida a ${relativeDay(date).toLowerCase()}`,
+        description: options.source === 'drink' ? 'Sin gastar IA' : options.source === 'product' ? 'Con la etiqueta de tu producto, sin gastar IA' : withoutAi ? 'Añadida desde tu historial, sin gastar IA' : `Añadida a ${relativeDay(date).toLowerCase()}`,
         action: { label: 'Deshacer', onClick: () => meals.remove(meal) },
       })
       onSaved(date)
@@ -310,6 +317,21 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
     setServings(1)
     setPhase({ kind: 'result', draft: draftFromProducts(product.alias || product.name, [singleItem(product)]), via: 'tap' })
     haptic('select')
+  }
+
+  const quickDrink = (drink: Drink) => {
+    const item = drinkItem(drink)
+    const draft: Draft = {
+      name: drink.name,
+      text: '',
+      items: [item],
+      ...itemsTotal([item]),
+      confidence: 1,
+      assumptions: ['El alcohol cuenta 7 kcal por gramo'],
+      source: 'drink',
+      dish_id: null,
+    }
+    save(draft, { source: 'drink', via: 'tap' })
   }
 
   const quickAdd = (dish: Dish) => save(draftFromDish(dish, dish.favorite ? 'favorite' : 'recent'), { source: dish.favorite ? 'favorite' : 'recent', via: 'tap' })
@@ -505,7 +527,7 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
                 <div className="mt-5">
                   <p className="eyebrow">Mis productos</p>
                   <div className="no-scrollbar -mx-5 mt-2 flex gap-2 overflow-x-auto px-5">
-                    {products.slice(0, 12).map((product) => (
+                    {rankedProducts.slice(0, 12).map((product) => (
                       <motion.button
                         key={product.id}
                         type="button"
@@ -521,6 +543,7 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
                   </div>
                 </div>
               )}
+              <DrinkPicker onPick={quickDrink} />
               <button
                 type="button"
                 onClick={onNewProduct}

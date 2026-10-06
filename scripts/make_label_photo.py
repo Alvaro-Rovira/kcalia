@@ -110,5 +110,7 @@ def make(kind: str = "yogur", seed: int = 4) -> bytes:
 
 if __name__ == "__main__":
     kind, target = (sys.argv[1], sys.argv[2]) if len(sys.argv) > 2 else ("yogur", "etiqueta.jpg")
-    open(target, "wb").write(make(kind))
-    print(target, len(make(kind)) // 1024, "KB")
+    data = make(kind)
+    with open(target, "wb") as handle:
+        handle.write(data)
+    print(target, len(data) // 1024, "KB")

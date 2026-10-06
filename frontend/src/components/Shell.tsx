@@ -1,14 +1,18 @@
 import clsx from 'clsx'
 import { AnimatePresence, motion } from 'motion/react'
-import { CalendarDays, ChartColumn, CloudOff, House, Plus, Scale, Settings, type LucideIcon } from 'lucide-react'
-import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { CalendarDays, ChartColumn, ClipboardList, CloudOff, Dumbbell, House, Plus, Scale, Settings, ShieldCheck, type LucideIcon } from 'lucide-react'
+import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate, useSearchParams, type Location } from 'react-router'
-import { useOnline, usePendingCount } from '@/hooks/data'
+import { useAdminOverview } from '@/hooks/admin'
+import { useBootstrap, useOnline, usePendingCount, useWaterActions } from '@/hooks/data'
 import { isValidISO, todayISO } from '@/lib/dates'
 import { plural } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
+import { readShortcut, withoutShortcut } from '@/lib/shortcuts'
 import type { Product, Slot } from '@/lib/types'
+import { fmtWater } from '@/lib/water'
 import { Confetti } from '@/ui/Confetti'
+import { toast } from '@/ui/toast'
 import { Logo, Wordmark } from './Logo'
 
 const AddMealSheet = lazy(() => import('./AddMealSheet'))
@@ -17,6 +21,8 @@ const ProductSheet = lazy(() => import('./ProductSheet'))
 interface AddMealOptions {
   date?: string
   slot?: Slot
+  /** Texto ya escrito (atajo de voz de iPhone: /?nueva=1&texto=...). */
+  text?: string
 }
 
 interface ShellContext {
@@ -29,11 +35,31 @@ interface ShellContext {
 const Context = createContext<ShellContext>({ openAddMeal: () => undefined, openProduct: () => undefined, celebrate: () => undefined })
 export const useShell = () => useContext(Context)
 
-const NAV: { to: string; label: string; Icon: LucideIcon }[] = [
+interface NavItem {
+  to: string
+  label: string
+  Icon: LucideIcon
+  /** Otras rutas en las que esta pestaña cuenta como activa. */
+  also?: string[]
+}
+
+// En el móvil, cinco pestañas: «Progreso» agrupa el resumen semanal y el cuerpo (peso, medidas y fotos).
+const NAV: NavItem[] = [
+  { to: '/', label: 'Hoy', Icon: House },
+  { to: '/historial', label: 'Historial', Icon: CalendarDays, also: ['/plan'] },
+  { to: '/entreno', label: 'Entreno', Icon: Dumbbell },
+  { to: '/resumen', label: 'Progreso', Icon: ChartColumn, also: ['/peso'] },
+  { to: '/ajustes', label: 'Ajustes', Icon: Settings, also: ['/admin'] },
+]
+
+// En el escritorio hay sitio para todo.
+const SIDEBAR: NavItem[] = [
   { to: '/', label: 'Hoy', Icon: House },
   { to: '/historial', label: 'Historial', Icon: CalendarDays },
+  { to: '/plan', label: 'Plan semanal', Icon: ClipboardList },
+  { to: '/entreno', label: 'Entreno', Icon: Dumbbell },
   { to: '/resumen', label: 'Resumen', Icon: ChartColumn },
-  { to: '/peso', label: 'Peso', Icon: Scale },
+  { to: '/peso', label: 'Cuerpo', Icon: Scale },
   { to: '/ajustes', label: 'Ajustes', Icon: Settings },
 ]
 
@@ -66,7 +92,29 @@ function OfflineChip() {
   )
 }
 
+/** Solicitudes de cuenta pendientes (solo para el administrador; 0 para el resto). */
+function usePendingRequests(): number {
+  const { data } = useBootstrap()
+  const admin = !!data?.user.is_admin
+  return useAdminOverview(admin).data?.pending ?? 0
+}
+
+function Badge({ count, className }: { count: number; className?: string }) {
+  if (!count) return null
+  return (
+    <span
+      className={clsx('grid h-[18px] min-w-[18px] place-items-center rounded-full bg-danger px-1 text-[11px] leading-none font-bold text-bg', className)}
+      data-num
+    >
+      {count > 9 ? '9+' : count}
+      <span className="sr-only"> {count === 1 ? 'solicitud pendiente' : 'solicitudes pendientes'}</span>
+    </span>
+  )
+}
+
 function BottomNav() {
+  const requests = usePendingRequests()
+  const { pathname } = useLocation()
   return (
     <nav
       aria-label="Principal"
@@ -74,7 +122,7 @@ function BottomNav() {
       style={{ paddingBottom: 'var(--safe-b)' }}
     >
       <ul className="mx-auto grid h-[var(--nav-h)] max-w-[520px] grid-cols-5 px-1.5">
-        {NAV.map(({ to, label, Icon }) => (
+        {NAV.map(({ to, label, Icon, also }) => (
           <li key={to} className="min-w-0">
             <NavLink
               to={to}
@@ -82,7 +130,9 @@ function BottomNav() {
               onClick={() => haptic('tap')}
               className="relative flex h-full flex-col items-center justify-center gap-1 rounded-md"
             >
-              {({ isActive }) => (
+              {({ isActive: exact }) => {
+                const isActive = exact || !!also?.some((path) => pathname.startsWith(path))
+                return (
                 <>
                   <span className="relative grid h-8 w-14 place-items-center">
                     {isActive && (
@@ -103,12 +153,14 @@ function BottomNav() {
                         aria-hidden
                       />
                     </motion.span>
+                    {to === '/ajustes' && <Badge count={requests} className="absolute -top-1 right-1.5" />}
                   </span>
                   <span className={clsx('text-[11px] leading-none font-medium transition-colors', isActive ? 'text-text' : 'text-text-3')}>
                     {label}
                   </span>
                 </>
-              )}
+                )
+              }}
             </NavLink>
           </li>
         ))}
@@ -118,6 +170,9 @@ function BottomNav() {
 }
 
 function Sidebar({ onAdd }: { onAdd: () => void }) {
+  const { data } = useBootstrap()
+  const requests = usePendingRequests()
+  const items = data?.user.is_admin ? [...SIDEBAR, { to: '/admin', label: 'Administración', Icon: ShieldCheck }] : SIDEBAR
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col border-r border-border bg-surface/60 px-4 py-7 backdrop-blur-xl lg:flex">
       <div className="flex items-center gap-2.5 px-2">
@@ -134,7 +189,7 @@ function Sidebar({ onAdd }: { onAdd: () => void }) {
       </button>
       <nav aria-label="Principal" className="mt-6">
         <ul className="space-y-1">
-          {NAV.map(({ to, label, Icon }) => (
+          {items.map(({ to, label, Icon }) => (
             <li key={to}>
               <NavLink
                 to={to}
@@ -149,7 +204,8 @@ function Sidebar({ onAdd }: { onAdd: () => void }) {
                 {({ isActive }) => (
                   <>
                     <Icon className={clsx('size-5', isActive && 'text-accent-text')} aria-hidden />
-                    {label}
+                    <span className="flex-1">{label}</span>
+                    {to === '/admin' && <Badge count={requests} />}
                   </>
                 )}
               </NavLink>
@@ -180,7 +236,7 @@ export function Shell({ children }: { children: (location: Location) => ReactNod
   const location = useLocation()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
-  const [sheet, setSheet] = useState<{ open: boolean; date: string; slot?: Slot }>({ open: false, date: todayISO() })
+  const [sheet, setSheet] = useState<{ open: boolean; date: string; slot?: Slot; text?: string }>({ open: false, date: todayISO() })
   const [confetti, setConfetti] = useState(0)
   const [productSheet, setProductSheet] = useState<{ open: boolean; product: Product | null }>({ open: false, product: null })
   const [productEver, setProductEver] = useState(false)
@@ -220,14 +276,26 @@ export function Shell({ children }: { children: (location: Location) => ReactNod
     window.scrollTo(0, 0)
   }, [location.pathname])
 
-  // Atajo de la PWA instalada: /?nueva=1 abre directamente la hoja de añadir.
+  // Atajos de la PWA instalada y del atajo de voz de iPhone:
+  // /?nueva=1 abre la hoja de añadir (con &texto=... ya escrito, sin analizar: no se gasta IA desde un enlace)
+  // y /?agua=250 apunta un vaso de agua hoy, con «Deshacer».
+  const { add: addWater, remove: removeWater } = useWaterActions()
+  // Una sola vez por navegación (StrictMode monta los efectos dos veces y el agua se apuntaría doble).
+  const handled = useRef<string | null>(null)
   useEffect(() => {
-    if (params.get('nueva') !== '1') return
-    const next = new URLSearchParams(params)
-    next.delete('nueva')
-    setParams(next, { replace: true })
-    setSheet({ open: true, date: todayISO() })
-  }, [params, setParams])
+    const shortcut = readShortcut(params)
+    if (!shortcut || handled.current === location.key) return
+    handled.current = location.key
+    setParams(withoutShortcut(params), { replace: true })
+    if (shortcut.add) setSheet({ open: true, date: todayISO(), text: shortcut.text })
+    if (shortcut.waterMl) {
+      const today = todayISO()
+      const ml = shortcut.waterMl
+      const entry = addWater(today, ml)
+      haptic('success')
+      toast({ title: `+${fmtWater(ml)} de agua`, action: { label: 'Deshacer', onClick: () => removeWater(today, entry.client_id) } })
+    }
+  }, [params, setParams, location.key, addWater, removeWater])
 
   return (
     <Context.Provider value={value}>
@@ -284,6 +352,7 @@ export function Shell({ children }: { children: (location: Location) => ReactNod
             open={sheet.open}
             date={sheet.date}
             slot={sheet.slot}
+            text={sheet.text}
             onClose={() => setSheet((s) => ({ ...s, open: false }))}
             onNewProduct={() => {
               setSheet((s) => ({ ...s, open: false }))

@@ -1,8 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
-import { ArrowRight, Camera, Check, ImagePlus, PencilLine, Trash2, WifiOff } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { useOnline } from '@/hooks/data'
+import { ArrowRight, Barcode, Camera, Check, ImagePlus, PencilLine, ScanBarcode, Trash2, WifiOff, X } from 'lucide-react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { useBootstrap, useOnline } from '@/hooks/data'
 import { api, ApiError, errorMessage } from '@/lib/api'
 import { fmt, fmtSmart } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
@@ -18,6 +18,10 @@ import { Segmented } from '@/ui/Segmented'
 import { Sheet } from '@/ui/Sheet'
 import { toast } from '@/ui/toast'
 import { Analyzing } from './Analyzing'
+import { useShell } from './Shell'
+
+// La cámara y el lector de respaldo (zxing-wasm) solo se descargan al escanear.
+const BarcodeScanner = lazy(() => import('./BarcodeScanner'))
 
 interface Props {
   open: boolean
@@ -26,8 +30,34 @@ interface Props {
   onClose: () => void
 }
 
-type Phase = { kind: 'pick' } | { kind: 'busy'; preview: string } | { kind: 'clarify'; question: string } | { kind: 'form' }
+type Phase =
+  | { kind: 'pick' }
+  | { kind: 'busy'; preview: string }
+  | { kind: 'clarify'; question: string }
+  | { kind: 'form' }
+  | { kind: 'scan' }
+  | { kind: 'lookup'; code: string }
+  | { kind: 'nocode'; code: string; reason: 'not_found' | 'unavailable' | 'offline' }
 type ScanResult = { status: 'ok'; draft: LabelDraft } | { status: 'clarify'; question: string }
+type BarcodeResult =
+  | { status: 'saved'; product: Product }
+  | { status: 'found'; draft: LabelDraft; code: string }
+  | { status: 'not_found' | 'unavailable'; code: string }
+
+const NO_CODE: Record<'not_found' | 'unavailable' | 'offline', { title: string; text: string }> = {
+  not_found: {
+    title: 'Este código no está en Open Food Facts',
+    text: 'Haz una foto a la tabla nutricional y la leo yo. El código queda guardado con el producto, así la próxima vez lo reconoceré al escanearlo.',
+  },
+  unavailable: {
+    title: 'Open Food Facts no responde ahora',
+    text: 'Puedes volver a intentarlo en un rato o hacer una foto a la tabla nutricional.',
+  },
+  offline: {
+    title: 'Sin conexión',
+    text: 'Para buscar un código nuevo necesito red. Los productos que ya guardaste con su código sí se reconocen sin conexión.',
+  },
+}
 
 interface Fields {
   name: string
@@ -141,6 +171,9 @@ export function ProductSheet({ open, product, onClose }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [blob, setBlob] = useState<Blob | null>(null)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [barcode, setBarcode] = useState<string | null>(null)
+  const { data: bootstrap } = useBootstrap()
+  const { openProduct } = useShell()
   const camera = useRef<HTMLInputElement>(null)
   const gallery = useRef<HTMLInputElement>(null)
   const objectUrl = useRef<string | null>(null)
@@ -159,6 +192,7 @@ export function ProductSheet({ open, product, onClose }: Props) {
     setError('')
     setConfirmDelete(false)
     setBlob(null)
+    setBarcode(product?.barcode ?? null)
     if (product) {
       setFields(fromProduct(product))
       setWarnings([])
@@ -201,6 +235,38 @@ export function ProductSheet({ open, product, onClose }: Props) {
     }
   }
 
+  /** Código leído o escrito: primero lo que ya está guardado (también sin red), luego Open Food Facts. */
+  async function lookupCode(code: string) {
+    setError('')
+    const saved = bootstrap?.products.find((p) => p.barcode === code)
+    if (saved) {
+      toast.success('Ya lo tienes guardado', saved.alias || saved.name)
+      return openProduct(saved)
+    }
+    setBarcode(code)
+    if (!navigator.onLine) return setPhase({ kind: 'nocode', code, reason: 'offline' })
+    setPhase({ kind: 'lookup', code })
+    try {
+      const result = await api.get<BarcodeResult>(`/api/products/barcode/${code}`)
+      if (result.status === 'saved') {
+        toast.success('Ya lo tienes guardado', result.product.alias || result.product.name)
+        return openProduct(result.product)
+      }
+      if (result.status === 'found') {
+        setFields(fromDraft(result.draft))
+        setWarnings(result.draft.warnings)
+        setImageUrl(null)
+        haptic('success')
+        return setPhase({ kind: 'form' })
+      }
+      setPhase({ kind: 'nocode', code, reason: result.status })
+    } catch (err) {
+      if (err instanceof ApiError && err.offline) return setPhase({ kind: 'nocode', code, reason: 'offline' })
+      setError(errorMessage(err))
+      setPhase({ kind: 'pick' })
+    }
+  }
+
   const macrosSum = (fields.protein ?? 0) + (fields.carbs ?? 0) + (fields.fat ?? 0)
   const missing = [fields.kcal, fields.protein, fields.carbs, fields.fat].some((v) => v === null)
   const tooMuch = macrosSum > 105
@@ -237,6 +303,7 @@ export function ProductSheet({ open, product, onClose }: Props) {
     salt100: fields.salt,
     unit_label: fields.unitLabel.trim(),
     unit_grams: fields.unitGrams,
+    barcode,
   })
 
   const putInCache = (saved: Product) =>
@@ -290,7 +357,15 @@ export function ProductSheet({ open, product, onClose }: Props) {
     }
   }
 
-  const title = editing ? 'Editar producto' : phase.kind === 'form' ? 'Revisa la etiqueta' : 'Guardar un producto'
+  const title = editing
+    ? 'Editar producto'
+    : phase.kind === 'form'
+      ? barcode && !blob
+        ? 'Revisa el producto'
+        : 'Revisa la etiqueta'
+      : phase.kind === 'scan'
+        ? 'Escanea el código'
+        : 'Guardar un producto'
   const footer =
     phase.kind === 'form' ? (
       <div className="space-y-2">
@@ -318,7 +393,10 @@ export function ProductSheet({ open, product, onClose }: Props) {
             </Notice>
           )}
           {error && <Notice level="warn">{error}</Notice>}
-          <Button size="lg" block disabled={!online} onClick={() => camera.current?.click()} icon={<Camera className="size-5" aria-hidden />}>
+          <Button size="lg" block onClick={() => setPhase({ kind: 'scan' })} icon={<ScanBarcode className="size-5" aria-hidden />}>
+            Escanear el código de barras
+          </Button>
+          <Button size="lg" block variant="secondary" disabled={!online} onClick={() => camera.current?.click()} icon={<Camera className="size-5" aria-hidden />}>
             Hacer foto a la etiqueta
           </Button>
           <Button size="lg" block variant="secondary" disabled={!online} onClick={() => gallery.current?.click()} icon={<ImagePlus className="size-5" aria-hidden />}>
@@ -336,6 +414,42 @@ export function ProductSheet({ open, product, onClose }: Props) {
       )}
 
       {phase.kind === 'busy' && <Analyzing mode="label" preview={phase.preview} />}
+
+      {phase.kind === 'scan' && (
+        <Suspense fallback={<div className="skeleton aspect-[4/3] !rounded-[22px]" role="status" aria-label="Preparando la cámara" />}>
+          <BarcodeScanner onDetected={(code) => void lookupCode(code)} onCancel={() => setPhase({ kind: 'pick' })} />
+        </Suspense>
+      )}
+
+      {phase.kind === 'lookup' && (
+        <div className="py-10 text-center" role="status">
+          <Barcode className="mx-auto size-9 animate-pulse-soft text-accent-text" aria-hidden />
+          <p className="mt-3 text-[15px] text-text-2">Buscando el código {phase.code}…</p>
+        </div>
+      )}
+
+      {phase.kind === 'nocode' && (
+        <div className="space-y-3 pt-1">
+          <Notice level={phase.reason === 'not_found' ? 'info' : 'warn'}>
+            <strong className="block font-semibold">{NO_CODE[phase.reason].title}</strong>
+            {NO_CODE[phase.reason].text}
+          </Notice>
+          <p className="text-[13px] text-text-3" data-num>
+            Código {phase.code}
+          </p>
+          <Button size="lg" block disabled={!online} onClick={() => camera.current?.click()} icon={<Camera className="size-5" aria-hidden />}>
+            Hacer foto a la etiqueta
+          </Button>
+          {phase.reason !== 'not_found' && (
+            <Button size="lg" block variant="secondary" disabled={!online} onClick={() => void lookupCode(phase.code)}>
+              Volver a buscar
+            </Button>
+          )}
+          <Button block variant="ghost" onClick={() => setPhase({ kind: 'form' })} icon={<PencilLine className="size-[18px]" aria-hidden />}>
+            Rellenarlo a mano
+          </Button>
+        </div>
+      )}
 
       {phase.kind === 'clarify' && (
         <div className="space-y-4 pt-1">
@@ -370,6 +484,15 @@ export function ProductSheet({ open, product, onClose }: Props) {
           {error && <Notice level="danger">{error}</Notice>}
           {!online && <Notice level="info">Sin conexión: puedes revisar el producto, pero guardar necesita red.</Notice>}
 
+          {barcode && (
+            <p className="flex items-center gap-2 text-[13px] text-text-3">
+              <Barcode className="size-4 shrink-0" aria-hidden />
+              <span data-num>Código de barras {barcode}</span>
+              <button type="button" onClick={() => setBarcode(null)} aria-label="Quitar el código de barras" className="-my-2 grid size-11 place-items-center rounded-full hover:text-text">
+                <X className="size-4" aria-hidden />
+              </button>
+            </p>
+          )}
           <Field label="Nombre del producto" value={fields.name} onChange={(e) => set('name', e.target.value)} maxLength={120} autoComplete="off" enterKeyHint="next" />
           <Field
             label="Cómo lo escribirás al apuntar"

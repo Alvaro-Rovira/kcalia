@@ -2,7 +2,7 @@ export type Sex = 'hombre' | 'mujer'
 export type Activity = 'sedentario' | 'ligero' | 'moderado' | 'alto' | 'muy_alto'
 export type Goal = 'definicion_ligera' | 'definicion_agresiva' | 'volumen' | 'mantenimiento' | 'recomposicion'
 export type Slot = 'desayuno' | 'comida' | 'merienda' | 'cena' | 'snack'
-export type Source = 'ai' | 'exact' | 'fuzzy' | 'cache' | 'favorite' | 'recent' | 'manual' | 'photo' | 'product'
+export type Source = 'ai' | 'exact' | 'fuzzy' | 'cache' | 'favorite' | 'recent' | 'manual' | 'photo' | 'product' | 'drink' | 'sugerencia' | 'import'
 export type Via = 'text' | 'voice' | 'photo' | 'tap'
 export type MacroKey = 'kcal' | 'protein' | 'carbs' | 'fat'
 export type ThemePref = 'dark' | 'light' | 'auto'
@@ -21,6 +21,24 @@ export interface Item extends Macros {
   grams: number
   /** Si sale de la etiqueta de un producto guardado. */
   product_id?: number | null
+  /** Añadido a mano: al guardar la comida se aprende en la caché de ingredientes. */
+  manual?: boolean
+  /** Fibra y gramos de alcohol (opcionales: lo antiguo no los trae y cuentan como 0). */
+  fiber?: number | null
+  alcohol?: number | null
+}
+
+/** Ingrediente de la caché: macros por 100 g y gramos por unidad habitual. */
+export interface FoodEntry {
+  name: string
+  norm: string
+  kcal100: number
+  protein100: number
+  carbs100: number
+  fat100: number
+  fiber100?: number | null
+  alcohol100?: number | null
+  unit_grams: Record<string, number>
 }
 
 /** Producto envasado con las cifras de su etiqueta (por 100 g o 100 ml). */
@@ -39,9 +57,11 @@ export interface Product {
   unit_label: string
   unit_grams: number | null
   has_image: boolean
+  barcode?: string | null
   use_count: number
   last_used_at: string
   created_at: string
+  slot_counts?: Partial<Record<Slot, number>>
 }
 
 /** Lo que la IA ha leído de la foto de una etiqueta: se revisa antes de guardar. */
@@ -61,6 +81,8 @@ export interface LabelDraft {
   confidence: number
   warnings: string[]
   missing: string[]
+  /** Si el borrador viene de escanear un código de barras (Open Food Facts). */
+  barcode?: string | null
 }
 
 export interface Draft extends Macros {
@@ -90,6 +112,8 @@ export interface Meal extends Macros {
   assumptions: string[]
   dish_id: number | null
   created_at: string
+  fiber?: number
+  alcohol?: number
   /** Guardada en el móvil, pendiente de llegar al servidor. */
   pending?: boolean
 }
@@ -122,6 +146,8 @@ export interface Dish extends Macros {
   favorite: boolean
   use_count: number
   last_used_at: string
+  /** Veces que se ha comido en cada momento del día (últimos meses). */
+  slot_counts?: Partial<Record<Slot, number>>
 }
 
 export interface Profile {
@@ -165,21 +191,99 @@ export interface Plan extends Macros {
   warnings: Warning[]
 }
 
+/** Preferencias guardadas en el servidor (cada versión añade campos con valor por defecto). */
+export type DayKind = 'entreno' | 'descanso'
+
+export interface DayTargetsValues {
+  kcal: number
+  protein: number
+  carbs: number
+  fat: number
+}
+
+export interface Prefs {
+  water_goal_ml: number | null
+  day_types?: boolean
+  /** 0 = lunes. */
+  training_days?: number[]
+  training_kcal_adjust?: number
+  rest_kcal_adjust?: number
+  training_targets?: DayTargetsValues | null
+  rest_targets?: DayTargetsValues | null
+  add_exercise_kcal?: boolean
+  rest_seconds?: number
+  reminders?: boolean
+  meal_reminders?: MealReminder[]
+  /** Hora del aviso para pesarse («08:30») o null si está apagado. */
+  weigh_reminder?: string | null
+  weigh_days?: number[]
+  suggest_enabled?: boolean
+  suggest_min_kcal?: number | null
+  suggest_hour?: string
+  suggest_hidden?: string[]
+}
+
+export interface MealReminder {
+  slot: Slot
+  time: string
+  enabled: boolean
+}
+
+export interface WaterEntry {
+  client_id: string
+  ml: number
+  created_at: string
+  pending?: boolean
+}
+
+export interface WaterDay {
+  date: string
+  total_ml: number
+  goal_ml: number
+  entries: WaterEntry[]
+}
+
 export interface Bootstrap {
-  user: { username: string }
+  user: { username: string; is_admin?: boolean }
   profile: Profile | null
   targets: Targets | null
   plan: Plan | null
   dishes: Dish[]
   products: Product[]
-  ai: { configured: boolean; model: string; used_today: number; limit: number }
+  /** Caché de ingredientes (las versiones anteriores no la traían). */
+  foods?: FoodEntry[]
+  prefs?: Prefs
+  water_goal_ml?: number
+  /** Días con el tipo cambiado a mano (fecha -> entreno o descanso). */
+  day_types?: Record<string, DayKind>
+  /** Calorías estimadas de los entrenos de cada día (recientes). */
+  exercise_kcal?: Record<string, number>
+  /** Mínimo de calorías restantes para sugerir algo (SUGGEST_MIN_KCAL del servidor). */
+  suggest_min_kcal_default?: number
+  ai: {
+    configured: boolean
+    model: string
+    used_today: number
+    limit: number
+    paused?: boolean
+    stt_used_today?: number
+    stt_limit?: number
+  }
   server_date: string
 }
+
+export type AccountStatus = 'pending' | 'approved' | 'suspended'
+/** first: instalación sin cuentas · open: se pueden solicitar · closed: cerrado · full: demasiadas pendientes */
+export type SignupState = 'first' | 'open' | 'closed' | 'full'
 
 export interface AuthStatus {
   registered: boolean
   authenticated: boolean
   username: string | null
+  /** Las versiones anteriores no lo traían: sin dato, la cuenta se da por aprobada. */
+  status?: AccountStatus | null
+  is_admin?: boolean
+  signup?: SignupState
 }
 
 export type ResolveResult =
@@ -190,6 +294,8 @@ export type ResolveResult =
 export interface DayTotal extends Macros {
   date: string
   meals: number
+  fiber?: number
+  alcohol?: number
 }
 
 export interface WeightPoint {
@@ -212,6 +318,10 @@ export interface WeekDay extends Macros {
   status: DayStatus
   balance: number
   protein_met: boolean
+  target_kcal?: number
+  kind?: DayKind | null
+  fiber?: number
+  alcohol?: number
 }
 
 export interface Badge {
@@ -237,6 +347,8 @@ export interface WeekSummary {
   avg_protein: number
   avg_carbs: number
   avg_fat: number
+  avg_fiber?: number
+  alcohol?: { grams: number; kcal: number; days: number; pct: number }
   balance_total: number
   adherence_pct: number
   projection: { weekly_kg: number; weeks_per_kg: number | null; direction: 'perdida' | 'ganancia' | 'estable' } | null
@@ -274,4 +386,17 @@ export interface Stats {
     calls_total: number
   }
   counts: { meals: number; weights: number; days: number }
+}
+
+export type MeasureKey = 'waist' | 'chest' | 'arm' | 'hip' | 'thigh'
+
+/** Medidas de un día, en centímetros. */
+export type Measurement = { date: string } & Record<MeasureKey, number | null>
+
+export interface ProgressPhoto {
+  id: number
+  client_id: string
+  date: string
+  size: number
+  created_at: string
 }

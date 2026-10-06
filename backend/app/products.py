@@ -32,6 +32,7 @@ class ProductInfo:
     fat100: float
     unit_label: str
     unit_grams: float | None
+    fiber100: float | None = None
 
 
 def round1(value: float) -> float:
@@ -111,7 +112,7 @@ def item_for(product: ProductInfo, qty: float, unit: str | None) -> dict | None:
     if grams <= 0 or grams > 5000:
         return None
     factor = grams / 100
-    return {
+    item = {
         "name": product.name,
         "qty": qty,
         "unit": unit or "pieza",
@@ -122,6 +123,9 @@ def item_for(product: ProductInfo, qty: float, unit: str | None) -> dict | None:
         "fat": round1(product.fat100 * factor),
         "product_id": product.id,
     }
+    if product.fiber100 is not None:
+        item["fiber"] = round1(product.fiber100 * factor)
+    return item
 
 
 def _try(piece: str, products: list[ProductInfo]) -> dict | None:

@@ -49,6 +49,7 @@ def servers():
         "AI_API_KEY": "fake",
         "STT_BASE_URL": f"http://127.0.0.1:{ai_port}/v1",
         "AI_DAILY_LIMIT": "50",
+        "OFF_BASE_URL": f"http://127.0.0.1:{ai_port}",
         "TZ": "Europe/Madrid",
     }
     backend = ROOT / "backend"

@@ -27,6 +27,8 @@ const FALLBACK: Record<number, string> = {
 }
 
 export const UNAUTHORIZED_EVENT = 'kcalia:unauthorized'
+/** La cuenta ha dejado de estar aprobada (pendiente o bloqueada) mientras se usaba la app. */
+export const ACCOUNT_EVENT = 'kcalia:account'
 
 async function parseError(response: Response): Promise<ApiError> {
   let message = FALLBACK[response.status] ?? 'Algo ha fallado. Inténtalo de nuevo en un momento.'
@@ -60,6 +62,9 @@ async function request<T>(method: string, url: string, body?: unknown, signal?: 
     const error = await parseError(response)
     if (response.status === 401 && !url.startsWith('/api/auth/')) {
       window.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT, { detail: error.code }))
+    }
+    if (response.status === 403 && error.code?.startsWith('account_')) {
+      window.dispatchEvent(new CustomEvent(ACCOUNT_EVENT, { detail: error.code }))
     }
     throw error
   }

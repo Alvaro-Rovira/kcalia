@@ -1,23 +1,30 @@
 import clsx from 'clsx'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { Flame, Lightbulb, Plus } from 'lucide-react'
+import { Activity, CopyPlus, Dumbbell, Flame, Leaf, Lightbulb, Moon, Plus, Wine } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { CopyPanel } from '@/components/CopyPanel'
 import { DateStrip } from '@/components/DateStrip'
 import { MealRow } from '@/components/MealRow'
 import { MealSheet } from '@/components/MealSheet'
+import { SuggestCard } from '@/components/SuggestCard'
+import { WaterCard } from '@/components/WaterCard'
 import { useShell } from '@/components/Shell'
-import { useApp, useMealActions, useMeals, useStats } from '@/hooks/data'
+import { useApp, useDayTargets, useDayTypeActions, useMealActions, useMeals, useStats } from '@/hooks/data'
 import { dailyTip } from '@/lib/coach'
+import { copyInputs } from '@/lib/copy'
+import { KIND_LABEL, targetsFor } from '@/lib/dayTargets'
 import { addDays, fmtLong, greeting, isValidISO, relativeDay, todayISO } from '@/lib/dates'
-import { capitalize, fmt } from '@/lib/format'
-import { GRAM_MACROS, sumMacros } from '@/lib/macros'
+import { capitalize, fmt, plural } from '@/lib/format'
+import { haptic } from '@/lib/haptics'
+import { FIBER_TARGET, GRAM_MACROS, mealsExtras, sumMacros } from '@/lib/macros'
 import { SLOTS } from '@/lib/slots'
 import type { Meal } from '@/lib/types'
 import { AnimatedNumber } from '@/ui/AnimatedNumber'
 import { Button } from '@/ui/Button'
 import { EmptyState } from '@/ui/EmptyState'
 import { Ring } from '@/ui/Ring'
+import { Sheet } from '@/ui/Sheet'
 import { Skeleton } from '@/ui/Skeleton'
 import { toast } from '@/ui/toast'
 
@@ -42,7 +49,8 @@ function celebrateOnce(date: string, kind: 'kcal' | 'protein'): boolean {
 
 export default function Today() {
   const app = useApp()
-  const { targets } = app
+  const dayTargets = useDayTargets()
+  const setDayType = useDayTypeActions()
   const { openAddMeal, celebrate } = useShell()
   const actions = useMealActions()
   const reduce = useReducedMotion()
@@ -50,13 +58,17 @@ export default function Today() {
   const today = todayISO()
   const date = isValidISO(params.get('fecha')) && params.get('fecha')! <= today ? params.get('fecha')! : today
   const isToday = date === today
+  const day = dayTargets(date)
+  const targets = { ...app.targets, ...day.targets }
   const [direction, setDirection] = useState(0)
   const [detail, setDetail] = useState<Meal | null>(null)
+  const [copyDay, setCopyDay] = useState(false)
 
   const meals = useMeals(date)
   const stats = useStats()
   const list = useMemo(() => meals.data ?? [], [meals.data])
   const eaten = useMemo(() => sumMacros(list), [list])
+  const extras = useMemo(() => mealsExtras(list), [list])
   const loading = meals.isPending
 
   const setDate = (next: string) => {
@@ -86,6 +98,19 @@ export default function Today() {
       toast({ tone: 'success', title: 'Calorías en objetivo', description: 'Justo donde tenían que estar.' })
     }
   }, [loading, date, isToday, onTarget, proteinDone, celebrate])
+
+  function copyAll(target: { date: string }) {
+    const copies = copyInputs(list, target)
+    for (const input of copies) actions.add(input)
+    haptic('success')
+    setCopyDay(false)
+    toast({
+      tone: 'success',
+      title: `${copies.length} ${plural(copies.length, 'comida copiada', 'comidas copiadas')} a ${relativeDay(target.date).toLowerCase()}`,
+      description: 'Sin gastar IA',
+      action: target.date !== date ? { label: 'Ver', onClick: () => setDate(target.date) } : undefined,
+    })
+  }
 
   function remove(meal: Meal) {
     actions.remove(meal)
@@ -118,6 +143,28 @@ export default function Today() {
           <h1 className="mt-0.5 truncate text-[30px] leading-tight font-semibold tracking-[-0.035em] text-text">
             {capitalize(relativeDay(date))}
           </h1>
+          {day.kind && (
+            <button
+              type="button"
+              onClick={() => {
+                const next = day.kind === 'entreno' ? 'descanso' : 'entreno'
+                setDayType(date, next)
+                haptic('select')
+                toast({
+                  title: `${KIND_LABEL[next]}: ${fmt(targetsFor(app.targets, app.prefs, next).kcal)} kcal`,
+                  action: { label: 'Deshacer', onClick: () => setDayType(date, day.manual ? day.kind : null) },
+                })
+              }}
+              aria-label={`${KIND_LABEL[day.kind]}. Cambiar a ${day.kind === 'entreno' ? 'descanso' : 'entreno'}`}
+              className="mt-1.5 inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-surface px-3 text-[13px] font-medium text-text-2"
+            >
+              {day.kind === 'entreno' ? <Dumbbell className="size-3.5 text-accent-text" aria-hidden /> : <Moon className="size-3.5 text-text-3" aria-hidden />}
+              {KIND_LABEL[day.kind]}
+              <span className="text-text-3" data-num>
+                · {fmt(day.targets.kcal)} kcal
+              </span>
+            </button>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-2 pt-1.5">
           {!isToday && (
@@ -143,7 +190,7 @@ export default function Today() {
       </header>
 
       <div className="mt-4">
-        <DateStrip date={date} onChange={setDate} targetKcal={targets.kcal} />
+        <DateStrip date={date} onChange={setDate} targetKcal={(iso) => dayTargets(iso).targets.kcal} />
       </div>
 
       <AnimatePresence mode="wait" custom={direction}>
@@ -256,6 +303,31 @@ export default function Today() {
                       )
                     })}
                   </div>
+                  {(list.length > 0 || day.exercise > 0) && (
+                    <p className="mt-3.5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[13px] text-text-2" data-num>
+                      <span className="flex items-center gap-1.5">
+                        <Leaf className="size-3.5 text-text-3" aria-hidden />
+                        Fibra <strong className="font-semibold text-text">{fmt(extras.fiber)} g</strong>
+                        <span className="text-text-3">
+                          · orientativo {FIBER_TARGET.min}-{FIBER_TARGET.max} g
+                        </span>
+                      </span>
+                      {day.exercise > 0 && (
+                        <span className="flex items-center gap-1.5">
+                          <Activity className="size-3.5 text-text-3" aria-hidden />
+                          Entreno <strong className="font-semibold text-text">≈ {fmt(day.exercise)} kcal</strong>
+                          <span className="text-text-3">· {app.prefs?.add_exercise_kcal ? 'sumadas al objetivo' : 'solo referencia'}</span>
+                        </span>
+                      )}
+                      {extras.alcohol > 0 && (
+                        <span className="flex items-center gap-1.5">
+                          <Wine className="size-3.5 text-text-3" aria-hidden />
+                          Alcohol <strong className="font-semibold text-text">{fmt(extras.alcohol, 1)} g</strong>
+                          <span className="text-text-3">· {fmt(extras.alcohol * 7)} kcal</span>
+                        </span>
+                      )}
+                    </p>
+                  )}
                 </>
               )}
             </section>
@@ -274,6 +346,8 @@ export default function Today() {
                 {tip.text}
               </motion.p>
             )}
+            {!loading && isToday && <SuggestCard date={date} eaten={eaten} targets={targets} meals={list} />}
+            {!loading && <WaterCard date={date} />}
           </div>
 
           <section className="mt-6 lg:mt-0" aria-label="Comidas del día">
@@ -336,6 +410,9 @@ export default function Today() {
                     </div>
                   )
                 })}
+                <Button variant="ghost" size="sm" block onClick={() => setCopyDay(true)} icon={<CopyPlus className="size-4" aria-hidden />}>
+                  Copiar este día a otro
+                </Button>
               </div>
             )}
           </section>
@@ -343,6 +420,9 @@ export default function Today() {
       </AnimatePresence>
 
       <MealSheet meal={detail} onClose={() => setDetail(null)} onDelete={remove} />
+      <Sheet open={copyDay} onClose={() => setCopyDay(false)} title={`Copiar ${isToday ? 'hoy' : relativeDay(date).toLowerCase()}`}>
+        <CopyPanel sourceDate={date} count={list.length} kcal={eaten.kcal} onCopy={copyAll} onCancel={() => setCopyDay(false)} />
+      </Sheet>
     </main>
   )
 }

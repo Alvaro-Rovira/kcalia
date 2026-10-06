@@ -4,12 +4,12 @@ from sqlalchemy.orm import Session
 
 from .. import services
 from ..db import get_db
-from ..deps import require_user
+from ..deps import require_approved_user
 from ..models import Weight
 from ..schemas import WeightIn
 from ..summary import moving_average
 
-router = APIRouter(prefix="/api/weight", tags=["peso"], dependencies=[Depends(require_user)])
+router = APIRouter(prefix="/api/weight", tags=["peso"], dependencies=[Depends(require_approved_user)])
 
 RECALC_THRESHOLD_KG = 1.0
 

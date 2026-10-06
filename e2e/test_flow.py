@@ -136,7 +136,8 @@ def test_04_coincidencia_aproximada_pregunta(page: Page, ai_calls):
 
 
 def test_05_peso_y_resumen(page: Page):
-    page.get_by_role("link", name="Peso").click()
+    page.get_by_role("link", name="Progreso").click()
+    page.get_by_role("link", name="Cuerpo").click()
     page.get_by_role("button", name="Apuntar").first.click()
     page.get_by_role("button", name="Guardar", exact=True).click()
     expect(page.get_by_text("Media 7 días")).to_be_visible()
@@ -264,4 +265,491 @@ def test_09_producto_desde_la_foto_de_su_etiqueta(page: Page, ai_calls, tmp_path
     # Cuenta como consulta ahorrada y el producto sabe cuántas veces se ha usado.
     stats = page.request.get(page.url.split("/")[0] + "//" + page.url.split("/")[2] + "/api/stats").json()
     assert stats["ai"]["saved"]["saved_product"] == 2
+    assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_10_solicitud_de_cuenta_aprobada_desde_el_panel(page: Page, browser_instance, servers):
+    """Otra persona solicita cuenta -> ve que está pendiente -> el admin la aprueba en /admin -> ya puede entrar."""
+    other = browser_instance.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True, locale="es-ES")
+    tab = other.new_page()
+    tab.goto(servers["app"])
+    tab.get_by_role("button", name="Solicítala").click()
+    expect(tab.get_by_role("heading", name="Solicita una cuenta")).to_be_visible()
+    tab.locator("input[name=username]").fill("lucia")
+    tab.locator("input[name=password]").fill("otra-clave-segura-7")
+    tab.get_by_role("button", name="Enviar solicitud").click()
+    expect(tab.get_by_role("heading", name="Solicitud enviada")).to_be_visible()
+    tab.get_by_role("button", name="Ir a iniciar sesión").click()
+    tab.locator("input[name=username]").fill("lucia")
+    tab.locator("input[name=password]").fill("otra-clave-segura-7")
+    tab.get_by_role("button", name="Entrar").click()
+    expect(tab.get_by_role("heading", name="Tu cuenta está pendiente de aprobación")).to_be_visible()
+    # Sin aprobar no puede usar nada, tampoco la IA.
+    assert tab.request.post(servers["app"] + "/api/meals/resolve", data={"text": "una pera"}).status == 403
+
+    # El admin ve la solicitud con su indicador y la aprueba.
+    page.goto(servers["app"] + "/ajustes")
+    expect(page.get_by_text("1 pendiente")).to_be_visible()
+    page.get_by_role("button", name="Cuentas, solicitudes y gasto de IA").click()
+    expect(page.get_by_role("heading", name="Administración")).to_be_visible()
+    expect(page.get_by_text("Solicitada")).to_be_visible()
+    page.get_by_role("button", name="Aprobar").click()
+    expect(page.get_by_text("lucia ya puede entrar")).to_be_visible()
+    expect(page.get_by_text("aprobó a")).to_be_visible()
+
+    tab.get_by_role("button", name="Comprobar de nuevo").click()
+    expect(tab.get_by_role("button", name="Empezar", exact=True)).to_be_visible()  # su propio cuestionario inicial
+    # Una cuenta normal no tiene panel de administración.
+    assert tab.request.get(servers["app"] + "/api/admin/overview").status == 403
+    other.close()
+    assert not page.errors  # type: ignore[attr-defined]
+
+
+def api_get(page: Page, servers, path: str):
+    return page.request.get(servers["app"] + path).json()
+
+
+def wait_until(check, timeout: float = 15) -> None:
+    """Espera a que la cola offline haya llevado los cambios al servidor."""
+    import time
+
+    deadline = time.time() + timeout
+    while not check():
+        assert time.time() < deadline, "no se ha sincronizado a tiempo"
+        time.sleep(0.25)
+
+
+def test_11_ingrediente_a_mano(page: Page, servers):
+    page.goto(servers["app"])
+    page.get_by_role("button", name="Pechuga de pollo con arroz").first.click()
+    sheet = page.get_by_role("dialog")
+    expect(sheet.get_by_role("heading", name="Detalle de la comida")).to_be_visible()
+    sheet.get_by_role("button", name="Añadir ingrediente a mano").click()
+    sheet.get_by_placeholder("Por ejemplo: queso fresco batido").fill("salsa de yogur casera")
+    sheet.get_by_label("Gramos del ingrediente").fill("50")
+    sheet.get_by_label("Calorías", exact=True).fill("120")
+    sheet.get_by_label("Proteínas en gramos").fill("3")
+    sheet.get_by_label("Hidratos en gramos").fill("4")
+    sheet.get_by_label("Grasas en gramos").fill("10")
+    sheet.get_by_role("button", name="Añadir · 60 kcal").click()
+    expect(sheet.get_by_text("Salsa de yogur casera")).to_be_visible()
+    sheet.get_by_role("button", name="Guardar cambios").click()
+    expect(page.get_by_text("Cambios guardados")).to_be_visible()
+    expect(page.get_by_text("cambio pendiente")).to_have_count(0, timeout=15_000)
+    wait_until(
+        lambda: any(
+            f["name"] == "salsa de yogur casera" and f["kcal100"] == 120 for f in api_get(page, servers, "/api/foods")["foods"]
+        )
+    )
+
+    # La próxima vez sale al autocompletar (también sin red: viaja en los datos del móvil).
+    page.get_by_role("button", name="Pechuga de pollo con arroz").first.click()
+    page.get_by_role("dialog").get_by_role("button", name="Añadir ingrediente a mano").click()
+    page.get_by_role("dialog").get_by_placeholder("Por ejemplo: queso fresco batido").fill("salsa yog")
+    page.get_by_role("option").filter(has_text="Salsa de yogur casera").click()
+    expect(page.get_by_role("dialog").get_by_label("Calorías", exact=True)).to_have_value("120")
+    page.keyboard.press("Escape")
+
+
+def test_12_copiar_comida_y_dia(page: Page, servers):
+    from datetime import date, timedelta
+
+    page.goto(servers["app"])
+    today = date.today().isoformat()
+    on_server = len(api_get(page, servers, f"/api/meals?date={today}")["meals"])
+    rows = page.get_by_role("button", name="Pechuga de pollo con arroz")
+    before = rows.count()
+    rows.first.click()
+    page.get_by_role("dialog").get_by_role("button", name="Copiar a hoy").click()
+    expect(page.get_by_text("Copiada a hoy")).to_be_visible()
+    expect(rows).to_have_count(before + 1)
+
+    today_meals = on_server + 1
+    wait_until(lambda: len(api_get(page, servers, f"/api/meals?date={today}")["meals"]) == today_meals)
+    page.get_by_role("button", name="Copiar este día a otro").click()
+    dialog = page.get_by_role("dialog")
+    dialog.get_by_role("radio", name="Ayer").click()
+    dialog.get_by_role("button", name="Copiar a ayer").click()
+    expect(page.get_by_text(f"{today_meals} comidas copiadas a ayer")).to_be_visible()
+    yesterday = (date.today() - timedelta(days=1)).isoformat()
+    wait_until(lambda: len(api_get(page, servers, f"/api/meals?date={yesterday}")["meals"]) == today_meals)
+
+
+def test_13_codigo_de_barras(page: Page, servers, ai_calls):
+    before = ai_calls()
+    page.goto(servers["app"] + "/historial")
+    page.get_by_role("radio", name="Productos").click()
+    page.get_by_role("button", name="Añadir", exact=True).click()
+    dialog = page.get_by_role("dialog")
+    dialog.get_by_role("button", name="Escanear el código de barras").click()
+    # En las pruebas no hay cámara: se escribe el código a mano.
+    dialog.get_by_label("Código de barras").fill("8410000123456")
+    dialog.get_by_role("button", name="Buscar").click()
+    expect(dialog.get_by_role("heading", name="Revisa el producto")).to_be_visible()
+    expect(dialog.get_by_label("Nombre del producto")).to_have_value("Queso fresco batido 0 % (Marca Blanca)")
+    expect(dialog.get_by_role("textbox", name="Calorías")).to_have_value("46")
+    expect(dialog.get_by_text("Código de barras 8410000123456")).to_be_visible()
+    dialog.get_by_role("button", name="Guardar producto").click()
+    expect(page.get_by_text("Guardado: queso fresco batido 0 %")).to_be_visible()
+    assert ai_calls() == before  # Open Food Facts no es IA
+
+    # Volver a escanearlo lo reconoce sin buscar fuera.
+    page.get_by_role("button", name="Añadir", exact=True).click()
+    page.get_by_role("dialog").get_by_role("button", name="Escanear el código de barras").click()
+    page.get_by_role("dialog").get_by_label("Código de barras").fill("8410000123456")
+    page.get_by_role("dialog").get_by_role("button", name="Buscar").click()
+    expect(page.get_by_text("Ya lo tienes guardado")).to_be_visible()
+    expect(page.get_by_role("heading", name="Editar producto")).to_be_visible()
+    page.keyboard.press("Escape")
+
+    # Un código que Open Food Facts no tiene: se ofrece la foto de la etiqueta.
+    page.get_by_role("button", name="Añadir", exact=True).click()
+    page.get_by_role("dialog").get_by_role("button", name="Escanear el código de barras").click()
+    page.get_by_role("dialog").get_by_label("Código de barras").fill("8410000999990")
+    page.get_by_role("dialog").get_by_role("button", name="Buscar").click()
+    expect(page.get_by_text("Este código no está en Open Food Facts")).to_be_visible()
+    expect(page.get_by_role("dialog").get_by_role("button", name="Hacer foto a la etiqueta")).to_be_visible()
+    page.keyboard.press("Escape")
+    assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_14_agua_con_y_sin_conexion(page: Page, servers):
+    from datetime import date
+
+    today = date.today().isoformat()
+    page.goto(servers["app"])
+    water = page.get_by_role("region", name="Agua")
+    expect(water.get_by_text("de 2,75 L")).to_be_visible()  # 75,5 kg × 35 ml, redondeado a 250
+    water.get_by_role("button", name="Añadir 250 ml de agua").click()
+    water.get_by_role("button", name="Añadir 500 ml de agua").click()
+    expect(water.get_by_text("750 ml", exact=True)).to_be_visible()
+    wait_until(lambda: api_get(page, servers, f"/api/water?date={today}")["total_ml"] == 750)
+
+    # Sin red se suma igual y se sincroniza al volver.
+    page.wait_for_timeout(1000)
+    page.context.set_offline(True)
+    water.get_by_role("button", name="Otra").click()
+    water.get_by_label("Mililitros de agua").fill("330")
+    water.get_by_role("button", name="Añadir esa cantidad").click()
+    expect(water.get_by_text("1,08 L", exact=True)).to_be_visible()
+    expect(page.get_by_text("cambio pendiente").first).to_be_visible()
+    page.context.set_offline(False)
+    wait_until(lambda: api_get(page, servers, f"/api/water?date={today}")["total_ml"] == 1080)
+
+    # Deshacer quita solo el último (su aviso es el más reciente).
+    water.get_by_role("button", name="Añadir 250 ml de agua").click()
+    page.get_by_role("status").filter(has_text="+250 ml de agua").get_by_role("button", name="Deshacer").last.click()
+    expect(water.get_by_text("1,08 L", exact=True)).to_be_visible()
+
+    page.get_by_role("link", name="Progreso").click()
+    expect(page.get_by_role("region", name="Agua de la semana")).to_be_visible()
+    page.get_by_role("link", name="Hoy").click()
+
+
+def test_15_bebida_con_alcohol_y_fibra(page: Page, servers):
+    from datetime import date
+
+    today = date.today().isoformat()
+    page.goto(servers["app"])
+    expect(page.get_by_text("Fibra", exact=False).first).to_be_visible()
+    page.get_by_role("button", name="Añadir comida").last.click()
+    page.get_by_role("button", name="Apuntar caña de cerveza, 87 kilocalorías").click()
+    expect(page.get_by_text("Caña de cerveza · 87 kcal")).to_be_visible()
+    expect(page.get_by_text("Alcohol 7,9 g")).to_be_visible()
+    wait_until(lambda: any(m["source"] == "drink" for m in api_get(page, servers, f"/api/meals?date={today}")["meals"]))
+    page.get_by_role("link", name="Progreso").click()
+    expect(page.get_by_role("region", name="Alcohol de la semana")).to_be_visible()
+    expect(page.get_by_text("Fibra media")).to_be_visible()
+    page.get_by_role("link", name="Hoy").click()
+
+
+def test_16_medidas_y_fotos(page: Page, servers, tmp_path):
+    page.goto(servers["app"] + "/peso")
+    page.get_by_role("radio", name="Medidas").click()
+    expect(page.get_by_text("Aún no hay medidas")).to_be_visible()
+    page.get_by_role("button", name="Apuntar medidas").click()
+    dialog = page.get_by_role("dialog")
+    dialog.get_by_label("Cintura en centímetros").fill("84,5")
+    dialog.get_by_label("Brazo en centímetros").fill("33")
+    dialog.get_by_role("button", name="Guardar medidas").click()
+    expect(page.get_by_text("Medidas guardadas")).to_be_visible()
+    expect(page.get_by_role("region", name="Historial de medidas").get_by_text("Cintura 84,5 · Brazo 33")).to_be_visible()
+    wait_until(lambda: len(api_get(page, servers, "/api/measurements")["entries"]) == 1)
+
+    # Sin red también: se apunta y se sincroniza después.
+    page.wait_for_timeout(1000)
+    page.context.set_offline(True)
+    page.get_by_role("button", name="Apuntar medidas").click()
+    dialog.get_by_label("Cambiar el día").fill("2026-09-01")
+    dialog.get_by_label("Cintura en centímetros").fill("87")
+    dialog.get_by_role("button", name="Guardar medidas").click()
+    expect(page.get_by_text("cambio pendiente").first).to_be_visible()
+    page.context.set_offline(False)
+    wait_until(lambda: len(api_get(page, servers, "/api/measurements")["entries"]) == 2)
+    expect(page.get_by_text("−2,5 cm desde el")).to_be_visible()
+
+    # Fotos: se suben reducidas y se comparan dos.
+    data_url = page.evaluate(
+        """() => { const c = document.createElement('canvas'); c.width = 900; c.height = 1200
+          const x = c.getContext('2d'); x.fillStyle = '#4a7'; x.fillRect(0, 0, 900, 1200); return c.toDataURL('image/jpeg', 0.9) }"""
+    )
+    import base64
+
+    photo = tmp_path / "progreso.jpg"
+    photo.write_bytes(base64.b64decode(data_url.split(",", 1)[1]))
+    page.get_by_role("radio", name="Fotos").click()
+    for _ in range(2):
+        page.locator("input[type=file]:not([capture])").set_input_files(str(photo))
+        expect(page.get_by_text("Foto guardada").first).to_be_visible()
+    wait_until(lambda: len(api_get(page, servers, "/api/photos")["photos"]) == 2)
+    page.get_by_role("button", name="Comparar").click()
+    photos = page.get_by_role("button", name="Foto del")
+    photos.nth(0).click()
+    photos.nth(1).click()
+    expect(page.get_by_role("heading", name="Comparación")).to_be_visible()
+    expect(page.get_by_text("0 días entre una y otra")).to_be_visible()
+    page.keyboard.press("Escape")
+    assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_17_dias_de_entreno_y_descanso(page: Page, servers):
+    from datetime import date
+
+    today = date.today()
+    page.goto(servers["app"] + "/ajustes")
+    base = api_get(page, servers, "/api/bootstrap")["targets"]["kcal"]
+    page.get_by_role("switch", name="Objetivos distintos para entreno y descanso").click()
+    # Hoy es día de entreno (todos los días marcados) y se nota en el objetivo.
+    group = page.get_by_role("group", name="Días de entreno habituales")
+    for index, name in enumerate(["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]):
+        button = group.get_by_role("button", name=name, exact=True)
+        if button.get_attribute("aria-pressed") == "false":
+            button.click()
+    wait_until(lambda: api_get(page, servers, "/api/prefs")["training_days"] == [0, 1, 2, 3, 4, 5, 6])
+    page.get_by_role("link", name="Hoy").click()
+    chip = page.get_by_role("button", name="Día de entreno. Cambiar a descanso")
+    expect(chip).to_contain_text(f"{base + 200:,}".replace(",", "."))
+    chip.click()
+    expect(page.get_by_role("button", name="Día de descanso. Cambiar a entreno")).to_be_visible()
+    wait_until(lambda: api_get(page, servers, "/api/bootstrap")["day_types"].get(today.isoformat()) == "descanso")
+    # Se deja como estaba para el resto de pruebas.
+    page.request.patch(servers["app"] + "/api/prefs", data={"day_types": False}, headers={"Origin": servers["app"]})
+    page.reload()
+
+
+def test_18_entreno_con_plantilla_y_sin_conexion(page: Page, servers):
+    page.goto(servers["app"])
+    page.get_by_role("link", name="Entreno").click()
+    expect(page.get_by_role("heading", name="Rutinas")).to_be_visible()
+    page.get_by_role("button", name="Empezar Empuje").click()
+    card = page.get_by_role("region", name="Press de banca")
+    expect(card.get_by_text("plan 4 × 8")).to_be_visible()
+    card.get_by_role("button", name="Peso: más").click()
+    card.get_by_role("button", name="Peso: más").click()  # 5 kg
+    weight = card.get_by_role("textbox", name="Peso", exact=True)
+    weight.fill("")
+    weight.fill("60")
+    expect(weight).to_have_value("60")
+    card.get_by_role("button", name="Serie 1").click()
+    expect(page.get_by_role("timer")).to_be_visible()  # descanso en marcha
+    page.get_by_role("button", name="Saltar el descanso").click()
+    # Sin red: la siguiente serie copia la anterior y queda en cola.
+    page.wait_for_timeout(800)
+    page.context.set_offline(True)
+    card.get_by_role("button", name="Repetir").click()
+    expect(card.get_by_text("2/4 series")).to_be_visible()
+    expect(page.get_by_text("cambio pendiente").first).to_be_visible()
+    page.context.set_offline(False)
+    wait_until(lambda: sum(len(w["sets"]) for w in api_get(page, servers, "/api/training")["workouts"]) == 2)
+
+    page.get_by_role("button", name="Terminar").click()
+    dialog = page.get_by_role("dialog")
+    dialog.get_by_role("radio", name="Intensa").click()
+    dialog.get_by_role("button", name="Guardar entreno").click()
+    expect(page.get_by_text("Entreno guardado")).to_be_visible()
+    expect(page.get_by_role("heading", name="Últimos entrenos")).to_be_visible()
+    wait_until(lambda: api_get(page, servers, "/api/training")["workouts"][0]["ended_at"] is not None)
+    last = api_get(page, servers, "/api/training")["last"]["ex-press-banca"]
+    assert last["weight"] == 60 and last["sets"] == 2
+    expect(page.get_by_role("heading", name="Progresión")).to_be_visible()
+    # Las calorías del entreno se ven en Hoy como referencia (no se suman salvo que se active en Ajustes).
+    page.get_by_role("link", name="Hoy").click()
+    expect(page.get_by_text("solo referencia")).to_be_visible()
+    assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_19_recordatorios(page: Page, servers):
+    # El service worker carga los manejadores de las notificaciones.
+    assert "push-sw.js" in httpx.get(servers["app"] + "/sw.js").text
+    assert "showNotification" in httpx.get(servers["app"] + "/push-sw.js").text
+    page.goto(servers["app"] + "/ajustes")
+    section = page.get_by_role("region", name="Recordatorios")
+    # En las pruebas no hay claves VAPID: se explica en lugar de fallar al activar.
+    expect(section.get_by_text("no están configuradas en este servidor")).to_be_visible()
+    section.get_by_role("switch", name="Recordatorios").click()
+    section.get_by_label("Hora del aviso de comida").fill("15:30")
+    wait_until(
+        lambda: api_get(page, servers, "/api/prefs")["reminders"] is True
+        and api_get(page, servers, "/api/prefs")["meal_reminders"][1]["time"] == "15:30"
+    )
+    section.get_by_role("button", name="sábado").click()
+    wait_until(lambda: 5 not in api_get(page, servers, "/api/prefs")["weigh_days"])
+    assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_20_plan_semanal_y_lista_de_la_compra(page: Page, servers, ai_calls):
+    from datetime import date
+
+    from app_dates import medium
+
+    today = date.today()
+    page.goto(servers["app"] + "/historial")
+    page.get_by_role("link", name="Plan").click()
+    expect(page.get_by_role("heading", name="Plan semanal")).to_be_visible()
+    page.get_by_role("button", name=f"Planificar comida del {medium(today)}").click()
+    page.get_by_role("dialog").get_by_role("button", name="Pechuga de pollo con arroz").first.click()
+    day = page.get_by_role("region", name=medium(today, capital=True))
+    expect(day.get_by_role("button", name="Pechuga de pollo con arroz")).to_be_visible()
+    shopping = page.get_by_role("region", name="Lista de la compra")
+    expect(shopping.get_by_text("Arroz blanco cocido")).to_be_visible()
+    shopping.get_by_label("Arroz blanco cocido").click()
+    expect(shopping.get_by_label("Arroz blanco cocido")).to_be_checked()
+    wait_until(lambda: any(api_get(page, servers, f"/api/plan?start={today.isoformat()}")["checks"].values()))
+
+    # Ideas de la IA para los huecos: gasta una consulta y se añade la que se elige.
+    before = ai_calls()
+    page.get_by_role("button", name="Pedir ideas a la IA", exact=False).click()
+    dialog = page.get_by_role("dialog")
+    expect(dialog.get_by_text("Tortilla francesa con ensalada").first).to_be_visible()
+    assert ai_calls() == before + 1
+    dialog.get_by_role("button", name="Añadir al plan").first.click()
+    page.keyboard.press("Escape")
+
+    # Apuntar en el diario lo planificado para hoy.
+    meals_before = len(api_get(page, servers, f"/api/meals?date={today.isoformat()}")["meals"])
+    day.get_by_role("button", name="Pechuga de pollo con arroz").click()
+    page.get_by_role("dialog").get_by_role("button", name="Apuntar en el diario").click()
+    expect(page.get_by_text("Apuntada en el diario")).to_be_visible()
+    wait_until(lambda: len(api_get(page, servers, f"/api/meals?date={today.isoformat()}")["meals"]) == meals_before + 1)
+    assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_21_sugerencia_para_cerrar_el_dia(page: Page, servers):
+    import re as regex
+    from datetime import date
+
+    today = date.today().isoformat()
+    headers = {"Origin": servers["app"]}
+    # Objetivo alto para que hoy queden calorías (el resto de pruebas ya ha comido bastante).
+    page.request.put(servers["app"] + "/api/targets", data={"kcal": 6000, "protein": 300, "carbs": 700, "fat": 200}, headers=headers)
+    # Sin la caché guardada en el móvil: así arranca con el objetivo nuevo.
+    page.goto(servers["app"])
+    page.evaluate("new Promise((resolve) => { const r = indexedDB.deleteDatabase('keyval-store'); r.onsuccess = r.onerror = r.onblocked = resolve })")
+    page.reload()
+    card = page.get_by_role("region", name="Sugerencia para cerrar el día")
+    finished = page.get_by_role("button", name="Ya terminé de comer")
+    # Antes de la hora y sin cena apuntada, se pide con «Ya terminé de comer».
+    expect(card.or_(finished)).to_be_visible()
+    if finished.is_visible():
+        finished.click()
+    expect(card).to_be_visible()
+    heading = card.get_by_role("heading")
+    before = int(regex.sub(r"\D", "", heading.inner_text()))
+    card.get_by_role("button", name="Añadir").first.click()
+    expect(page.get_by_text("Añadida a hoy")).to_be_visible()
+    # Las calorías que quedan bajan al momento (también la tarjeta, que se recalcula).
+    expect(heading).not_to_have_text(regex.compile(rf"Te quedan {before:,}".replace(",", ".")))
+    wait_until(lambda: any(m["source"] == "sugerencia" for m in api_get(page, servers, f"/api/meals?date={today}")["meals"]))
+    added = next(m for m in api_get(page, servers, f"/api/meals?date={today}")["meals"] if m["source"] == "sugerencia")
+    assert added["kcal"] <= before
+    # «No sugerir más esto» la oculta y se puede recuperar en Ajustes.
+    card.get_by_role("button", name="No sugerir más esto").first.click()
+    wait_until(lambda: len(api_get(page, servers, "/api/prefs")["suggest_hidden"]) >= 1)
+    page.request.post(servers["app"] + "/api/targets/recalculate", headers=headers)
+    assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_22_compartir_el_resumen_como_imagen(page: Page, servers, tmp_path):
+    page.goto(servers["app"] + "/resumen")
+    expect(page.get_by_role("heading", name="Resumen")).to_be_visible()
+    # Sin el menú de compartir del sistema (navegador de pruebas) se descarga la imagen.
+    with page.expect_download() as info:
+        page.get_by_role("button", name="Compartir la semana como imagen").click()
+    download = info.value
+    assert download.suggested_filename.startswith("kcalia-semana-") and download.suggested_filename.endswith(".png")
+    path = tmp_path / "semana.png"
+    download.save_as(path)
+    data = path.read_bytes()
+    assert data[:8] == b"\x89PNG\r\n\x1a\n" and len(data) > 20_000
+    width, height = int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
+    assert (width, height) == (1080, 1350)
+    expect(page.get_by_text("Imagen descargada")).to_be_visible()
+    assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_23_importar_csv_de_otra_app(page: Page, servers, tmp_path):
+    from datetime import date, timedelta
+
+    day = (date.today() - timedelta(days=20)).isoformat()
+    path = tmp_path / "myfitnesspal.csv"
+    path.write_text(
+        "Date,Meal,Calories,Fat (g),Carbohydrates (g),Fiber,Protein (g),Note\n"
+        f"{day},Breakfast,350,12,40,5,20,\n"
+        f"{day},Dinner,640,22,60,8,45,\n",
+        encoding="utf-8",
+    )
+    page.goto(servers["app"] + "/ajustes")
+    page.get_by_role("button", name="Importar datos").click()
+    dialog = page.get_by_role("dialog")
+    dialog.get_by_label("Fichero para importar").set_input_files(str(path))
+    expect(dialog.get_by_text("Exportación de MyFitnessPal")).to_be_visible()
+    expect(dialog.get_by_test_id("import-summary")).to_have_text("2 comidas nuevas")
+    expect(dialog.get_by_role("region", name="Primeras comidas que se importarán").get_by_text("Cena")).to_be_visible()
+    dialog.get_by_role("button", name="Importar 2 comidas").click()
+    expect(page.get_by_text("2 comidas importadas")).to_be_visible()
+    meals = api_get(page, servers, f"/api/meals?date={day}")["meals"]
+    assert sorted(m["kcal"] for m in meals) == [350, 640]
+    assert {m["source"] for m in meals} == {"import"}
+
+    # Importar otra vez el mismo fichero no duplica nada.
+    page.get_by_role("button", name="Importar datos").click()
+    dialog = page.get_by_role("dialog")
+    dialog.get_by_label("Fichero para importar").set_input_files(str(path))
+    expect(dialog.get_by_test_id("import-summary")).to_have_text("0 comidas nuevas · 2 ya importadas")
+    expect(dialog.get_by_role("button", name="Nada nuevo que importar")).to_be_disabled()
+    assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_24_atajos_de_la_pwa_y_de_voz(page: Page, servers, ai_calls):
+    from datetime import date
+
+    manifest = page.request.get(servers["app"] + "/manifest.webmanifest").json()
+    assert [s["url"] for s in manifest["shortcuts"]] == ["/?nueva=1", "/?agua=250", "/entreno", "/peso"]
+    for shortcut in manifest["shortcuts"]:
+        assert page.request.get(servers["app"] + shortcut["icons"][0]["src"]).ok
+
+    # Un vaso de agua desde el atajo: se apunta una sola vez y la URL queda limpia.
+    today = date.today().isoformat()
+    before = api_get(page, servers, f"/api/water?date={today}")["total_ml"]
+    page.goto(servers["app"] + "/?agua=250")
+    expect(page.get_by_text("+250 ml de agua")).to_be_visible()
+    wait_until(lambda: api_get(page, servers, f"/api/water?date={today}")["total_ml"] == before + 250)
+    assert "agua" not in page.url
+    page.wait_for_timeout(1000)
+    assert api_get(page, servers, f"/api/water?date={today}")["total_ml"] == before + 250
+
+    # Atajo de voz: abre la hoja con el texto dictado, sin gastar IA hasta que se pulse «Analizar».
+    calls = ai_calls()
+    page.goto(servers["app"] + "/?nueva=1&texto=" + "un%20pl%C3%A1tano%20y%20un%20yogur")
+    dialog = page.get_by_role("dialog")
+    expect(dialog.get_by_label("Describe lo que has comido")).to_have_value("un plátano y un yogur")
+    assert "texto" not in page.url
+    page.wait_for_timeout(800)
+    assert ai_calls() == calls
+    dialog.get_by_role("button", name="Cerrar").click()
+
+    # La guía del atajo de iPhone enseña la dirección de este servidor.
+    page.goto(servers["app"] + "/ajustes")
+    page.get_by_role("button", name="Atajo de voz en iPhone").click()
+    expect(page.get_by_test_id("voice-url")).to_have_text(servers["app"] + "/?nueva=1&texto=")
     assert not page.errors  # type: ignore[attr-defined]

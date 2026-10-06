@@ -5,9 +5,10 @@ import { Shell } from './components/Shell'
 import { Splash } from './components/Splash'
 import { UpdateBanner } from './components/UpdateBanner'
 import { useAuthStatus, useBootstrap } from './hooks/data'
-import { UNAUTHORIZED_EVENT } from './lib/api'
+import { ACCOUNT_EVENT, UNAUTHORIZED_EVENT } from './lib/api'
 import type { AuthStatus } from './lib/types'
 import { keys } from './offline/queryClient'
+import AccountStatus from './pages/AccountStatus'
 import Auth from './pages/Auth'
 import Today from './pages/Today'
 import { Button } from './ui/Button'
@@ -19,6 +20,9 @@ const loaders = {
   '/resumen': () => import('./pages/Summary'),
   '/peso': () => import('./pages/Weight'),
   '/ajustes': () => import('./pages/Settings'),
+  '/admin': () => import('./pages/Admin'),
+  '/entreno': () => import('./pages/Workout'),
+  '/plan': () => import('./pages/Plan'),
 }
 
 /** Empieza a descargar la pantalla de la URL actual en paralelo con la sesión y los datos. */
@@ -32,6 +36,9 @@ const History = lazy(loaders['/historial'])
 const Summary = lazy(loaders['/resumen'])
 const WeightPage = lazy(loaders['/peso'])
 const Settings = lazy(loaders['/ajustes'])
+const Admin = lazy(loaders['/admin'])
+const WorkoutPage = lazy(loaders['/entreno'])
+const PlanPage = lazy(loaders['/plan'])
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 function CannotConnect({ onRetry }: { onRetry: () => void }) {
@@ -67,7 +74,11 @@ function AuthedApp() {
           <Route path="/historial" element={<History />} />
           <Route path="/resumen" element={<Summary />} />
           <Route path="/peso" element={<WeightPage />} />
+          <Route path="/entreno" element={<WorkoutPage />} />
+          <Route path="/plan" element={<PlanPage />} />
           <Route path="/ajustes" element={<Settings />} />
+          {/* Solo existe para el administrador; para el resto es una ruta desconocida (y la API responde 403). */}
+          {bootstrap.data.user.is_admin && <Route path="/admin" element={<Admin />} />}
           <Route path="*" element={<NotFound />} />
         </Routes>
       )}
@@ -87,8 +98,14 @@ export default function App() {
       if (current?.authenticated) setExpired(true)
       client.setQueryData<AuthStatus>(keys.auth, (old) => (old ? { ...old, authenticated: false } : old))
     }
+    // La cuenta ha pasado a pendiente o bloqueada: se vuelve a preguntar por la sesión y se enseña su estado.
+    const onAccount = () => void client.invalidateQueries({ queryKey: keys.auth })
     window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized)
-    return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized)
+    window.addEventListener(ACCOUNT_EVENT, onAccount)
+    return () => {
+      window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized)
+      window.removeEventListener(ACCOUNT_EVENT, onAccount)
+    }
   }, [client])
 
   useEffect(() => {
@@ -102,7 +119,9 @@ export default function App() {
     // Lo guardado dice "sin sesión": se confirma antes de enseñar el login.
     screen = <Splash />
   } else if (!auth.data.authenticated) {
-    screen = <Auth registered={auth.data.registered} expired={expired} />
+    screen = <Auth registered={auth.data.registered} signup={auth.data.signup} expired={expired} />
+  } else if (auth.data.status === 'pending' || auth.data.status === 'suspended') {
+    screen = <AccountStatus status={auth.data.status} username={auth.data.username} />
   } else {
     screen = <AuthedApp />
   }

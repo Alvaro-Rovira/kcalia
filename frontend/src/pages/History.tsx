@@ -6,6 +6,7 @@ import { lazy, Suspense, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import type { CaloriesPoint } from '@/components/charts/CaloriesChart'
 import { ItemList, Totals } from '@/components/MealBreakdown'
+import { HistoryTabs } from '@/components/HistoryTabs'
 import { ProductsLibrary } from '@/components/ProductList'
 import { useShell } from '@/components/Shell'
 import { useApp, useDays, useDishActions, useMealActions } from '@/hooks/data'
@@ -84,6 +85,7 @@ export default function History() {
 
   return (
     <main className="page">
+      <HistoryTabs />
       <header>
         <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.035em] text-text">Historial</h1>
         <p className="mt-1 text-[14.5px] text-text-2">

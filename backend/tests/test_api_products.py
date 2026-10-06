@@ -4,6 +4,7 @@ import json
 
 import httpx
 import pytest
+from conftest import create_user, login, reset_database
 from fastapi.testclient import TestClient
 
 from app.ai import AiClient
@@ -85,7 +86,9 @@ def client(fake):
     ai = AiClient(settings, http=httpx.Client(transport=httpx.MockTransport(fake.handler)))
     app.dependency_overrides[get_ai_client] = lambda: ai
     with TestClient(app) as c:
-        c.post("/api/auth/register", json={"username": "productos", "password": "contraseña-larga"})
+        reset_database()
+        create_user("productos")
+        login(c, "productos")
         c.put("/api/profile", json=PROFILE)
         yield c
     app.dependency_overrides.clear()
@@ -257,10 +260,10 @@ def test_borrar_producto_y_su_foto(client):
 def test_la_lectura_de_etiquetas_cuenta_para_el_cupo_diario(client, fake):
     used = client.get("/api/stats").json()["ai"]["used_today"]
     assert used >= 6  # las lecturas anteriores (y la corrección) gastaron cupo
-    from app import services
+    from app import services, tenancy
     from app.db import SessionLocal
 
-    with SessionLocal() as db:
+    with SessionLocal() as db, tenancy.unscoped(db):
         assert services.ai_calls_today(db, __import__("datetime").date.today(), ("vision",)) >= 5
 
 
@@ -268,6 +271,7 @@ def test_borrar_la_cuenta_borra_productos_y_fotos(client, fake):
     draft = scan(client, fake, LABEL)["draft"]
     product = save(client, draft).json()
     assert client.post("/api/account/delete", json={"password": "contraseña-larga"}).json() == {"ok": True}
-    client.post("/api/auth/register", json={"username": "otra", "password": "contraseña-larga"})
+    create_user("otra")
+    login(client, "otra")
     assert client.get("/api/products").json()["products"] == []
     assert client.get(f"/api/products/{product['id']}/image").status_code == 404

@@ -20,6 +20,8 @@ SIMILARITY_THRESHOLD = 0.85
 TOKEN_THRESHOLD = 0.75
 CONNECTORS = frozenset({"con", "y", "e", "a", "al", "en"})
 MACROS = ("kcal", "protein", "carbs", "fat")
+# Datos secundarios: pueden faltar (comidas antiguas, respuestas sin ellos) y entonces cuentan como 0.
+EXTRAS = ("fiber", "alcohol")
 
 
 def similarity(a: str, b: str) -> float:
@@ -75,6 +77,8 @@ class FoodInfo:
     carbs100: float
     fat100: float
     unit_grams: dict[str, float] = field(default_factory=dict)
+    fiber100: float | None = None
+    alcohol100: float | None = None
 
 
 def canonical_unit(unit: str | None) -> str | None:
@@ -110,18 +114,21 @@ def resolve_from_foods(text: str, lookup: Callable[[str], FoodInfo | None]) -> l
         if not grams or grams <= 0 or grams > 5000:
             return None
         factor = grams / 100
-        items.append(
-            {
-                "name": food.name,
-                "qty": qty,
-                "unit": unit or DEFAULT_UNIT,
-                "grams": round(grams, 1),
-                "kcal": round(food.kcal100 * factor, 1),
-                "protein": round(food.protein100 * factor, 1),
-                "carbs": round(food.carbs100 * factor, 1),
-                "fat": round(food.fat100 * factor, 1),
-            }
-        )
+        item = {
+            "name": food.name,
+            "qty": qty,
+            "unit": unit or DEFAULT_UNIT,
+            "grams": round(grams, 1),
+            "kcal": round(food.kcal100 * factor, 1),
+            "protein": round(food.protein100 * factor, 1),
+            "carbs": round(food.carbs100 * factor, 1),
+            "fat": round(food.fat100 * factor, 1),
+        }
+        if food.fiber100 is not None:
+            item["fiber"] = round(food.fiber100 * factor, 1)
+        if food.alcohol100:
+            item["alcohol"] = round(food.alcohol100 * factor, 1)
+        items.append(item)
     return items
 
 
@@ -134,11 +141,17 @@ class FoodUpdate:
     carbs100: float
     fat100: float
     unit_grams: dict[str, float]
+    fiber100: float | None = None
+    alcohol100: float | None = None
 
 
 def _per100(item: dict) -> dict[str, float]:
     grams = item["grams"]
-    return {f"{m}100": round(item[m] / grams * 100, 2) for m in MACROS}
+    values = {f"{m}100": round(item[m] / grams * 100, 2) for m in MACROS}
+    for extra in EXTRAS:
+        if item.get(extra) is not None:
+            values[f"{extra}100"] = round(item[extra] / grams * 100, 2)
+    return values
 
 
 def _unit_grams(qty: float, unit: str | None, grams: float) -> dict[str, float]:
@@ -189,3 +202,8 @@ def learn_foods(text: str, items: list[dict]) -> list[FoodUpdate]:
 
 def totals(items: list[dict], servings: float = 1.0) -> dict[str, float]:
     return {m: round(sum(float(i.get(m, 0)) for i in items) * servings, 1) for m in MACROS}
+
+
+def extras(items: list[dict], servings: float = 1.0) -> dict[str, float]:
+    """Fibra y alcohol de la comida; lo que no traiga el dato cuenta como 0."""
+    return {e: round(sum(float(i.get(e) or 0) for i in items) * servings, 1) for e in EXTRAS}

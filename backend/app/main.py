@@ -3,17 +3,34 @@ import threading
 from contextlib import asynccontextmanager
 from urllib.parse import urlparse
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from . import tenancy  # noqa: F401  (registra el filtro por usuario en las sesiones)
 from .ai import AiError
 from .config import get_settings
 from .db import init_db
+from .deps import enforce_access
 from .jobs import start_scheduler
-from .routers import account, auth, meals, products, profile, summary, weight
+from .routers import (
+    account,
+    admin,
+    auth,
+    importer,
+    meals,
+    planner,
+    products,
+    profile,
+    push,
+    suggest,
+    summary,
+    tracking,
+    training,
+    weight,
+)
 from .spa import render_index
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -21,7 +38,8 @@ log = logging.getLogger("kcalia")
 
 CSP = (
     "default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; "
-    "style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; "
+    # wasm-unsafe-eval: solo permite compilar WebAssembly (el lector de códigos de barras de respaldo).
+    "style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; "
     "font-src 'self'; worker-src 'self'; manifest-src 'self'; "
     "frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 )
@@ -33,7 +51,7 @@ SECURITY_HEADERS = {
     "X-Frame-Options": "DENY",
 }
 # Ficheros que no deben quedarse en caché: de ellos depende que llegue una versión nueva.
-NO_CACHE_FILES = {"index.html", "sw.js", "registerSW.js", "manifest.webmanifest"}
+NO_CACHE_FILES = {"index.html", "sw.js", "push-sw.js", "registerSW.js", "manifest.webmanifest"}
 
 
 @asynccontextmanager
@@ -45,7 +63,15 @@ async def lifespan(_: FastAPI):
     stop.set()
 
 
-app = FastAPI(title="Kcalia", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+# enforce_access se aplica a TODAS las rutas: lo que no sea público exige una cuenta aprobada.
+app = FastAPI(
+    title="Kcalia",
+    lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
+    dependencies=[Depends(enforce_access)],
+)
 
 
 if get_settings().gzip:
@@ -101,7 +127,22 @@ def health() -> dict:
     return {"status": "ok"}
 
 
-for module in (auth, profile, meals, products, weight, summary, account):
+for module in (
+    auth,
+    profile,
+    meals,
+    products,
+    weight,
+    summary,
+    tracking,
+    training,
+    planner,
+    suggest,
+    push,
+    importer,
+    account,
+    admin,
+):
     app.include_router(module.router)
 
 

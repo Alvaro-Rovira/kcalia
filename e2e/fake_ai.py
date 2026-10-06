@@ -10,6 +10,7 @@ import argparse
 import asyncio
 import json
 import os
+import re
 import unicodedata
 
 import uvicorn
@@ -19,12 +20,19 @@ app = FastAPI()
 CALLS = {"chat": 0, "stt": 0}
 
 
+FIBER100 = {"pan integral": 7, "arroz blanco cocido": 0.4, "lentejas": 7.9, "avena": 10, "platano": 2.6, "nueces": 6.7,
+            "brocoli": 3.3, "patata": 1.8, "tomate": 1.2}
+
+
 def item(name, qty, unit, grams, kcal, protein, carbs, fat):
     """Como el modelo real: valores por 100 g y peso total (los totales los calcula la app)."""
     per100 = lambda value: round(value / grams * 100, 2)  # noqa: E731
+    plain_name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
+    fiber = next((v for k, v in FIBER100.items() if k in plain_name), 0)
     return {
         "name": name, "qty": qty, "unit": unit, "grams": grams,
         "kcal100": per100(kcal), "protein100": per100(protein), "carbs100": per100(carbs), "fat100": per100(fat),
+        "fiber100": fiber, "alcohol100": 0,
     }
 
 
@@ -170,10 +178,34 @@ LABELS = {
 NEXT_LABEL = ["yogur"]  # qué etiqueta devuelve la siguiente lectura (POST /next-label?kind=galletas)
 
 
+PLAN_IDEAS = {
+    "desayuno": ("Tostadas con tomate y pavo", [item("pan integral", 2, "rebanada", 60, 150, 6, 25, 2), item("tomate", 60, "g", 60, 11, 0.5, 2.3, 0.1), item("pavo en lonchas", 3, "loncha", 60, 63, 12, 0.9, 1.2)]),
+    "comida": ("Arroz con pollo y verduras", [item("arroz blanco cocido", 200, "g", 200, 260, 5.4, 56, 0.6), item("pechuga de pollo a la plancha", 150, "g", 150, 247.5, 46.5, 0, 5.4)]),
+    "cena": ("Tortilla francesa con ensalada", [item("huevo", 2, "pieza", 110, 157.3, 13.9, 0.8, 10.5), item("lechuga", 100, "g", 100, 15, 1.4, 2.9, 0.2)]),
+}
+IDEAS = [
+    ("Yogur griego con fresas", [item("yogur griego", 1, "pieza", 125, 150, 7.5, 5, 11.3), item("fresas", 100, "g", 100, 32, 0.7, 7.7, 0.3)]),
+    ("Lata de atún al natural", [item("atún al natural", 1, "lata", 56, 61.6, 14, 0, 0.6)]),
+    ("Queso fresco batido con nueces", [item("queso fresco batido", 250, "g", 250, 115, 20, 8.8, 0.5), item("nueces", 15, "g", 15, 98, 2.3, 2.1, 9.8)]),
+]
+
+
 def answer(messages: list[dict]) -> dict:
+    system = str(messages[0]["content"]) if messages and messages[0]["role"] == "system" else ""
     # La lectura de etiquetas usa otro prompt de sistema: responde con la tabla de un yogur ligero.
-    if messages and messages[0]["role"] == "system" and "etiquetas nutricionales" in str(messages[0]["content"]):
+    if "etiquetas nutricionales" in system:
         return LABELS[NEXT_LABEL[0]]
+    # Rellenar huecos del plan: una idea por hueco pedido («- 2026-10-06 · cena: unas 600 kcal»).
+    if "huecos de un plan semanal" in system:
+        request = str(messages[1]["content"])
+        meals = []
+        for day, slot in re.findall(r"- (\d{4}-\d{2}-\d{2}) · (\w+):", request):
+            name, items = PLAN_IDEAS.get(slot, PLAN_IDEAS["comida"])
+            meals.append({"date": day, "slot": slot, "name": name, "items": items})
+        return {"meals": meals}
+    # Ideas para cerrar el día.
+    if "cerrar el día" in system:
+        return {"ideas": [{"name": name, "items": items} for name, items in IDEAS]}
     content = messages[-1]["content"]
     # La petición de reintento ("no cumple el esquema") se responde con la comida original.
     for message in reversed(messages):
@@ -223,6 +255,31 @@ async def transcribe():
 def next_label(kind: str = "yogur"):
     NEXT_LABEL[0] = kind if kind in LABELS else "yogur"
     return {"next": NEXT_LABEL[0]}
+
+
+# Open Food Facts simulado (OFF_BASE_URL apunta aquí en las pruebas): un producto conocido y el resto, 404.
+OFF_PRODUCTS = {
+    "8410000123456": {
+        "code": "8410000123456",
+        "product_name_es": "Queso fresco batido 0 %",
+        "brands": "Marca Blanca",
+        "quantity": "500 g",
+        "serving_size": "1 tarrina (250 g)",
+        "serving_quantity": 250,
+        "nutriments": {"energy-kcal_100g": 46, "proteins_100g": 8, "carbohydrates_100g": 3.5, "fat_100g": 0.2},
+    }
+}
+
+
+@app.get("/api/v2/product/{code}")
+def off_product(code: str):
+    from fastapi.responses import JSONResponse
+
+    CALLS["off"] = CALLS.get("off", 0) + 1
+    product = OFF_PRODUCTS.get(code.removesuffix(".json"))
+    if product is None:
+        return JSONResponse({"status": 0, "status_verbose": "product not found"}, status_code=404)
+    return {"status": 1, "product": product}
 
 
 @app.get("/calls")

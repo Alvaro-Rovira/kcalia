@@ -73,4 +73,11 @@ export const keys = {
   week: (start: string) => ['week', start] as const,
   summaries: ['summaries'] as const,
   stats: ['stats'] as const,
+  water: (date: string) => ['water', date] as const,
+  waterDays: (start: string, end: string) => ['water', 'days', start, end] as const,
+  measurements: ['measurements'] as const,
+  training: ['training'] as const,
+  plan: (start: string) => ['plan', start] as const,
+  exerciseHistory: (cid: string) => ['training', 'history', cid] as const,
+  photos: ['photos'] as const,
 }

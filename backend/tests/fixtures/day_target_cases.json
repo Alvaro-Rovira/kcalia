@@ -1,0 +1,192 @@
+{
+ "base": {
+  "kcal": 2200,
+  "protein": 160,
+  "carbs": 230,
+  "fat": 70
+ },
+ "cases": [
+  {
+   "name": "desactivado: el objetivo de siempre",
+   "prefs": {
+    "day_types": false
+   },
+   "date": "2026-10-05",
+   "overrides": {},
+   "exercise": 0,
+   "kind": null,
+   "targets": {
+    "kcal": 2200,
+    "protein": 160,
+    "carbs": 230,
+    "fat": 70
+   }
+  },
+  {
+   "name": "lunes de entreno por defecto: +200 kcal en hidratos",
+   "prefs": {
+    "day_types": true
+   },
+   "date": "2026-10-05",
+   "overrides": {},
+   "exercise": 0,
+   "kind": "entreno",
+   "targets": {
+    "kcal": 2400,
+    "protein": 160,
+    "carbs": 280,
+    "fat": 70
+   }
+  },
+  {
+   "name": "martes de descanso: -100 kcal",
+   "prefs": {
+    "day_types": true
+   },
+   "date": "2026-10-06",
+   "overrides": {},
+   "exercise": 0,
+   "kind": "descanso",
+   "targets": {
+    "kcal": 2100,
+    "protein": 160,
+    "carbs": 205,
+    "fat": 70
+   }
+  },
+  {
+   "name": "un martes marcado como entreno",
+   "prefs": {
+    "day_types": true
+   },
+   "date": "2026-10-06",
+   "overrides": {
+    "2026-10-06": "entreno"
+   },
+   "exercise": 0,
+   "kind": "entreno",
+   "targets": {
+    "kcal": 2400,
+    "protein": 160,
+    "carbs": 280,
+    "fat": 70
+   }
+  },
+  {
+   "name": "días de entreno propios (sábado)",
+   "prefs": {
+    "day_types": true,
+    "training_days": [
+     5
+    ]
+   },
+   "date": "2026-10-10",
+   "overrides": {},
+   "exercise": 0,
+   "kind": "entreno",
+   "targets": {
+    "kcal": 2400,
+    "protein": 160,
+    "carbs": 280,
+    "fat": 70
+   }
+  },
+  {
+   "name": "ajuste propio",
+   "prefs": {
+    "day_types": true,
+    "training_kcal_adjust": 350,
+    "rest_kcal_adjust": -250
+   },
+   "date": "2026-10-07",
+   "overrides": {},
+   "exercise": 0,
+   "kind": "entreno",
+   "targets": {
+    "kcal": 2552,
+    "protein": 160,
+    "carbs": 318,
+    "fat": 70
+   }
+  },
+  {
+   "name": "objetivos a mano para el descanso",
+   "prefs": {
+    "day_types": true,
+    "rest_targets": {
+     "kcal": 1900,
+     "protein": 165,
+     "carbs": 150,
+     "fat": 72
+    }
+   },
+   "date": "2026-10-06",
+   "overrides": {},
+   "exercise": 0,
+   "kind": "descanso",
+   "targets": {
+    "kcal": 1900,
+    "protein": 165,
+    "carbs": 150,
+    "fat": 72
+   }
+  },
+  {
+   "name": "los hidratos no bajan de cero",
+   "prefs": {
+    "day_types": true,
+    "rest_kcal_adjust": -800
+   },
+   "base": {
+    "kcal": 1500,
+    "protein": 150,
+    "carbs": 100,
+    "fat": 66
+   },
+   "date": "2026-10-06",
+   "overrides": {},
+   "exercise": 0,
+   "kind": "descanso",
+   "targets": {
+    "kcal": 1100,
+    "protein": 150,
+    "carbs": 0,
+    "fat": 66
+   }
+  },
+  {
+   "name": "entreno sumado al objetivo",
+   "prefs": {
+    "day_types": false,
+    "add_exercise_kcal": true
+   },
+   "date": "2026-10-06",
+   "overrides": {},
+   "exercise": 310,
+   "kind": null,
+   "targets": {
+    "kcal": 2512,
+    "protein": 160,
+    "carbs": 308,
+    "fat": 70
+   }
+  },
+  {
+   "name": "entreno solo informativo",
+   "prefs": {
+    "day_types": false,
+    "add_exercise_kcal": false
+   },
+   "date": "2026-10-06",
+   "overrides": {},
+   "exercise": 310,
+   "kind": null,
+   "targets": {
+    "kcal": 2200,
+    "protein": 160,
+    "carbs": 230,
+    "fat": 70
+   }
+  }
+ ]
+}

@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 import { AnimatePresence, motion } from 'motion/react'
-import { Minus, Plus, Tag, X } from 'lucide-react'
+import { Minus, PencilLine, Plus, Tag, X } from 'lucide-react'
+import { useState } from 'react'
 import { capitalize, fmt, fmtSmart } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
 import { GRAM_MACROS, itemsTotal } from '@/lib/macros'
@@ -9,6 +10,7 @@ import type { Item, Slot } from '@/lib/types'
 import { AnimatedNumber } from '@/ui/AnimatedNumber'
 import { NumberInput } from '@/ui/Field'
 import { MacroBar } from '@/ui/MacroBar'
+import { IngredientForm } from './IngredientForm'
 
 const PRESETS = [0.5, 1, 1.5, 2]
 
@@ -25,6 +27,8 @@ function rescale(item: Item, grams: number): Item {
     protein: round(item.protein),
     carbs: round(item.carbs),
     fat: round(item.fat),
+    ...(item.fiber != null ? { fiber: round(item.fiber) } : {}),
+    ...(item.alcohol != null ? { alcohol: round(item.alcohol) } : {}),
   }
 }
 
@@ -123,6 +127,7 @@ export function ServingsPicker({ value, onChange }: { value: number; onChange: (
 }
 
 export function ItemList({ items, onChange }: { items: Item[]; onChange?: (items: Item[]) => void }) {
+  const [adding, setAdding] = useState(false)
   return (
     <div>
       <span className="eyebrow">Ingredientes</span>
@@ -143,6 +148,7 @@ export function ItemList({ items, onChange }: { items: Item[]; onChange?: (items
                   <p className="flex items-center gap-1.5 text-[14.5px] font-medium text-text">
                     <span className="truncate">{capitalize(item.name)}</span>
                     {item.product_id ? <Tag className="size-3.5 shrink-0 text-accent-text" aria-label="De la etiqueta de tu producto" /> : null}
+                    {item.manual ? <PencilLine className="size-3.5 shrink-0 text-text-3" aria-label="Añadido a mano" /> : null}
                   </p>
                   <p className="mt-0.5 text-[12px] text-text-3" data-num>
                     {fmt(item.kcal)} kcal ·{' '}
@@ -196,6 +202,35 @@ export function ItemList({ items, onChange }: { items: Item[]; onChange?: (items
           ))}
         </AnimatePresence>
       </ul>
+      {onChange && (
+        <AnimatePresence initial={false} mode="wait">
+          {adding ? (
+            <IngredientForm
+              key="form"
+              onCancel={() => setAdding(false)}
+              onAdd={(item) => {
+                onChange([...items, item])
+                setAdding(false)
+              }}
+            />
+          ) : (
+            <motion.button
+              key="add"
+              type="button"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              onClick={() => {
+                haptic('tap')
+                setAdding(true)
+              }}
+              className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-dashed border-border-strong px-3 text-[14px] font-medium text-text-2 transition-colors hover:bg-surface-2 hover:text-text"
+            >
+              <Plus className="size-4" aria-hidden />
+              Añadir ingrediente a mano
+            </motion.button>
+          )}
+        </AnimatePresence>
+      )}
     </div>
   )
 }

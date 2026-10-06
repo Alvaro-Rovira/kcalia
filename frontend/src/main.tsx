@@ -17,6 +17,24 @@ const REJECTED: Record<Op['type'], string> = {
   'weight.put': 'No se ha podido guardar un peso',
   'weight.delete': 'No se ha podido borrar un peso',
   'dish.patch': 'No se ha podido actualizar un favorito',
+  'water.add': 'No se ha podido guardar el agua',
+  'water.delete': 'No se ha podido quitar el agua',
+  'prefs.patch': 'No se ha podido guardar un ajuste',
+  'measure.put': 'No se han podido guardar unas medidas',
+  'measure.delete': 'No se han podido borrar unas medidas',
+  'daytype.put': 'No se ha podido cambiar el tipo de día',
+  'exercise.create': 'No se ha podido crear un ejercicio',
+  'template.save': 'No se ha podido guardar una plantilla',
+  'template.delete': 'No se ha podido borrar una plantilla',
+  'workout.create': 'No se ha podido guardar un entreno',
+  'workout.patch': 'No se ha podido actualizar un entreno',
+  'workout.delete': 'No se ha podido borrar un entreno',
+  'set.create': 'No se ha podido guardar una serie',
+  'set.patch': 'No se ha podido cambiar una serie',
+  'set.delete': 'No se ha podido borrar una serie',
+  'plan.save': 'No se ha podido guardar el plan',
+  'plan.delete': 'No se ha podido quitar algo del plan',
+  'shopping.check': 'No se ha podido marcar la lista de la compra',
 }
 
 preloadRoute(location.pathname)
@@ -28,6 +46,14 @@ outbox.init({
     if (touchesMeals) {
       for (const key of ['meals', 'days', 'week'] as const) void queryClient.invalidateQueries({ queryKey: [key] })
       void queryClient.invalidateQueries({ queryKey: keys.summaries })
+    }
+    if ([...types].some((t) => t.startsWith('water.'))) void queryClient.invalidateQueries({ queryKey: ['water'] })
+    if ([...types].some((t) => t.startsWith('measure.'))) void queryClient.invalidateQueries({ queryKey: keys.measurements })
+    if ([...types].some((t) => /^(exercise|template|workout|set)\./.test(t))) void queryClient.invalidateQueries({ queryKey: keys.training })
+    if ([...types].some((t) => t.startsWith('plan.') || t === 'shopping.check')) void queryClient.invalidateQueries({ queryKey: ['plan'] })
+    if ([...types].some((t) => t === 'daytype.put' || t === 'prefs.patch' || t === 'workout.patch')) {
+      void queryClient.invalidateQueries({ queryKey: ['week'] })
+      void queryClient.invalidateQueries({ queryKey: keys.stats })
     }
     if ([...types].some((t) => t.startsWith('weight.'))) {
       void queryClient.invalidateQueries({ queryKey: keys.weight })

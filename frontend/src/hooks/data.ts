@@ -1,15 +1,26 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useSyncExternalStore } from 'react'
 import { api, newClientId } from '@/lib/api'
-import { itemsTotal } from '@/lib/macros'
+import { itemsExtras, itemsTotal } from '@/lib/macros'
+import { foodKey } from '@/lib/textnorm'
+import { kindFor, targetsFor } from '@/lib/dayTargets'
+import { autoWaterGoal } from '@/lib/water'
 import type {
   AuthStatus,
   Bootstrap,
+  DayKind,
+  DayTargetsValues,
   DayTotal,
   Dish,
+  FoodEntry,
+  Item,
   Meal,
   MealInput,
+  Measurement,
+  Prefs,
+  ProgressPhoto,
   Stats,
+  WaterDay,
   WeekSummary,
   WeightData,
 } from '@/lib/types'
@@ -93,6 +104,32 @@ export function useOnline(): boolean {
   )
 }
 
+/** Los ingredientes añadidos a mano ya salen al autocompletar, también sin red (el servidor los aprende al sincronizar). */
+function rememberManualFoods(client: ReturnType<typeof useQueryClient>, items: Item[]): void {
+  const manual = items.filter((i) => i.manual && !i.product_id && i.grams > 0)
+  if (!manual.length) return
+  client.setQueryData<Bootstrap>(keys.bootstrap, (old) => {
+    if (!old) return old
+    const foods = [...(old.foods ?? [])]
+    for (const item of manual) {
+      const per = (v: number) => Math.round((v / item.grams) * 1000) / 10
+      const entry: FoodEntry = {
+        name: item.name,
+        norm: foodKey(item.name),
+        kcal100: per(item.kcal),
+        protein100: per(item.protein),
+        carbs100: per(item.carbs),
+        fat100: per(item.fat),
+        unit_grams: {},
+      }
+      const index = foods.findIndex((f) => f.norm === entry.norm)
+      if (index >= 0) foods[index] = { ...foods[index], ...entry, unit_grams: foods[index].unit_grams }
+      else foods.unshift(entry)
+    }
+    return { ...old, foods }
+  })
+}
+
 /** Escrituras del diario: se reflejan al instante y viajan al servidor por la cola offline. */
 export function useMealActions() {
   const client = useQueryClient()
@@ -123,12 +160,14 @@ export function useMealActions() {
         created_at: new Date().toISOString(),
         pending: true,
         ...itemsTotal(body.items, body.servings),
+        ...itemsExtras(body.items, body.servings),
       }
       patchList(body.date, (meals) => [...meals, meal])
+      rememberManualFoods(client, body.items)
       void enqueue({ type: 'meal.create', body })
       return meal
     },
-    [patchList],
+    [patchList, client],
   )
 
   const remove = useCallback(
@@ -154,16 +193,17 @@ export function useMealActions() {
   const update = useCallback(
     (meal: Meal, patch: MealPatch) => {
       const next: Meal = { ...meal, ...patch, pending: true }
-      Object.assign(next, itemsTotal(next.items, next.servings))
+      Object.assign(next, itemsTotal(next.items, next.servings), itemsExtras(next.items, next.servings))
       if (patch.date && patch.date !== meal.date) {
         patchList(meal.date, (meals) => meals.filter((m) => m.client_id !== meal.client_id))
         patchList(patch.date, (meals) => [...meals, next])
       } else {
         patchList(meal.date, (meals) => meals.map((m) => (m.client_id === meal.client_id ? next : m)))
       }
+      if (patch.items) rememberManualFoods(client, patch.items)
       void enqueue({ type: 'meal.patch', clientId: meal.client_id, body: patch })
     },
-    [patchList],
+    [patchList, client],
   )
 
   return { add, remove, restore, update }
@@ -216,4 +256,134 @@ export function useWeightActions() {
     [client],
   )
   return { save, remove }
+}
+
+export function useWater(date: string) {
+  return useQuery({ queryKey: keys.water(date), queryFn: () => api.get<WaterDay>(`/api/water?date=${date}`) })
+}
+
+export function useWaterDays(start: string, end: string) {
+  return useQuery({
+    queryKey: keys.waterDays(start, end),
+    queryFn: () => api.get<{ goal_ml: number; days: { date: string; ml: number }[] }>(`/api/water/days?start=${start}&end=${end}`),
+  })
+}
+
+/** Agua: se suma al instante en pantalla y viaja por la cola offline (cada toque, su propio id). */
+export function useWaterActions() {
+  const client = useQueryClient()
+  const goal = useBootstrap().data?.water_goal_ml ?? 2000
+  const patch = useCallback(
+    (date: string, update: (day: WaterDay) => WaterDay) => {
+      client.setQueryData<WaterDay>(keys.water(date), (old) => {
+        const day = update(old ?? { date, total_ml: 0, goal_ml: goal, entries: [] })
+        return { ...day, total_ml: day.entries.reduce((sum, e) => sum + e.ml, 0) }
+      })
+    },
+    [client, goal],
+  )
+  const add = useCallback(
+    (date: string, ml: number) => {
+      const entry = { client_id: newClientId(), ml, created_at: new Date().toISOString(), pending: true }
+      patch(date, (day) => ({ ...day, entries: [...day.entries, entry] }))
+      void enqueue({ type: 'water.add', body: { client_id: entry.client_id, date, ml } })
+      return entry
+    },
+    [patch],
+  )
+  const remove = useCallback(
+    (date: string, clientId: string) => {
+      patch(date, (day) => ({ ...day, entries: day.entries.filter((e) => e.client_id !== clientId) }))
+      void enqueue({ type: 'water.delete', clientId })
+    },
+    [patch],
+  )
+  return { add, remove }
+}
+
+/** Preferencias: se aplican al momento en los datos del móvil y se guardan por la cola offline. */
+export function usePrefsActions() {
+  const client = useQueryClient()
+  return useCallback(
+    (changes: Partial<Prefs>) => {
+      client.setQueryData<Bootstrap>(keys.bootstrap, (old) => {
+        if (!old) return old
+        const prefs = { ...(old.prefs ?? { water_goal_ml: null }), ...changes }
+        const water_goal_ml = prefs.water_goal_ml ?? autoWaterGoal(old.profile?.weight_kg)
+        return { ...old, prefs, water_goal_ml }
+      })
+      void enqueue({ type: 'prefs.patch', body: changes })
+    },
+    [client],
+  )
+}
+
+export function useMeasurements() {
+  return useQuery({
+    queryKey: keys.measurements,
+    queryFn: () => api.get<{ entries: Measurement[] }>('/api/measurements'),
+    select: (data) => data.entries,
+  })
+}
+
+/** Medidas: un registro por día; se ven al momento y viajan por la cola offline. */
+export function useMeasureActions() {
+  const client = useQueryClient()
+  const set = useCallback(
+    (update: (entries: Measurement[]) => Measurement[]) =>
+      client.setQueryData<{ entries: Measurement[] }>(keys.measurements, (old) => ({ entries: update(old?.entries ?? []) })),
+    [client],
+  )
+  const save = useCallback(
+    (entry: Measurement) => {
+      set((entries) => [...entries.filter((e) => e.date !== entry.date), entry].sort((a, b) => a.date.localeCompare(b.date)))
+      void enqueue({ type: 'measure.put', body: entry })
+    },
+    [set],
+  )
+  const remove = useCallback(
+    (date: string) => {
+      set((entries) => entries.filter((e) => e.date !== date))
+      void enqueue({ type: 'measure.delete', date })
+    },
+    [set],
+  )
+  return { save, remove }
+}
+
+export function usePhotos() {
+  return useQuery({ queryKey: keys.photos, queryFn: () => api.get<{ photos: ProgressPhoto[] }>('/api/photos'), select: (data) => data.photos })
+}
+
+/** Objetivos de un día concreto según su tipo (entreno o descanso). Se calcula en el móvil: funciona sin red. */
+export function useDayTargets(): (iso: string) => { kind: DayKind | null; targets: DayTargetsValues; manual: boolean; exercise: number } {
+  const { data } = useBootstrap()
+  return useCallback(
+    (iso: string) => {
+      const base = data?.targets ?? { kcal: 2000, protein: 120, carbs: 220, fat: 65 }
+      const overrides = data?.day_types ?? {}
+      const kind = kindFor(iso, data?.prefs, overrides)
+      // Si se suman las calorías del entreno al objetivo, cuenta lo entrenado ese día.
+      const exercise = data?.exercise_kcal?.[iso] ?? 0
+      return { kind, targets: targetsFor(base, data?.prefs, kind, exercise), manual: iso in overrides, exercise }
+    },
+    [data?.targets, data?.day_types, data?.prefs, data?.exercise_kcal],
+  )
+}
+
+export function useDayTypeActions() {
+  const client = useQueryClient()
+  return useCallback(
+    (date: string, kind: DayKind | null) => {
+      client.setQueryData<Bootstrap>(keys.bootstrap, (old) => {
+        if (!old) return old
+        const day_types = { ...(old.day_types ?? {}) }
+        if (kind) day_types[date] = kind
+        else delete day_types[date]
+        return { ...old, day_types }
+      })
+      void enqueue({ type: 'daytype.put', body: { date, kind } })
+    },
+    [client],
+  )
 }

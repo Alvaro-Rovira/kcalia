@@ -9,7 +9,8 @@ import type { DayStatus } from '@/lib/types'
 interface Props {
   date: string
   onChange: (date: string) => void
-  targetKcal: number
+  /** Objetivo de calorías de cada día (cambia si hay días de entreno y de descanso). */
+  targetKcal: number | ((iso: string) => number)
 }
 
 function statusOf(kcal: number, target: number): DayStatus {
@@ -71,7 +72,7 @@ export function DateStrip({ date, onChange, targetKcal }: Props) {
           const selected = day === date
           const future = day > today
           const total = byDate.get(day)
-          const status: DayStatus = total && total.meals > 0 ? statusOf(total.kcal, targetKcal) : 'sin_registro'
+          const status: DayStatus = total && total.meals > 0 ? statusOf(total.kcal, typeof targetKcal === 'function' ? targetKcal(day) : targetKcal) : 'sin_registro'
           return (
             <li key={day} className="flex justify-center">
               <button

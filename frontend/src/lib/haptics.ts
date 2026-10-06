@@ -8,6 +8,8 @@ const patterns = {
 } as const
 
 export function haptic(kind: keyof typeof patterns = 'tap'): void {
+  // Sin un toque previo en la página (p. ej. al abrir un atajo) Chrome bloquea la vibración y lo anota como error.
+  if (typeof navigator === 'undefined' || navigator.userActivation?.hasBeenActive === false) return
   try {
     navigator.vibrate?.(patterns[kind] as number | number[])
   } catch {

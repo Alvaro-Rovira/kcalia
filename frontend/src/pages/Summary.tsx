@@ -7,21 +7,26 @@ import {
   ChevronLeft,
   ChevronRight,
   Flame,
+  Leaf,
   Lock,
   Mic,
   NotebookPen,
   PiggyBank,
   Scale,
+  Share2,
   Star,
   Target,
   TrendingDown,
   TrendingUp,
   Trophy,
   Utensils,
+  Wine,
   Zap,
   type LucideIcon,
 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
+import { ProgressTabs } from '@/components/ProgressTabs'
+import { WaterWeek } from '@/components/WaterWeek'
 import { useStats, useSummaries, useWeek } from '@/hooks/data'
 import { addDays, fmtRange, fmtWeekday, todayISO, weekdayInitial, weekStart } from '@/lib/dates'
 import { capitalize, fmt, fmtSigned, plural } from '@/lib/format'
@@ -32,6 +37,7 @@ import { EmptyState } from '@/ui/EmptyState'
 import { IconButton } from '@/ui/Button'
 import { Ring } from '@/ui/Ring'
 import { Skeleton } from '@/ui/Skeleton'
+import { toast } from '@/ui/toast'
 
 const ACHIEVEMENT_ICONS: Record<string, LucideIcon> = {
   utensils: Utensils,
@@ -184,6 +190,22 @@ export default function Summary() {
   const isCurrent = start === currentWeek
   const streak = stats.data?.streak
 
+  const [sharing, setSharing] = useState(false)
+
+  async function share() {
+    if (!summary) return
+    setSharing(true)
+    try {
+      const { shareSummary } = await import('@/lib/shareCard')
+      const result = await shareSummary(summary)
+      if (result === 'downloaded') toast.success('Imagen descargada', 'Ya puedes compartirla donde quieras.')
+    } catch {
+      toast.error('No he podido crear la imagen')
+    } finally {
+      setSharing(false)
+    }
+  }
+
   const shift = (weeks: number) => {
     const next = addDays(start, weeks * 7)
     if (next > currentWeek) return
@@ -193,6 +215,7 @@ export default function Summary() {
 
   return (
     <main className="page">
+      <ProgressTabs />
       <header className="flex items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.035em] text-text">Resumen</h1>
@@ -201,6 +224,11 @@ export default function Summary() {
           </p>
         </div>
         <div className="flex shrink-0">
+          {summary && summary.logged_days > 0 && (
+            <IconButton label="Compartir la semana como imagen" disabled={sharing} onClick={() => void share()}>
+              <Share2 className="size-5" aria-hidden />
+            </IconButton>
+          )}
           <IconButton label="Semana anterior" onClick={() => shift(-1)}>
             <ChevronLeft className="size-5" aria-hidden />
           </IconButton>
@@ -381,6 +409,18 @@ export default function Summary() {
                   <span className="block text-[12.5px] text-text-3">Objetivo {fmt(summary.targets.protein)} g</span>
                 </p>
               </div>
+              {summary.avg_fiber !== undefined && summary.logged_days > 0 && (
+                <div className="flex items-center justify-between gap-3 p-4">
+                  <p className="flex items-center gap-1.5 text-[12.5px] font-medium text-text-2">
+                    <Leaf className="size-3.5 text-text-3" aria-hidden />
+                    Fibra media
+                  </p>
+                  <p className="text-right text-[14px] text-text-2" data-num>
+                    <span className="font-semibold text-text">{fmt(summary.avg_fiber)} g</span> al día
+                    <span className="block text-[12.5px] text-text-3">Orientativo: 25-30 g</span>
+                  </p>
+                </div>
+              )}
               <div className="flex items-center justify-between gap-3 p-4">
                 <div>
                   <p className="text-[12.5px] font-medium text-text-2">Tendencia de peso</p>
@@ -401,6 +441,23 @@ export default function Summary() {
               </div>
             </section>
           </div>
+
+          {(summary.alcohol?.grams ?? 0) > 0 && (
+            <section className="card flex items-start gap-3.5 p-4" aria-label="Alcohol de la semana">
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-surface-2">
+                <Wine className="size-5 text-text-2" aria-hidden />
+              </span>
+              <div>
+                <h2 className="text-[15px] font-semibold text-text">Alcohol</h2>
+                <p className="mt-0.5 text-[14px] leading-relaxed text-text-2" data-num>
+                  {fmt(summary.alcohol!.grams, 1)} g en {summary.alcohol!.days} {plural(summary.alcohol!.days, 'día', 'días')}: {fmt(summary.alcohol!.kcal)} kcal, el{' '}
+                  {fmt(summary.alcohol!.pct, 1)} % de lo que comiste. Ya están dentro de tus calorías.
+                </p>
+              </div>
+            </section>
+          )}
+
+          <WaterWeek start={start} />
 
           {summary.vs_previous && (
             <section className="card p-4" aria-label="Comparación con la semana anterior">
