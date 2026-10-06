@@ -299,3 +299,37 @@ def test_juntar_con_unidades_distintas_deja_los_gramos():
     b = {**a, "qty": 5, "unit": "g", "grams": 5}
     oil = parse_meal(_meal(a, b)).items[0]
     assert (oil.unit, oil.grams, oil.qty) == ("g", 15, 15)
+
+
+def test_fibra_y_alcohol_opcionales_y_compatibles_con_respuestas_antiguas():
+    # Sin los campos nuevos (respuestas y cachés de antes): siguen valiendo y quedan vacíos.
+    egg = parse_meal(_meal(_item())).items[0]
+    assert egg.fiber is None and egg.alcohol is None
+    lentils = _item(
+        name="lentejas", grams=300, kcal100=116, protein100=9, carbs100=20, fat100=0.4, fiber100=7.9, alcohol100=0
+    )
+    item = parse_meal(_meal(lentils)).items[0]
+    assert item.fiber == pytest.approx(23.7) and item.alcohol is None
+
+
+def test_cerveza_con_alcohol_no_se_corrige():
+    beer = _item(
+        name="cerveza",
+        qty=200,
+        unit="ml",
+        grams=200,
+        kcal100=43,
+        protein100=0.4,
+        carbs100=3.6,
+        fat100=0,
+        alcohol100=3.9,
+    )
+    meal = parse_meal(_meal(beer))
+    assert meal.items[0].alcohol == pytest.approx(7.8) and meal.items[0].kcal == 86
+    assert meal.confidence == 0.9  # 4·0,4 + 4·3,6 + 7·3,9 = 43: coherente, sin ajustes
+
+
+@pytest.mark.parametrize("bad", [{"alcohol100": 70}, {"fiber100": -1}, {"fiber100": "mucha"}])
+def test_fibra_o_alcohol_imposibles_se_rechazan(bad):
+    with pytest.raises(ValueError):
+        parse_meal(_meal(_item(**bad)))

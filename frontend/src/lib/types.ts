@@ -2,7 +2,7 @@ export type Sex = 'hombre' | 'mujer'
 export type Activity = 'sedentario' | 'ligero' | 'moderado' | 'alto' | 'muy_alto'
 export type Goal = 'definicion_ligera' | 'definicion_agresiva' | 'volumen' | 'mantenimiento' | 'recomposicion'
 export type Slot = 'desayuno' | 'comida' | 'merienda' | 'cena' | 'snack'
-export type Source = 'ai' | 'exact' | 'fuzzy' | 'cache' | 'favorite' | 'recent' | 'manual' | 'photo' | 'product'
+export type Source = 'ai' | 'exact' | 'fuzzy' | 'cache' | 'favorite' | 'recent' | 'manual' | 'photo' | 'product' | 'drink'
 export type Via = 'text' | 'voice' | 'photo' | 'tap'
 export type MacroKey = 'kcal' | 'protein' | 'carbs' | 'fat'
 export type ThemePref = 'dark' | 'light' | 'auto'
@@ -23,6 +23,9 @@ export interface Item extends Macros {
   product_id?: number | null
   /** Añadido a mano: al guardar la comida se aprende en la caché de ingredientes. */
   manual?: boolean
+  /** Fibra y gramos de alcohol (opcionales: lo antiguo no los trae y cuentan como 0). */
+  fiber?: number | null
+  alcohol?: number | null
 }
 
 /** Ingrediente de la caché: macros por 100 g y gramos por unidad habitual. */
@@ -33,6 +36,8 @@ export interface FoodEntry {
   protein100: number
   carbs100: number
   fat100: number
+  fiber100?: number | null
+  alcohol100?: number | null
   unit_grams: Record<string, number>
 }
 
@@ -107,6 +112,8 @@ export interface Meal extends Macros {
   assumptions: string[]
   dish_id: number | null
   created_at: string
+  fiber?: number
+  alcohol?: number
   /** Guardada en el móvil, pendiente de llegar al servidor. */
   pending?: boolean
 }
@@ -248,6 +255,8 @@ export type ResolveResult =
 export interface DayTotal extends Macros {
   date: string
   meals: number
+  fiber?: number
+  alcohol?: number
 }
 
 export interface WeightPoint {
@@ -270,6 +279,8 @@ export interface WeekDay extends Macros {
   status: DayStatus
   balance: number
   protein_met: boolean
+  fiber?: number
+  alcohol?: number
 }
 
 export interface Badge {
@@ -295,6 +306,8 @@ export interface WeekSummary {
   avg_protein: number
   avg_carbs: number
   avg_fat: number
+  avg_fiber?: number
+  alcohol?: { grams: number; kcal: number; days: number; pct: number }
   balance_total: number
   adherence_pct: number
   projection: { weekly_kg: number; weeks_per_kg: number | null; direction: 'perdida' | 'ganancia' | 'estable' } | null

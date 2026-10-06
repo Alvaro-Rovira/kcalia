@@ -140,6 +140,9 @@ class Meal(TenantMixin, Base):
     protein: Mapped[float] = mapped_column(Float)
     carbs: Mapped[float] = mapped_column(Float)
     fat: Mapped[float] = mapped_column(Float)
+    # Fibra y gramos de alcohol (7 kcal/g, ya incluidos en kcal). None en comidas anteriores a estos datos.
+    fiber: Mapped[float | None] = mapped_column(Float, nullable=True)
+    alcohol: Mapped[float | None] = mapped_column(Float, nullable=True)
     source: Mapped[str] = mapped_column(String(12), default="ai")
     confidence: Mapped[float] = mapped_column(Float, default=0.8)
     assumptions: Mapped[list] = mapped_column(JSON, default=list)
@@ -166,6 +169,8 @@ class Food(TenantMixin, Base):
     protein100: Mapped[float] = mapped_column(Float)
     carbs100: Mapped[float] = mapped_column(Float)
     fat100: Mapped[float] = mapped_column(Float)
+    fiber100: Mapped[float | None] = mapped_column(Float, nullable=True)
+    alcohol100: Mapped[float | None] = mapped_column(Float, nullable=True)
     unit_grams: Mapped[dict] = mapped_column(JSON, default=dict)
     hits: Mapped[int] = mapped_column(Integer, default=0)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)

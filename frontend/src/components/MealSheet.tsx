@@ -29,6 +29,7 @@ const SOURCE_TEXT: Record<Meal['source'], string> = {
   recent: 'Reciente, sin IA',
   manual: 'Añadida a mano',
   product: 'Con la etiqueta de tu producto, sin IA',
+  drink: 'Bebida, sin IA',
 }
 
 const itemsTotalKcal = (items: Item[], servings: number) => itemsTotal(items, servings).kcal

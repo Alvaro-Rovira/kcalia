@@ -19,12 +19,19 @@ app = FastAPI()
 CALLS = {"chat": 0, "stt": 0}
 
 
+FIBER100 = {"pan integral": 7, "arroz blanco cocido": 0.4, "lentejas": 7.9, "avena": 10, "platano": 2.6, "nueces": 6.7,
+            "brocoli": 3.3, "patata": 1.8, "tomate": 1.2}
+
+
 def item(name, qty, unit, grams, kcal, protein, carbs, fat):
     """Como el modelo real: valores por 100 g y peso total (los totales los calcula la app)."""
     per100 = lambda value: round(value / grams * 100, 2)  # noqa: E731
+    plain_name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
+    fiber = next((v for k, v in FIBER100.items() if k in plain_name), 0)
     return {
         "name": name, "qty": qty, "unit": unit, "grams": grams,
         "kcal100": per100(kcal), "protein100": per100(protein), "carbs100": per100(carbs), "fat100": per100(fat),
+        "fiber100": fiber, "alcohol100": 0,
     }
 
 

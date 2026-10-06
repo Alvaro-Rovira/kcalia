@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useSyncExternalStore } from 'react'
 import { api, newClientId } from '@/lib/api'
-import { itemsTotal } from '@/lib/macros'
+import { itemsExtras, itemsTotal } from '@/lib/macros'
 import { foodKey } from '@/lib/textnorm'
 import { autoWaterGoal } from '@/lib/water'
 import type {
@@ -155,6 +155,7 @@ export function useMealActions() {
         created_at: new Date().toISOString(),
         pending: true,
         ...itemsTotal(body.items, body.servings),
+        ...itemsExtras(body.items, body.servings),
       }
       patchList(body.date, (meals) => [...meals, meal])
       rememberManualFoods(client, body.items)
@@ -187,7 +188,7 @@ export function useMealActions() {
   const update = useCallback(
     (meal: Meal, patch: MealPatch) => {
       const next: Meal = { ...meal, ...patch, pending: true }
-      Object.assign(next, itemsTotal(next.items, next.servings))
+      Object.assign(next, itemsTotal(next.items, next.servings), itemsExtras(next.items, next.servings))
       if (patch.date && patch.date !== meal.date) {
         patchList(meal.date, (meals) => meals.filter((m) => m.client_id !== meal.client_id))
         patchList(patch.date, (meals) => [...meals, next])

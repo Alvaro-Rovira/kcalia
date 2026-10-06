@@ -25,6 +25,7 @@ import { relativeDay, todayISO } from '@/lib/dates'
 import { capitalize, fmt } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
 import { downscaleImage } from '@/lib/image'
+import { drinkItem, type Drink } from '@/lib/drinks'
 import { itemsTotal } from '@/lib/macros'
 import { draftFromProducts, resolveText, singleItem } from '@/lib/products'
 import { rankForSlot } from '@/lib/ranking'
@@ -38,6 +39,7 @@ import { Notice } from '@/ui/Notice'
 import { Sheet } from '@/ui/Sheet'
 import { toast } from '@/ui/toast'
 import { Analyzing } from './Analyzing'
+import { DrinkPicker } from './DrinkPicker'
 import { ItemList, ServingsPicker, SlotPicker, Totals } from './MealBreakdown'
 
 interface Props {
@@ -199,7 +201,7 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
       toast({
         tone: 'success',
         title: `${meal.name} · ${fmt(total.kcal)} kcal`,
-        description: options.source === 'product' ? 'Con la etiqueta de tu producto, sin gastar IA' : withoutAi ? 'Añadida desde tu historial, sin gastar IA' : `Añadida a ${relativeDay(date).toLowerCase()}`,
+        description: options.source === 'drink' ? 'Sin gastar IA' : options.source === 'product' ? 'Con la etiqueta de tu producto, sin gastar IA' : withoutAi ? 'Añadida desde tu historial, sin gastar IA' : `Añadida a ${relativeDay(date).toLowerCase()}`,
         action: { label: 'Deshacer', onClick: () => meals.remove(meal) },
       })
       onSaved(date)
@@ -313,6 +315,21 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
     setServings(1)
     setPhase({ kind: 'result', draft: draftFromProducts(product.alias || product.name, [singleItem(product)]), via: 'tap' })
     haptic('select')
+  }
+
+  const quickDrink = (drink: Drink) => {
+    const item = drinkItem(drink)
+    const draft: Draft = {
+      name: drink.name,
+      text: '',
+      items: [item],
+      ...itemsTotal([item]),
+      confidence: 1,
+      assumptions: ['El alcohol cuenta 7 kcal por gramo'],
+      source: 'drink',
+      dish_id: null,
+    }
+    save(draft, { source: 'drink', via: 'tap' })
   }
 
   const quickAdd = (dish: Dish) => save(draftFromDish(dish, dish.favorite ? 'favorite' : 'recent'), { source: dish.favorite ? 'favorite' : 'recent', via: 'tap' })
@@ -524,6 +541,7 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
                   </div>
                 </div>
               )}
+              <DrinkPicker onPick={quickDrink} />
               <button
                 type="button"
                 onClick={onNewProduct}

@@ -56,3 +56,68 @@ def test_borrar_datos_se_lleva_el_agua(client):
     assert client.post("/api/data/delete", json={"password": PASSWORD}).json() == {"ok": True}
     client.put("/api/profile", json=PROFILE)
     assert client.get("/api/water", params={"date": "2026-10-02"}).json()["total_ml"] == 0
+
+
+BEER = {
+    "name": "cerveza (caña)",
+    "qty": 200,
+    "unit": "ml",
+    "grams": 200,
+    "kcal": 69.3,
+    "protein": 0.8,
+    "carbs": 7.2,
+    "fat": 0,
+    "alcohol": 7.9,
+}
+BREAD = {
+    "name": "pan integral",
+    "qty": 60,
+    "unit": "g",
+    "grams": 60,
+    "kcal": 150,
+    "protein": 6,
+    "carbs": 25,
+    "fat": 2,
+    "fiber": 4.2,
+}
+OLD = {
+    "name": "tortilla",
+    "qty": 1,
+    "unit": "pieza",
+    "grams": 150,
+    "kcal": 285,
+    "protein": 9.8,
+    "carbs": 18,
+    "fat": 19.5,
+}
+
+
+def add(client, cid, items, **extra):
+    body = {
+        "client_id": cid,
+        "date": "2026-10-05",
+        "slot": "cena",
+        "name": "Cena",
+        "items": items,
+        "source": "manual",
+        **extra,
+    }
+    response = client.post("/api/meals", json=body)
+    assert response.status_code == 201, response.text
+    return response.json()
+
+
+def test_fibra_y_alcohol_en_comidas_dia_y_semana(client):
+    beer = add(client, "cid-cerveza1", [BEER], source="drink", servings=2)
+    assert beer["alcohol"] == pytest.approx(15.8) and beer["kcal"] == pytest.approx(138.6)
+    dinner = add(client, "cid-cena-001", [BREAD, OLD])
+    assert dinner["fiber"] == 4.2 and dinner["alcohol"] == 0  # lo que no trae el dato cuenta como 0
+    day = client.get("/api/days", params={"start": "2026-10-05", "end": "2026-10-05"}).json()["days"][0]
+    assert day["fiber"] == 4.2 and day["alcohol"] == pytest.approx(15.8)
+    week = client.get("/api/summary/week", params={"start": "2026-10-05"}).json()
+    assert week["alcohol"]["grams"] == pytest.approx(15.8) and week["alcohol"]["kcal"] == 111
+    assert week["alcohol"]["days"] == 1 and week["avg_fiber"] == 4.2
+    patched = client.patch("/api/meals/cid-cena-001", json={"servings": 2}).json()
+    assert patched["fiber"] == 8.4
+    csv_text = client.get("/api/export/meals.csv").text
+    assert "fibra_g;alcohol_g" in csv_text.splitlines()[0] and "15,8" in csv_text

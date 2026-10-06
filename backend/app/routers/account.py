@@ -51,6 +51,8 @@ def export_json(db: Session = Depends(get_db)) -> dict:
                 "protein100": f.protein100,
                 "carbs100": f.carbs100,
                 "fat100": f.fat100,
+                "fiber100": f.fiber100,
+                "alcohol100": f.alcohol100,
                 "unit_grams": f.unit_grams,
             }
             for f in db.scalars(select(Food).order_by(Food.name))
@@ -83,6 +85,8 @@ def export_meals_csv(db: Session = Depends(get_db)) -> Response:
             "proteinas_g",
             "hidratos_g",
             "grasas_g",
+            "fibra_g",
+            "alcohol_g",
             "origen",
             "ingredientes",
         ]
@@ -99,6 +103,8 @@ def export_meals_csv(db: Session = Depends(get_db)) -> Response:
                 _es(meal.protein),
                 _es(meal.carbs),
                 _es(meal.fat),
+                _es(meal.fiber or 0),
+                _es(meal.alcohol or 0),
                 meal.source,
                 ingredients,
             ]

@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { CopyPlus, Flame, Lightbulb, Plus } from 'lucide-react'
+import { CopyPlus, Flame, Leaf, Lightbulb, Plus, Wine } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { CopyPanel } from '@/components/CopyPanel'
@@ -15,7 +15,7 @@ import { copyInputs } from '@/lib/copy'
 import { addDays, fmtLong, greeting, isValidISO, relativeDay, todayISO } from '@/lib/dates'
 import { capitalize, fmt, plural } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
-import { GRAM_MACROS, sumMacros } from '@/lib/macros'
+import { FIBER_TARGET, GRAM_MACROS, mealsExtras, sumMacros } from '@/lib/macros'
 import { SLOTS } from '@/lib/slots'
 import type { Meal } from '@/lib/types'
 import { AnimatedNumber } from '@/ui/AnimatedNumber'
@@ -63,6 +63,7 @@ export default function Today() {
   const stats = useStats()
   const list = useMemo(() => meals.data ?? [], [meals.data])
   const eaten = useMemo(() => sumMacros(list), [list])
+  const extras = useMemo(() => mealsExtras(list), [list])
   const loading = meals.isPending
 
   const setDate = (next: string) => {
@@ -275,6 +276,24 @@ export default function Today() {
                       )
                     })}
                   </div>
+                  {list.length > 0 && (
+                    <p className="mt-3.5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[13px] text-text-2" data-num>
+                      <span className="flex items-center gap-1.5">
+                        <Leaf className="size-3.5 text-text-3" aria-hidden />
+                        Fibra <strong className="font-semibold text-text">{fmt(extras.fiber)} g</strong>
+                        <span className="text-text-3">
+                          · orientativo {FIBER_TARGET.min}-{FIBER_TARGET.max} g
+                        </span>
+                      </span>
+                      {extras.alcohol > 0 && (
+                        <span className="flex items-center gap-1.5">
+                          <Wine className="size-3.5 text-text-3" aria-hidden />
+                          Alcohol <strong className="font-semibold text-text">{fmt(extras.alcohol, 1)} g</strong>
+                          <span className="text-text-3">· {fmt(extras.alcohol * 7)} kcal</span>
+                        </span>
+                      )}
+                    </p>
+                  )}
                 </>
               )}
             </section>

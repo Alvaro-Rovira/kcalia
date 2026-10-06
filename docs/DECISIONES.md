@@ -34,3 +34,7 @@ Decisiones tomadas sin poder preguntar, con el motivo. La más reciente, abajo.
     (3 para «no existe») y un tope de 150 búsquedas por usuario y día. `OFF_BASE_URL` solo existe para las pruebas.
 13. **Copias de comidas** cuentan como «a un toque» (`source = recent`), no gastan IA y no vuelven a enseñar a la caché
     los ingredientes hechos a mano.
+14. **Fibra y alcohol opcionales** en ingredientes, comidas (migración v3) y caché: lo antiguo queda vacío y cuenta
+    como 0. El esquema de la IA pide `fiber100` y `alcohol100`, pero acepta respuestas sin ellos; el alcohol entra en la
+    comprobación de coherencia (7 kcal/g). Las bebidas rápidas se guardan como comida con `source = "drink"` y se
+    calculan en el móvil: gramos de alcohol = ml × % vol × 0,789 / 100.

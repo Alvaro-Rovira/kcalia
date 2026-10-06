@@ -7,7 +7,7 @@ Sex = Literal["hombre", "mujer"]
 Activity = Literal["sedentario", "ligero", "moderado", "alto", "muy_alto"]
 Goal = Literal["definicion_ligera", "definicion_agresiva", "volumen", "mantenimiento", "recomposicion"]
 Slot = Literal["desayuno", "comida", "merienda", "cena", "snack"]
-Source = Literal["ai", "exact", "fuzzy", "cache", "favorite", "recent", "manual", "photo", "product"]
+Source = Literal["ai", "exact", "fuzzy", "cache", "favorite", "recent", "manual", "photo", "product", "drink"]
 Via = Literal["text", "voice", "photo", "tap"]
 
 
@@ -75,6 +75,9 @@ class Item(BaseModel):
     protein: float = Field(ge=0, le=600)
     carbs: float = Field(ge=0, le=1200)
     fat: float = Field(ge=0, le=600)
+    # Opcionales: las comidas antiguas no los tienen.
+    fiber: float | None = Field(default=None, ge=0, le=300)
+    alcohol: float | None = Field(default=None, ge=0, le=500)
 
 
 class ResolveIn(BaseModel):

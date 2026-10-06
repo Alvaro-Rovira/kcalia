@@ -9,7 +9,7 @@ from ..ai import AiClient, AiMeal, transcribe
 from ..config import get_settings
 from ..db import get_db
 from ..deps import get_ai_client, require_approved_user, require_user, today_local
-from ..matching import totals
+from ..matching import extras, totals
 from ..models import Dish, DishAlias, Meal, User, utcnow
 from ..products import resolve_text
 from ..schemas import DishPatch, MealIn, MealPatch, ResolveIn
@@ -270,6 +270,7 @@ def create_meal(body: MealIn, db: Session = Depends(get_db)) -> dict:
         assumptions=body.assumptions,
         dish_id=dish.id if dish else None,
         **macro,
+        **extras(items, body.servings),
     )
     db.add(meal)
     db.commit()
@@ -303,6 +304,7 @@ def update_meal(client_id: str, body: MealPatch, db: Session = Depends(get_db)) 
         meal.servings = body.servings
     macro = totals(meal.items, meal.servings)
     meal.kcal, meal.protein, meal.carbs, meal.fat = (macro[m] for m in ("kcal", "protein", "carbs", "fat"))
+    meal.fiber, meal.alcohol = (extras(meal.items, meal.servings)[e] for e in ("fiber", "alcohol"))
     db.commit()
     today = today_local()
     services.refresh_week_if_stored(db, meal.date, today)

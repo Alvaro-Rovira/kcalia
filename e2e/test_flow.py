@@ -443,3 +443,20 @@ def test_14_agua_con_y_sin_conexion(page: Page, servers):
     page.get_by_role("link", name="Resumen").click()
     expect(page.get_by_role("region", name="Agua de la semana")).to_be_visible()
     page.get_by_role("link", name="Hoy").click()
+
+
+def test_15_bebida_con_alcohol_y_fibra(page: Page, servers):
+    from datetime import date
+
+    today = date.today().isoformat()
+    page.goto(servers["app"])
+    expect(page.get_by_text("Fibra", exact=False).first).to_be_visible()
+    page.get_by_role("button", name="Añadir comida").last.click()
+    page.get_by_role("button", name="Apuntar caña de cerveza, 87 kilocalorías").click()
+    expect(page.get_by_text("Caña de cerveza · 87 kcal")).to_be_visible()
+    expect(page.get_by_text("Alcohol 7,9 g")).to_be_visible()
+    wait_until(lambda: any(m["source"] == "drink" for m in api_get(page, servers, f"/api/meals?date={today}")["meals"]))
+    page.get_by_role("link", name="Resumen").click()
+    expect(page.get_by_role("region", name="Alcohol de la semana")).to_be_visible()
+    expect(page.get_by_text("Fibra media")).to_be_visible()
+    page.get_by_role("link", name="Hoy").click()

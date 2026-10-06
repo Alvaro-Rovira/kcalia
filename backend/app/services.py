@@ -281,6 +281,8 @@ def meal_dict(meal: Meal) -> dict:
         "protein": meal.protein,
         "carbs": meal.carbs,
         "fat": meal.fat,
+        "fiber": meal.fiber or 0,
+        "alcohol": meal.alcohol or 0,
         "source": meal.source,
         "confidence": meal.confidence,
         "assumptions": meal.assumptions,
@@ -333,7 +335,16 @@ def resolve_with_food_cache(db: Session, text: str) -> list[dict] | None:
         food = db.scalar(select(Food).where(Food.norm == key))
         if food is None:
             return None
-        return FoodInfo(food.name, food.kcal100, food.protein100, food.carbs100, food.fat100, food.unit_grams or {})
+        return FoodInfo(
+            food.name,
+            food.kcal100,
+            food.protein100,
+            food.carbs100,
+            food.fat100,
+            food.unit_grams or {},
+            food.fiber100,
+            food.alcohol100,
+        )
 
     return resolve_from_foods(text, lookup)
 
@@ -350,12 +361,18 @@ def store_foods(db: Session, updates: list[FoodUpdate]) -> None:
                     protein100=update.protein100,
                     carbs100=update.carbs100,
                     fat100=update.fat100,
+                    fiber100=update.fiber100,
+                    alcohol100=update.alcohol100,
                     unit_grams=update.unit_grams,
                 )
             )
         else:
             food.kcal100, food.protein100 = update.kcal100, update.protein100
             food.carbs100, food.fat100 = update.carbs100, update.fat100
+            if update.fiber100 is not None:
+                food.fiber100 = update.fiber100
+            if update.alcohol100 is not None:
+                food.alcohol100 = update.alcohol100
             food.unit_grams = {**(food.unit_grams or {}), **update.unit_grams}
             food.hits += 1
 
@@ -419,6 +436,8 @@ def food_dict(food: Food) -> dict:
         "protein100": food.protein100,
         "carbs100": food.carbs100,
         "fat100": food.fat100,
+        "fiber100": food.fiber100,
+        "alcohol100": food.alcohol100,
         "unit_grams": food.unit_grams or {},
     }
 
@@ -464,7 +483,17 @@ def all_products(db: Session) -> list[Product]:
 def product_infos(db: Session) -> list[ProductInfo]:
     return [
         ProductInfo(
-            p.id, p.name, p.alias, p.basis, p.kcal100, p.protein100, p.carbs100, p.fat100, p.unit_label, p.unit_grams
+            p.id,
+            p.name,
+            p.alias,
+            p.basis,
+            p.kcal100,
+            p.protein100,
+            p.carbs100,
+            p.fat100,
+            p.unit_label,
+            p.unit_grams,
+            p.fiber100,
         )
         for p in all_products(db)
     ]
@@ -490,6 +519,8 @@ def day_totals(db: Session, start: str | None = None, end: str | None = None) ->
             func.sum(Meal.carbs),
             func.sum(Meal.fat),
             func.count(Meal.id),
+            func.coalesce(func.sum(Meal.fiber), 0),
+            func.coalesce(func.sum(Meal.alcohol), 0),
         )
         .where(Meal.deleted_at.is_(None))
         .group_by(Meal.date)
@@ -499,7 +530,16 @@ def day_totals(db: Session, start: str | None = None, end: str | None = None) ->
     if end:
         query = query.where(Meal.date <= end)
     return {
-        row[0]: {"date": row[0], "kcal": row[1], "protein": row[2], "carbs": row[3], "fat": row[4], "meals": row[5]}
+        row[0]: {
+            "date": row[0],
+            "kcal": row[1],
+            "protein": row[2],
+            "carbs": row[3],
+            "fat": row[4],
+            "meals": row[5],
+            "fiber": round(row[6] or 0, 1),
+            "alcohol": round(row[7] or 0, 1),
+        }
         for row in db.execute(query)
     }
 

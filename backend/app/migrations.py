@@ -179,7 +179,13 @@ def _v2_barcodes(conn: sqlite3.Connection) -> None:
     rebuild_table(conn, Base.metadata.tables["products"])
 
 
-MIGRATIONS: list[Callable[[sqlite3.Connection], None]] = [_v1_multiuser, _v2_barcodes]
+def _v3_fiber_alcohol(conn: sqlite3.Connection) -> None:
+    """Fibra y alcohol en las comidas y en la caché de ingredientes (columnas nuevas, vacías en lo antiguo)."""
+    rebuild_table(conn, Base.metadata.tables["meals"])
+    rebuild_table(conn, Base.metadata.tables["foods"])
+
+
+MIGRATIONS: list[Callable[[sqlite3.Connection], None]] = [_v1_multiuser, _v2_barcodes, _v3_fiber_alcohol]
 CURRENT_VERSION = len(MIGRATIONS)
 
 

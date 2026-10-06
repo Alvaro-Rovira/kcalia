@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Flame,
+  Leaf,
   Lock,
   Mic,
   NotebookPen,
@@ -18,6 +19,7 @@ import {
   TrendingUp,
   Trophy,
   Utensils,
+  Wine,
   Zap,
   type LucideIcon,
 } from 'lucide-react'
@@ -382,6 +384,18 @@ export default function Summary() {
                   <span className="block text-[12.5px] text-text-3">Objetivo {fmt(summary.targets.protein)} g</span>
                 </p>
               </div>
+              {summary.avg_fiber !== undefined && summary.logged_days > 0 && (
+                <div className="flex items-center justify-between gap-3 p-4">
+                  <p className="flex items-center gap-1.5 text-[12.5px] font-medium text-text-2">
+                    <Leaf className="size-3.5 text-text-3" aria-hidden />
+                    Fibra media
+                  </p>
+                  <p className="text-right text-[14px] text-text-2" data-num>
+                    <span className="font-semibold text-text">{fmt(summary.avg_fiber)} g</span> al día
+                    <span className="block text-[12.5px] text-text-3">Orientativo: 25-30 g</span>
+                  </p>
+                </div>
+              )}
               <div className="flex items-center justify-between gap-3 p-4">
                 <div>
                   <p className="text-[12.5px] font-medium text-text-2">Tendencia de peso</p>
@@ -402,6 +416,21 @@ export default function Summary() {
               </div>
             </section>
           </div>
+
+          {(summary.alcohol?.grams ?? 0) > 0 && (
+            <section className="card flex items-start gap-3.5 p-4" aria-label="Alcohol de la semana">
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-surface-2">
+                <Wine className="size-5 text-text-2" aria-hidden />
+              </span>
+              <div>
+                <h2 className="text-[15px] font-semibold text-text">Alcohol</h2>
+                <p className="mt-0.5 text-[14px] leading-relaxed text-text-2" data-num>
+                  {fmt(summary.alcohol!.grams, 1)} g en {summary.alcohol!.days} {plural(summary.alcohol!.days, 'día', 'días')}: {fmt(summary.alcohol!.kcal)} kcal, el{' '}
+                  {fmt(summary.alcohol!.pct, 1)} % de lo que comiste. Ya están dentro de tus calorías.
+                </p>
+              </div>
+            </section>
+          )}
 
           <WaterWeek start={start} />
 

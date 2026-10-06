@@ -27,6 +27,8 @@ function rescale(item: Item, grams: number): Item {
     protein: round(item.protein),
     carbs: round(item.carbs),
     fat: round(item.fat),
+    ...(item.fiber != null ? { fiber: round(item.fiber) } : {}),
+    ...(item.alcohol != null ? { alcohol: round(item.alcohol) } : {}),
   }
 }
 
