@@ -180,7 +180,29 @@ def apply_plan(db: Session, profile: Profile) -> tuple[Targets, dict]:
 # ---------------------------------------------------------------- comidas e historial
 
 
-def dish_dict(dish: Dish, aliases: list[str] | None = None) -> dict:
+USAGE_WINDOW_DAYS = 120
+
+
+def slot_usage(db: Session, today: date | None = None) -> tuple[dict[int, dict[str, int]], dict[int, dict[str, int]]]:
+    """Cuántas veces se ha comido cada comida conocida y cada producto en cada momento del día (últimos meses).
+
+    Sirve para ordenar favoritos y recientes según la hora: el café por la mañana, la cena por la noche.
+    """
+    since = ((today or date.today()) - timedelta(days=USAGE_WINDOW_DAYS)).isoformat()
+    dishes: dict[int, dict[str, int]] = {}
+    products: dict[int, dict[str, int]] = {}
+    rows = db.execute(select(Meal.dish_id, Meal.slot, Meal.items).where(Meal.deleted_at.is_(None), Meal.date >= since))
+    for dish_id, slot, items in rows:
+        if dish_id:
+            counts = dishes.setdefault(dish_id, {})
+            counts[slot] = counts.get(slot, 0) + 1
+        for product_id in {item.get("product_id") for item in items or [] if item.get("product_id")}:
+            counts = products.setdefault(product_id, {})
+            counts[slot] = counts.get(slot, 0) + 1
+    return dishes, products
+
+
+def dish_dict(dish: Dish, aliases: list[str] | None = None, slot_counts: dict[str, int] | None = None) -> dict:
     return {
         "id": dish.id,
         "name": dish.name,
@@ -198,15 +220,18 @@ def dish_dict(dish: Dish, aliases: list[str] | None = None) -> dict:
         "favorite": dish.favorite,
         "use_count": dish.use_count,
         "last_used_at": dish.last_used_at.isoformat() + "Z",
+        "slot_counts": slot_counts or {},
     }
 
 
-def all_dishes(db: Session, limit: int = 600) -> list[dict]:
+def all_dishes(db: Session, limit: int = 600, usage: dict[int, dict[str, int]] | None = None) -> list[dict]:
     dishes = db.scalars(select(Dish).order_by(Dish.last_used_at.desc()).limit(limit)).all()
     aliases: dict[int, list[str]] = {}
     for alias in db.scalars(select(DishAlias)):
         aliases.setdefault(alias.dish_id, []).append(alias.norm)
-    return [dish_dict(d, aliases.get(d.id)) for d in dishes]
+    if usage is None:
+        usage = slot_usage(db)[0]
+    return [dish_dict(d, aliases.get(d.id), usage.get(d.id)) for d in dishes]
 
 
 def meal_dict(meal: Meal) -> dict:
@@ -374,7 +399,7 @@ def all_foods(db: Session, limit: int = 1500) -> list[dict]:
 # ---------------------------------------------------------------- productos
 
 
-def product_dict(product: Product) -> dict:
+def product_dict(product: Product, slot_counts: dict[str, int] | None = None) -> dict:
     return {
         "id": product.id,
         "name": product.name,
@@ -390,6 +415,7 @@ def product_dict(product: Product) -> dict:
         "unit_label": product.unit_label,
         "unit_grams": product.unit_grams,
         "has_image": product.has_image,
+        "slot_counts": slot_counts or {},
         "use_count": product.use_count,
         "last_used_at": product.last_used_at.isoformat() + "Z",
         "created_at": product.created_at.isoformat() + "Z",

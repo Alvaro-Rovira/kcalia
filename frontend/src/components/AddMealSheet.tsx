@@ -27,6 +27,7 @@ import { haptic } from '@/lib/haptics'
 import { downscaleImage } from '@/lib/image'
 import { itemsTotal } from '@/lib/macros'
 import { draftFromProducts, resolveText, singleItem } from '@/lib/products'
+import { rankForSlot } from '@/lib/ranking'
 import { draftFromDish, matchLocally, suggestDishes } from '@/lib/resolve'
 import { slotForTime } from '@/lib/slots'
 import type { Dish, Draft, Item, Meal, Product, ResolveResult, Slot, Source, Via } from '@/lib/types'
@@ -168,8 +169,10 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
     [],
   )
 
-  const favorites = useMemo(() => dishes.filter((d) => d.favorite).sort((a, b) => b.use_count - a.use_count), [dishes])
-  const recents = useMemo(() => dishes.filter((d) => !d.favorite).slice(0, 12), [dishes])
+  // Ordenados para el momento elegido (al abrir, el de la hora): el café arriba por la mañana, la cena por la noche.
+  const favorites = useMemo(() => rankForSlot(dishes.filter((d) => d.favorite), slot), [dishes, slot])
+  const recents = useMemo(() => rankForSlot(dishes.filter((d) => !d.favorite).slice(0, 30), slot).slice(0, 12), [dishes, slot])
+  const rankedProducts = useMemo(() => rankForSlot(products, slot), [products, slot])
   const suggestions = useMemo(() => suggestDishes(text, dishes), [text, dishes])
 
   /** Guarda y cierra. El aviso permite deshacer sin pedir confirmaciones. */
@@ -505,7 +508,7 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
                 <div className="mt-5">
                   <p className="eyebrow">Mis productos</p>
                   <div className="no-scrollbar -mx-5 mt-2 flex gap-2 overflow-x-auto px-5">
-                    {products.slice(0, 12).map((product) => (
+                    {rankedProducts.slice(0, 12).map((product) => (
                       <motion.button
                         key={product.id}
                         type="button"

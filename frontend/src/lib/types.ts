@@ -55,6 +55,7 @@ export interface Product {
   use_count: number
   last_used_at: string
   created_at: string
+  slot_counts?: Partial<Record<Slot, number>>
 }
 
 /** Lo que la IA ha leído de la foto de una etiqueta: se revisa antes de guardar. */
@@ -135,6 +136,8 @@ export interface Dish extends Macros {
   favorite: boolean
   use_count: number
   last_used_at: string
+  /** Veces que se ha comido en cada momento del día (últimos meses). */
+  slot_counts?: Partial<Record<Slot, number>>
 }
 
 export interface Profile {

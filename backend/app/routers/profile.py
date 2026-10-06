@@ -21,13 +21,14 @@ def bootstrap(user: User = Depends(require_user), db: Session = Depends(get_db))
     profile = services.get_profile(db)
     targets = services.get_targets(db)
     today = today_local(settings)
+    dish_usage, product_usage = services.slot_usage(db, today)
     return {
         "user": {"username": user.username, "is_admin": user.is_admin},
         "profile": services.profile_dict(profile) if profile else None,
         "targets": services.targets_dict(targets) if targets else None,
         "plan": services.plan_for(profile) if profile else None,
-        "dishes": services.all_dishes(db),
-        "products": [services.product_dict(p) for p in services.all_products(db)],
+        "dishes": services.all_dishes(db, usage=dish_usage),
+        "products": [services.product_dict(p, product_usage.get(p.id)) for p in services.all_products(db)],
         "foods": services.all_foods(db),
         "ai": {
             "configured": get_ai_client().configured,

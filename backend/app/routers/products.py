@@ -59,7 +59,8 @@ def scan(
 
 @router.get("")
 def list_products(db: Session = Depends(get_db)) -> dict:
-    return {"products": [services.product_dict(p) for p in services.all_products(db)]}
+    usage = services.slot_usage(db)[1]
+    return {"products": [services.product_dict(p, usage.get(p.id)) for p in services.all_products(db)]}
 
 
 @router.post("", status_code=201)

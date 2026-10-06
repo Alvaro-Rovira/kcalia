@@ -90,3 +90,36 @@ def test_editar_una_comida_anadiendo_un_ingrediente_tambien_aprende(client):
 def test_lo_de_un_producto_no_se_aprende_como_ingrediente(client):
     meal(client, "cid-manual-3", [{**MANUAL, "name": "yogur de marca", "product_id": 999}])
     assert not any(f["name"] == "yogur de marca" for f in client.get("/api/foods").json()["foods"])
+
+
+def test_uso_por_momento_del_dia(client):
+    from datetime import date
+
+    today = date.today().isoformat()
+    cafe = {
+        "name": "café con leche",
+        "qty": 1,
+        "unit": "taza",
+        "grams": 200,
+        "kcal": 92,
+        "protein": 6.6,
+        "carbs": 9.6,
+        "fat": 3.2,
+    }
+    first = meal(client, "cid-slot-1", [cafe], name="Café con leche", text="café con leche", date=today, source="ai")
+    for n, slot in enumerate(("desayuno", "desayuno", "merienda"), start=2):
+        meal(
+            client,
+            f"cid-slot-{n}",
+            [cafe],
+            name="Café con leche",
+            text="café con leche",
+            date=today,
+            slot=slot,
+            source="recent",
+            dish_id=first["dish_id"],
+        )
+    dish = next(d for d in client.get("/api/dishes").json()["dishes"] if d["id"] == first["dish_id"])
+    assert dish["slot_counts"] == {"desayuno": 3, "merienda": 1}
+    boot = next(d for d in client.get("/api/bootstrap").json()["dishes"] if d["id"] == first["dish_id"])
+    assert boot["slot_counts"] == dish["slot_counts"]
