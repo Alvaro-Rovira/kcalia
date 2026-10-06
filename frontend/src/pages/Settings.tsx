@@ -138,6 +138,11 @@ export default function Settings() {
         <p className="mt-1 text-[14.5px] text-text-2">Sesión iniciada como {app.user.username}</p>
       </header>
 
+      {isAdmin && admin.data?.backup?.ok === false && (
+        <Notice level="danger" className="mt-4">
+          La última copia de seguridad externa no se pudo subir: {admin.data.backup.error}. Revísalo en Administración.
+        </Notice>
+      )}
       {isAdmin && (
         <Section title="Administración" id="a-admin">
           <Row

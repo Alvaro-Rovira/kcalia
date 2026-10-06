@@ -31,6 +31,22 @@ export interface AdminOverview {
   signup: { state: 'first' | 'open' | 'closed' | 'full'; allowed_by_server: boolean; open: boolean; max_pending: number }
   defaults: { ai_user_daily_limit: number; stt_user_daily_limit: number; admin_ai_daily_limit: number }
   prices: { ai_input_per_million: number; ai_output_per_million: number; stt_per_call: number }
+  backup?: BackupStatus
+}
+
+export interface BackupStatus {
+  configured: boolean
+  local_keep: number
+  remote_keep: number
+  encrypted: boolean
+  date?: string
+  ok?: boolean
+  at?: string
+  key?: string
+  size?: number
+  error?: string
+  attempts?: number
+  last_ok_at?: string | null
 }
 
 export interface AuditEntry {

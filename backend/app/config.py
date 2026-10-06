@@ -17,6 +17,17 @@ class Settings(BaseSettings):
     static_dir: Path = Path("./static")
     backup_keep: int = 7
 
+    # Copia fuera del servidor (S3 compatible: AWS, Cloudflare R2, Backblaze B2, MinIO...). Vacío = solo copia local.
+    backup_remote_url: str = ""
+    backup_remote_bucket: str = ""
+    backup_remote_prefix: str = "kcalia/"
+    backup_remote_region: str = "auto"
+    backup_remote_access_key: str = ""
+    backup_remote_secret_key: str = ""
+    backup_remote_keep: int = 30
+    # Frase para cifrar las copias externas (AES-256-GCM). Vacía = sin cifrar (el almacenamiento debe ser privado).
+    backup_encryption_key: str = ""
+
     session_days: int = 180
     # Comprime respuestas desde la propia app. Detrás de Caddy sobra (comprime él, con zstd); útil sin proxy.
     gzip: bool = False

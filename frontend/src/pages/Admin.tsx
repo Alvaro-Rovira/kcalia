@@ -3,7 +3,7 @@ import clsx from 'clsx'
 import { motion } from 'motion/react'
 import { Ban, Check, CircleCheck, Hourglass, KeyRound, LogOut, Mic, ShieldOff, Sparkles, Trash2, UserCheck, X } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
-import { adminKeys, useAdminAudit, useAdminOverview, useAdminUsers, type AdminUser, type AuditEntry } from '@/hooks/admin'
+import { adminKeys, useAdminAudit, useAdminOverview, useAdminUsers, type AdminUser, type AuditEntry, type BackupStatus } from '@/hooks/admin'
 import { useOnline } from '@/hooks/data'
 import { api, errorMessage } from '@/lib/api'
 import { fmtAgo } from '@/lib/dates'
@@ -241,6 +241,12 @@ export default function Admin() {
         </Section>
       </div>
 
+      {data?.backup && (
+        <Section title="Copias de seguridad" id="adm-backup">
+          <BackupCard backup={data.backup} />
+        </Section>
+      )}
+
       <Section title="Cuentas" id="adm-users" aside={data && <span className="text-[13.5px] text-text-3" data-num>{data.users.total} en total</span>}>
         {users.isPending ? (
           <Skeleton className="h-40 !rounded-[22px]" />
@@ -282,6 +288,35 @@ export default function Admin() {
 
       <UserSheet user={selected} onClose={() => setSelected(null)} act={act} busy={busy} />
     </main>
+  )
+}
+
+function BackupCard({ backup }: { backup: BackupStatus }) {
+  if (!backup.configured) {
+    return (
+      <div className="card p-4 text-[14px] leading-relaxed text-text-2">
+        Solo hay copia local: cada noche, las {backup.local_keep} últimas en el propio servidor. Para tener una copia fuera
+        (S3, R2, B2…) configura las variables <code>BACKUP_REMOTE_*</code>: está explicado en el README.
+      </div>
+    )
+  }
+  const failed = backup.ok === false
+  return (
+    <div className="card space-y-2 p-4">
+      {failed && (
+        <Notice level="danger">
+          La última subida falló{backup.attempts ? ` (${backup.attempts} ${plural(backup.attempts, 'intento', 'intentos')})` : ''}: {backup.error}
+        </Notice>
+      )}
+      <p className="text-[14px] text-text-2" data-num>
+        {backup.ok
+          ? `Última copia externa ${fmtAgo(backup.at)}${backup.size ? `, ${fmt(backup.size / 1024)} KB` : ''}.`
+          : backup.last_ok_at
+            ? `La última que salió bien fue ${fmtAgo(backup.last_ok_at)}.`
+            : 'Todavía no se ha subido ninguna copia.'}{' '}
+        Se guardan las {backup.remote_keep} más recientes{backup.encrypted ? ', cifradas' : ', sin cifrar'}.
+      </p>
+    </div>
   )
 }
 

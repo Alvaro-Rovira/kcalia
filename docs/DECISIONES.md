@@ -64,3 +64,8 @@ Decisiones tomadas sin poder preguntar, con el motivo. La más reciente, abajo.
     gramos (máximo 250 g) en ingredientes y productos por 100 g; parejas entre los 14 más usados. De 23 a 5 h apunta a
     algo ligero (≤ 350 kcal). Variedad: lo sugerido ayer y lo descartado hoy se guarda en el propio móvil
     (localStorage); lo ocultado para siempre va en las preferencias. Se guarda con `source = "sugerencia"`.
+22. **Copia externa a S3 compatible** (AWS, Cloudflare R2, Backblaze B2, MinIO) con firma SigV4 propia sobre httpx,
+    probada con el ejemplo oficial de AWS: boto3 pesa mucho para un PUT, un HEAD, un listado y un DELETE. rclone no va
+    dentro del contenedor (es otro binario); se documenta como alternativa desde el host. Cifrado opcional AES-256-GCM
+    con clave derivada por scrypt de una frase; `scripts/restore-backup.py` descifra y comprueba la integridad. Hasta 6
+    intentos al día; el estado se ve en Administración y, si la última falló, también en Ajustes del admin.

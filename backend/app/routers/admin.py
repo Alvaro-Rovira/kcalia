@@ -10,10 +10,11 @@ from pydantic import BaseModel, Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
-from .. import services
+from .. import offsite, services
 from ..config import get_settings
 from ..db import get_db
 from ..deps import require_admin, today_local
+from ..jobs import BACKUP_STATUS_KEY
 from ..models import AdminAudit, AiUsage, AuthSession, User
 from ..usage import ai_limit_for, stt_limit_for
 from .auth import signup_state
@@ -155,6 +156,13 @@ def overview(db: Session = Depends(get_db)) -> dict:
             "ai_user_daily_limit": settings.ai_user_daily_limit,
             "stt_user_daily_limit": settings.stt_user_daily_limit,
             "admin_ai_daily_limit": settings.admin_ai_limit,
+        },
+        "backup": {
+            "configured": offsite.configured(settings),
+            "local_keep": settings.backup_keep,
+            "remote_keep": settings.backup_remote_keep,
+            "encrypted": bool(settings.backup_encryption_key),
+            **(services.app_setting(db, BACKUP_STATUS_KEY, {}) or {}),
         },
         "prices": {
             "ai_input_per_million": settings.ai_price_input,

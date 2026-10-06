@@ -9,9 +9,10 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+import httpx
 from sqlalchemy import select
 
-from . import reminders, services, tenancy
+from . import offsite, reminders, services, tenancy
 from .config import Settings, get_settings
 from .db import SessionLocal
 from .models import User
@@ -23,6 +24,7 @@ BACKUP_HOUR = 3
 SUMMARY_WEEKDAY = 6  # domingo
 SUMMARY_HOUR = 21
 CHECK_EVERY_SECONDS = 600
+BACKUP_STATUS_KEY = "backup_remote"
 # Los recordatorios se revisan cada minuto; copias y resúmenes, cada diez.
 REMINDERS_EVERY_SECONDS = 60
 
@@ -53,6 +55,52 @@ def backup_database(settings: Settings, now: datetime | None = None) -> Path | N
     return target
 
 
+MAX_UPLOAD_ATTEMPTS = 6
+_http: httpx.Client | None = None
+
+
+def offsite_http() -> httpx.Client:
+    """Cliente para la copia externa. Las pruebas lo sustituyen (nunca se sube a un servicio real)."""
+    global _http
+    if _http is None:
+        _http = httpx.Client(timeout=120)
+    return _http
+
+
+def set_offsite_http(client: httpx.Client | None) -> None:
+    global _http
+    _http = client
+
+
+def upload_offsite(settings: Settings, path: Path, day: str) -> dict | None:
+    """Sube la copia del día si hay destino y aún no se ha subido bien (como mucho 6 intentos al día)."""
+    if not offsite.configured(settings):
+        return None
+    with SessionLocal() as db:
+        status = services.app_setting(db, BACKUP_STATUS_KEY, {}) or {}
+        if status.get("date") == day and (status.get("ok") or status.get("attempts", 0) >= MAX_UPLOAD_ATTEMPTS):
+            return status
+        result = offsite.upload(path, settings, offsite_http())
+        attempts = (status.get("attempts", 0) if status.get("date") == day else 0) + 1
+        status = {
+            "date": day,
+            "ok": result.ok,
+            "at": datetime.now(settings.zone).isoformat(timespec="seconds"),
+            "key": result.key,
+            "size": result.size,
+            "sha256": result.sha256,
+            "error": result.error,
+            "attempts": attempts,
+            # La última subida buena, para enseñarla aunque la de hoy falle.
+            "last_ok_at": datetime.now(settings.zone).isoformat(timespec="seconds")
+            if result.ok
+            else status.get("last_ok_at"),
+        }
+        services.set_app_setting(db, BACKUP_STATUS_KEY, status)
+        db.commit()
+    return status
+
+
 def _tick(settings: Settings) -> None:
     now = datetime.now(settings.zone)
     today = now.date()
@@ -62,6 +110,8 @@ def _tick(settings: Settings) -> None:
         path = backup_database(settings, now)
         if path:
             log.info("Copia de seguridad creada: %s", path.name)
+    if todays_backup.exists():
+        upload_offsite(settings, todays_backup, today.isoformat())
 
     closing_week = now.weekday() == SUMMARY_WEEKDAY and now.hour >= SUMMARY_HOUR
     with SessionLocal() as db:
