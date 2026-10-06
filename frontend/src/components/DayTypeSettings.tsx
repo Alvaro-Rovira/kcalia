@@ -110,6 +110,18 @@ export function DayTypeSettings() {
           ))}
         </>
       )}
+      <div className="border-t border-border">
+        <Switch
+          label="Sumar las calorías del entreno al objetivo"
+          description={
+            prefs.add_exercise_kcal
+              ? 'Lo entrenado (estimado por duración e intensidad) se suma ese día en forma de hidratos.'
+              : 'Ahora solo se muestran como referencia. Es una estimación, no una medida.'
+          }
+          checked={!!prefs.add_exercise_kcal}
+          onChange={(on) => save({ add_exercise_kcal: on })}
+        />
+      </div>
       <DayKindSheet kind={editing} onClose={() => setEditing(null)} />
     </>
   )

@@ -572,4 +572,7 @@ def test_18_entreno_con_plantilla_y_sin_conexion(page: Page, servers):
     last = api_get(page, servers, "/api/training")["last"]["ex-press-banca"]
     assert last["weight"] == 60 and last["sets"] == 2
     expect(page.get_by_role("heading", name="Progresión")).to_be_visible()
+    # Las calorías del entreno se ven en Hoy como referencia (no se suman salvo que se active en Ajustes).
+    page.get_by_role("link", name="Hoy").click()
+    expect(page.get_by_text("solo referencia")).to_be_visible()
     assert not page.errors  # type: ignore[attr-defined]

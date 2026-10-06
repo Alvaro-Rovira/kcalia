@@ -52,3 +52,6 @@ Decisiones tomadas sin poder preguntar, con el motivo. La más reciente, abajo.
     cada usuario la primera vez, con ids fijos. Los ejercicios no se borran, se archivan (conservan su historial).
 18. **Navegación móvil**: Hoy · Historial · Entreno · Progreso · Ajustes. «Progreso» agrupa el resumen semanal y el
     cuerpo (peso, medidas y fotos) con dos pestañas; en escritorio la barra lateral muestra todo por separado.
+19. **Calorías del entreno**: MET × peso × horas con MET de fuerza 3,5 / 5 / 6 (suave / moderada / intensa, del
+    Compendium of Physical Activities). Solo informativas por defecto; si se activa sumarlas, entran en el objetivo de
+    ese día como hidratos, con el mismo cálculo en el servidor y en el móvil.

@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { CopyPlus, Dumbbell, Flame, Leaf, Lightbulb, Moon, Plus, Wine } from 'lucide-react'
+import { Activity, CopyPlus, Dumbbell, Flame, Leaf, Lightbulb, Moon, Plus, Wine } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { CopyPanel } from '@/components/CopyPanel'
@@ -302,7 +302,7 @@ export default function Today() {
                       )
                     })}
                   </div>
-                  {list.length > 0 && (
+                  {(list.length > 0 || day.exercise > 0) && (
                     <p className="mt-3.5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[13px] text-text-2" data-num>
                       <span className="flex items-center gap-1.5">
                         <Leaf className="size-3.5 text-text-3" aria-hidden />
@@ -311,6 +311,13 @@ export default function Today() {
                           · orientativo {FIBER_TARGET.min}-{FIBER_TARGET.max} g
                         </span>
                       </span>
+                      {day.exercise > 0 && (
+                        <span className="flex items-center gap-1.5">
+                          <Activity className="size-3.5 text-text-3" aria-hidden />
+                          Entreno <strong className="font-semibold text-text">≈ {fmt(day.exercise)} kcal</strong>
+                          <span className="text-text-3">· {app.prefs?.add_exercise_kcal ? 'sumadas al objetivo' : 'solo referencia'}</span>
+                        </span>
+                      )}
                       {extras.alcohol > 0 && (
                         <span className="flex items-center gap-1.5">
                           <Wine className="size-3.5 text-text-3" aria-hidden />

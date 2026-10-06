@@ -154,3 +154,17 @@ def test_borrar_entreno_y_sus_series(client):
     assert client.delete("/api/workouts/wk-0000002").json() == {"ok": True}
     assert client.delete("/api/sets/set-000010").json() == {"ok": True}  # ya no existe: no es un error
     assert [w["client_id"] for w in client.get("/api/training").json()["workouts"]] == ["wk-0000001"]
+
+
+def test_calorias_del_entreno_informativas_o_sumadas(client):
+    targets = client.get("/api/bootstrap").json()["targets"]
+    boot = client.get("/api/bootstrap").json()
+    kcal = estimated_kcal(65, "intensa", 80)
+    assert boot["exercise_kcal"].get("2026-10-01") in (None, kcal)  # solo los últimos 60 días
+    week = client.get("/api/day-types", params={"start": "2026-10-01", "end": "2026-10-01"}).json()
+    assert week["days"][0]["targets"]["kcal"] == targets["kcal"]  # por defecto, solo informativo
+    client.patch("/api/prefs", json={"add_exercise_kcal": True})
+    week = client.get("/api/day-types", params={"start": "2026-10-01", "end": "2026-10-01"}).json()
+    added = week["days"][0]["targets"]
+    assert added["kcal"] == targets["kcal"] + round(kcal / 4) * 4 and added["protein"] == targets["protein"]
+    client.patch("/api/prefs", json={"add_exercise_kcal": False})
