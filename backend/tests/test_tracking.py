@@ -185,3 +185,46 @@ def test_fotos_y_medidas_de_otro_usuario_no_se_ven(client):
     assert client.get("/api/measurements").json()["entries"] == []
     login(client, "ana")
     assert len(client.get("/api/photos").json()["photos"]) == 1
+
+
+def test_tipos_de_dia_y_objetivos_por_tipo(client):
+    targets = client.get("/api/bootstrap").json()["targets"]
+    week = client.get("/api/day-types", params={"start": "2026-10-05", "end": "2026-10-11"}).json()
+    assert week["enabled"] is False and all(d["kind"] is None for d in week["days"])
+    assert week["days"][0]["targets"]["kcal"] == targets["kcal"]
+
+    client.patch("/api/prefs", json={"day_types": True, "training_days": [0, 3]})
+    week = client.get("/api/day-types", params={"start": "2026-10-05", "end": "2026-10-11"}).json()
+    kinds = [d["kind"] for d in week["days"]]
+    assert kinds == ["entreno", "descanso", "descanso", "entreno", "descanso", "descanso", "descanso"]
+    assert week["kinds"]["entreno"]["kcal"] == targets["kcal"] + 200
+    assert week["kinds"]["descanso"]["kcal"] == targets["kcal"] - 100
+
+    changed = client.put("/api/day-types", json={"date": "2026-10-07", "kind": "entreno"}).json()
+    assert changed["days"][0]["kind"] == "entreno" and changed["days"][0]["manual"] is True
+    assert client.get("/api/bootstrap").json()["day_types"] == {"2026-10-07": "entreno"}
+    reset = client.put("/api/day-types", json={"date": "2026-10-07", "kind": None}).json()
+    assert reset["days"][0]["kind"] == "descanso" and reset["days"][0]["manual"] is False
+    assert client.put("/api/day-types", json={"date": "2026-10-07", "kind": "fiesta"}).status_code == 422
+
+
+def test_el_resumen_usa_el_objetivo_de_cada_dia(client):
+    targets = client.get("/api/bootstrap").json()["targets"]
+    big = {
+        "name": "plato",
+        "qty": 1,
+        "unit": "plato",
+        "grams": 500,
+        "kcal": targets["kcal"] + 150,
+        "protein": 120,
+        "carbs": 250,
+        "fat": 60,
+    }
+    for cid, day in (("cid-tipo-lun", "2026-10-12"), ("cid-tipo-mar", "2026-10-13")):
+        add(client, cid, [big], date=day)
+    week = client.get("/api/summary/week", params={"start": "2026-10-12"}).json()
+    monday, tuesday = week["days"][0], week["days"][1]
+    assert monday["kind"] == "entreno" and monday["target_kcal"] == targets["kcal"] + 200
+    assert monday["status"] == "cumplido"  # +150 sobre un objetivo de entreno de +200
+    assert tuesday["kind"] == "descanso" and tuesday["status"] == "pasado"  # +250 sobre el de descanso
+    client.patch("/api/prefs", json={"day_types": False})

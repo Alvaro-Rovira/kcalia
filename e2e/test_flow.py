@@ -509,3 +509,28 @@ def test_16_medidas_y_fotos(page: Page, servers, tmp_path):
     expect(page.get_by_text("0 días entre una y otra")).to_be_visible()
     page.keyboard.press("Escape")
     assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_17_dias_de_entreno_y_descanso(page: Page, servers):
+    from datetime import date
+
+    today = date.today()
+    page.goto(servers["app"] + "/ajustes")
+    base = api_get(page, servers, "/api/bootstrap")["targets"]["kcal"]
+    page.get_by_role("switch", name="Objetivos distintos para entreno y descanso").click()
+    # Hoy es día de entreno (todos los días marcados) y se nota en el objetivo.
+    group = page.get_by_role("group", name="Días de entreno habituales")
+    for index, name in enumerate(["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]):
+        button = group.get_by_role("button", name=name, exact=True)
+        if button.get_attribute("aria-pressed") == "false":
+            button.click()
+    wait_until(lambda: api_get(page, servers, "/api/prefs")["training_days"] == [0, 1, 2, 3, 4, 5, 6])
+    page.get_by_role("link", name="Hoy").click()
+    chip = page.get_by_role("button", name="Día de entreno. Cambiar a descanso")
+    expect(chip).to_contain_text(f"{base + 200:,}".replace(",", "."))
+    chip.click()
+    expect(page.get_by_role("button", name="Día de descanso. Cambiar a entreno")).to_be_visible()
+    wait_until(lambda: api_get(page, servers, "/api/bootstrap")["day_types"].get(today.isoformat()) == "descanso")
+    # Se deja como estaba para el resto de pruebas.
+    page.request.patch(servers["app"] + "/api/prefs", data={"day_types": False}, headers={"Origin": servers["app"]})
+    page.reload()

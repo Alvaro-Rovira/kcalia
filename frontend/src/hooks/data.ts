@@ -3,10 +3,13 @@ import { useCallback, useSyncExternalStore } from 'react'
 import { api, newClientId } from '@/lib/api'
 import { itemsExtras, itemsTotal } from '@/lib/macros'
 import { foodKey } from '@/lib/textnorm'
+import { kindFor, targetsFor } from '@/lib/dayTargets'
 import { autoWaterGoal } from '@/lib/water'
 import type {
   AuthStatus,
   Bootstrap,
+  DayKind,
+  DayTargetsValues,
   DayTotal,
   Dish,
   FoodEntry,
@@ -350,4 +353,36 @@ export function useMeasureActions() {
 
 export function usePhotos() {
   return useQuery({ queryKey: keys.photos, queryFn: () => api.get<{ photos: ProgressPhoto[] }>('/api/photos'), select: (data) => data.photos })
+}
+
+/** Objetivos de un día concreto según su tipo (entreno o descanso). Se calcula en el móvil: funciona sin red. */
+export function useDayTargets(): (iso: string) => { kind: DayKind | null; targets: DayTargetsValues; manual: boolean } {
+  const { data } = useBootstrap()
+  return useCallback(
+    (iso: string) => {
+      const base = data?.targets ?? { kcal: 2000, protein: 120, carbs: 220, fat: 65 }
+      const overrides = data?.day_types ?? {}
+      const kind = kindFor(iso, data?.prefs, overrides)
+      // El entreno sumado al objetivo llega con el registro de entrenos (ver useExerciseKcal).
+      return { kind, targets: targetsFor(base, data?.prefs, kind), manual: iso in overrides }
+    },
+    [data?.targets, data?.day_types, data?.prefs],
+  )
+}
+
+export function useDayTypeActions() {
+  const client = useQueryClient()
+  return useCallback(
+    (date: string, kind: DayKind | null) => {
+      client.setQueryData<Bootstrap>(keys.bootstrap, (old) => {
+        if (!old) return old
+        const day_types = { ...(old.day_types ?? {}) }
+        if (kind) day_types[date] = kind
+        else delete day_types[date]
+        return { ...old, day_types }
+      })
+      void enqueue({ type: 'daytype.put', body: { date, kind } })
+    },
+    [client],
+  )
 }

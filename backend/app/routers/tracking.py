@@ -6,11 +6,11 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, Upl
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from .. import services
+from .. import daytargets, services
 from ..db import get_db
 from ..deps import require_approved_user
-from ..models import MEASURES, BodyMeasurement, ProgressPhoto, WaterLog
-from ..schemas import MeasurementIn, PrefsPatch, WaterIn
+from ..models import MEASURES, BodyMeasurement, DayType, ProgressPhoto, WaterLog
+from ..schemas import DayTypeIn, MeasurementIn, PrefsPatch, WaterIn
 
 router = APIRouter(prefix="/api", tags=["seguimiento"], dependencies=[Depends(require_approved_user)])
 
@@ -184,3 +184,48 @@ def delete_photo(photo_id: int, db: Session = Depends(get_db)) -> dict:
         db.delete(row)
         db.commit()
     return {"ok": True}
+
+
+# ---------------------------------------------------------------- tipo de día (entreno o descanso)
+
+
+def _kinds_payload(db: Session, start: date_type, end: date_type) -> dict:
+    targets = services.get_targets(db)
+    if targets is None:
+        raise HTTPException(409, "Completa primero tu perfil.")
+    prefs = services.get_prefs(db)
+    overrides = services.day_type_overrides(db, start.isoformat(), end.isoformat())
+    per_day = services.targets_by_day(db, start, end, targets, prefs)
+    base = services.targets_dict(targets)
+    return {
+        "enabled": prefs.day_types,
+        "days": [
+            {"date": iso, "kind": values.get("kind"), "manual": iso in overrides, "targets": values}
+            for iso, values in per_day.items()
+        ],
+        "kinds": {kind: daytargets.targets_for(base, prefs, kind) for kind in daytargets.KINDS},
+    }
+
+
+@router.get("/day-types")
+def list_day_types(start: str, end: str, db: Session = Depends(get_db)) -> dict:
+    first, last = date_type.fromisoformat(_iso(start)), date_type.fromisoformat(_iso(end))
+    if last < first or (last - first).days > 400:
+        raise HTTPException(422, "Ese intervalo de fechas no es válido.")
+    return _kinds_payload(db, first, last)
+
+
+@router.put("/day-types")
+def set_day_type(body: DayTypeIn, db: Session = Depends(get_db)) -> dict:
+    """Cambia el tipo de un día concreto (idempotente). Sin tipo, vuelve al de su día de la semana."""
+    row = db.scalar(select(DayType).where(DayType.date == body.date))
+    if body.kind is None:
+        if row is not None:
+            db.delete(row)
+    elif row is None:
+        db.add(DayType(date=body.date, kind=body.kind))
+    else:
+        row.kind = body.kind
+    db.commit()
+    day = date_type.fromisoformat(body.date)
+    return _kinds_payload(db, day, day)

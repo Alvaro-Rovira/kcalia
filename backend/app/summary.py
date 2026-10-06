@@ -54,9 +54,18 @@ def build_week_summary(
     targets: dict,
     weights: dict[str, float],
     previous: dict | None = None,
+    day_targets: dict[str, dict] | None = None,
 ) -> dict:
-    """`days`: fecha ISO -> {kcal, protein, carbs, fat, meals}. `weights`: fecha ISO -> kg."""
-    target_kcal, tdee = targets["kcal"], targets["tdee"]
+    """`days`: fecha ISO -> {kcal, protein, carbs, fat, meals}. `weights`: fecha ISO -> kg.
+
+    `day_targets`: objetivos de cada día si cambian según el tipo de día (entreno o descanso); si no, `targets`.
+    """
+    tdee = targets["tdee"]
+    day_targets = day_targets or {}
+
+    def target(iso: str, key: str) -> float:
+        return day_targets.get(iso, targets)[key]
+
     end = start + timedelta(days=6)
     elapsed = max(0, min(7, (today - start).days + 1))
 
@@ -65,18 +74,21 @@ def build_week_summary(
         current = start + timedelta(days=offset)
         raw = days.get(current.isoformat())
         logged = bool(raw and raw.get("meals", 0) > 0)
+        iso = current.isoformat()
         row = {
-            "date": current.isoformat(),
+            "date": iso,
             "logged": logged,
+            "target_kcal": target(iso, "kcal"),
+            "kind": day_targets.get(iso, {}).get("kind"),
             "kcal": round(raw["kcal"]) if logged else 0,
             "protein": round(raw["protein"]) if logged else 0,
             "carbs": round(raw["carbs"]) if logged else 0,
             "fat": round(raw["fat"]) if logged else 0,
             "fiber": round(raw.get("fiber") or 0, 1) if logged else 0,
             "alcohol": round(raw.get("alcohol") or 0, 1) if logged else 0,
-            "status": day_status(raw["kcal"], target_kcal) if logged else "sin_registro",
+            "status": day_status(raw["kcal"], target(iso, "kcal")) if logged else "sin_registro",
             "balance": round(raw["kcal"] - tdee) if logged else 0,
-            "protein_met": protein_met(raw["protein"], targets["protein"]) if logged else False,
+            "protein_met": protein_met(raw["protein"], target(iso, "protein")) if logged else False,
         }
         rows.append(row)
 
@@ -88,17 +100,17 @@ def build_week_summary(
 
     best = worst = None
     if logged_rows:
-        by_distance = sorted(logged_rows, key=lambda r: abs(r["kcal"] - target_kcal))
+        by_distance = sorted(logged_rows, key=lambda r: abs(r["kcal"] - r["target_kcal"]))
         best = {
             "date": by_distance[0]["date"],
             "kcal": by_distance[0]["kcal"],
-            "diff": by_distance[0]["kcal"] - target_kcal,
+            "diff": by_distance[0]["kcal"] - by_distance[0]["target_kcal"],
         }
         if n > 1:
             worst = {
                 "date": by_distance[-1]["date"],
                 "kcal": by_distance[-1]["kcal"],
-                "diff": by_distance[-1]["kcal"] - target_kcal,
+                "diff": by_distance[-1]["kcal"] - by_distance[-1]["target_kcal"],
             }
 
     week_weights = [weights[d] for d in sorted(weights) if start.isoformat() <= d <= end.isoformat()]

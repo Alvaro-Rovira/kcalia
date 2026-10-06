@@ -5,8 +5,8 @@ from datetime import date, timedelta
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
+from . import daytargets, tenancy
 from . import summary as summary_lib
-from . import tenancy
 from .matching import FoodInfo, FoodUpdate, find_similar, learn_foods, resolve_from_foods, totals
 from .models import (
     Achievement,
@@ -14,6 +14,7 @@ from .models import (
     AppSetting,
     BodyMeasurement,
     Counter,
+    DayType,
     Dish,
     DishAlias,
     Food,
@@ -553,15 +554,57 @@ def weights_map(db: Session) -> dict[str, float]:
 # ---------------------------------------------------------------- resúmenes semanales
 
 
+# ---------------------------------------------------------------- tipo de día
+
+
+def day_type_overrides(db: Session, start: str | None = None, end: str | None = None) -> dict[str, str]:
+    query = select(DayType.date, DayType.kind)
+    if start:
+        query = query.where(DayType.date >= start)
+    if end:
+        query = query.where(DayType.date <= end)
+    return dict(db.execute(query).all())
+
+
+def exercise_kcal_by_day(db: Session, start: str, end: str) -> dict[str, float]:
+    """Calorías estimadas de entrenamiento por día (las rellena el registro de entrenos)."""
+    from .workouts import estimated_kcal_by_day
+
+    return estimated_kcal_by_day(db, start, end)
+
+
+def targets_by_day(
+    db: Session, start: date, end: date, targets: Targets, prefs: Prefs | None = None
+) -> dict[str, dict]:
+    """Objetivos de cada día entre dos fechas según su tipo (y el entreno, si se suma)."""
+    prefs = prefs or get_prefs(db)
+    base = targets_dict(targets)
+    if not prefs.day_types and not prefs.add_exercise_kcal:
+        same = daytargets.targets_for(base, prefs, None)
+        return {(start + timedelta(days=i)).isoformat(): same for i in range((end - start).days + 1)}
+    overrides = day_type_overrides(db, start.isoformat(), end.isoformat())
+    exercise = exercise_kcal_by_day(db, start.isoformat(), end.isoformat()) if prefs.add_exercise_kcal else {}
+    out = {}
+    for offset in range((end - start).days + 1):
+        day = start + timedelta(days=offset)
+        iso = day.isoformat()
+        kind = daytargets.kind_for(day, prefs, overrides)
+        out[iso] = {**daytargets.targets_for(base, prefs, kind, exercise.get(iso, 0)), "kind": kind}
+    return out
+
+
 def compute_week(db: Session, start: date, today: date, targets: Targets) -> dict:
     end = start + timedelta(days=6)
     prev_start = start - timedelta(days=7)
     days = day_totals(db, prev_start.isoformat(), end.isoformat())
     weights = weights_map(db)
     tdict = targets_dict(targets)
-    previous = summary_lib.build_week_summary(start=prev_start, today=today, days=days, targets=tdict, weights=weights)
+    per_day = targets_by_day(db, prev_start, end, targets)
+    previous = summary_lib.build_week_summary(
+        start=prev_start, today=today, days=days, targets=tdict, weights=weights, day_targets=per_day
+    )
     return summary_lib.build_week_summary(
-        start=start, today=today, days=days, targets=tdict, weights=weights, previous=previous
+        start=start, today=today, days=days, targets=tdict, weights=weights, previous=previous, day_targets=per_day
     )
 
 
@@ -620,13 +663,14 @@ def compute_stats(db: Session, today: date, ai_limit: int) -> dict:
     statuses: dict[str, str] = {}
     weekly_on_target: dict[str, int] = {}
     weekly_protein: dict[str, int] = {}
-    if targets is not None:
+    if targets is not None and days:
+        per_day = targets_by_day(db, date.fromisoformat(min(days)), date.fromisoformat(max(days)), targets)
         for iso, day in days.items():
-            statuses[iso] = summary_lib.day_status(day["kcal"], targets.kcal)
+            statuses[iso] = summary_lib.day_status(day["kcal"], per_day[iso]["kcal"])
             week = summary_lib.week_start(date.fromisoformat(iso)).isoformat()
             if statuses[iso] == "cumplido":
                 weekly_on_target[week] = weekly_on_target.get(week, 0) + 1
-            if summary_lib.protein_met(day["protein"], targets.protein):
+            if summary_lib.protein_met(day["protein"], per_day[iso]["protein"]):
                 weekly_protein[week] = weekly_protein.get(week, 0) + 1
     streak = summary_lib.streak(statuses, today)
 
@@ -694,6 +738,7 @@ def wipe_data(db: Session) -> None:
     if tenancy.current_user_id(db) is None:
         raise tenancy.TenancyError("wipe_data necesita una sesión limitada a un usuario")
     for model in (
+        DayType,
         ProgressPhoto,
         BodyMeasurement,
         WaterLog,

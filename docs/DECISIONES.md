@@ -41,3 +41,8 @@ Decisiones tomadas sin poder preguntar, con el motivo. La más reciente, abajo.
 15. **Fotos de progreso solo con conexión.** Se reducen en el móvil (1.280 px) y se suben al momento; guardar
     imágenes en la cola offline (IndexedDB) arriesga el espacio del navegador en iOS. Las medidas sí van por la cola.
     Las fotos viven en su propia tabla con la imagen en una columna diferida: los listados nunca la cargan.
+16. **Objetivos por tipo de día, desactivados por defecto**: activarlos cambiaría el objetivo de quien ya usa la app
+    sin pedirlo. Al activarlos: días de entreno por defecto lunes, miércoles y viernes, +200 kcal en entreno y −100 en
+    descanso, siempre a través de los hidratos (la proteína y la grasa no cambian). Cada tipo se puede fijar a mano y
+    cada día concreto se cambia desde Hoy. El cálculo existe en Python y TS con casos compartidos y redondeo «mitad
+    hacia arriba» en los dos (el `round` de Python redondea al par y daba resultados distintos).

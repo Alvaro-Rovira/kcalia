@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { CopyPlus, Flame, Leaf, Lightbulb, Plus, Wine } from 'lucide-react'
+import { CopyPlus, Dumbbell, Flame, Leaf, Lightbulb, Moon, Plus, Wine } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { CopyPanel } from '@/components/CopyPanel'
@@ -9,9 +9,10 @@ import { MealRow } from '@/components/MealRow'
 import { MealSheet } from '@/components/MealSheet'
 import { WaterCard } from '@/components/WaterCard'
 import { useShell } from '@/components/Shell'
-import { useApp, useMealActions, useMeals, useStats } from '@/hooks/data'
+import { useApp, useDayTargets, useDayTypeActions, useMealActions, useMeals, useStats } from '@/hooks/data'
 import { dailyTip } from '@/lib/coach'
 import { copyInputs } from '@/lib/copy'
+import { KIND_LABEL, targetsFor } from '@/lib/dayTargets'
 import { addDays, fmtLong, greeting, isValidISO, relativeDay, todayISO } from '@/lib/dates'
 import { capitalize, fmt, plural } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
@@ -47,7 +48,8 @@ function celebrateOnce(date: string, kind: 'kcal' | 'protein'): boolean {
 
 export default function Today() {
   const app = useApp()
-  const { targets } = app
+  const dayTargets = useDayTargets()
+  const setDayType = useDayTypeActions()
   const { openAddMeal, celebrate } = useShell()
   const actions = useMealActions()
   const reduce = useReducedMotion()
@@ -55,6 +57,8 @@ export default function Today() {
   const today = todayISO()
   const date = isValidISO(params.get('fecha')) && params.get('fecha')! <= today ? params.get('fecha')! : today
   const isToday = date === today
+  const day = dayTargets(date)
+  const targets = { ...app.targets, ...day.targets }
   const [direction, setDirection] = useState(0)
   const [detail, setDetail] = useState<Meal | null>(null)
   const [copyDay, setCopyDay] = useState(false)
@@ -138,6 +142,28 @@ export default function Today() {
           <h1 className="mt-0.5 truncate text-[30px] leading-tight font-semibold tracking-[-0.035em] text-text">
             {capitalize(relativeDay(date))}
           </h1>
+          {day.kind && (
+            <button
+              type="button"
+              onClick={() => {
+                const next = day.kind === 'entreno' ? 'descanso' : 'entreno'
+                setDayType(date, next)
+                haptic('select')
+                toast({
+                  title: `${KIND_LABEL[next]}: ${fmt(targetsFor(app.targets, app.prefs, next).kcal)} kcal`,
+                  action: { label: 'Deshacer', onClick: () => setDayType(date, day.manual ? day.kind : null) },
+                })
+              }}
+              aria-label={`${KIND_LABEL[day.kind]}. Cambiar a ${day.kind === 'entreno' ? 'descanso' : 'entreno'}`}
+              className="mt-1.5 inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-surface px-3 text-[13px] font-medium text-text-2"
+            >
+              {day.kind === 'entreno' ? <Dumbbell className="size-3.5 text-accent-text" aria-hidden /> : <Moon className="size-3.5 text-text-3" aria-hidden />}
+              {KIND_LABEL[day.kind]}
+              <span className="text-text-3" data-num>
+                · {fmt(day.targets.kcal)} kcal
+              </span>
+            </button>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-2 pt-1.5">
           {!isToday && (
@@ -163,7 +189,7 @@ export default function Today() {
       </header>
 
       <div className="mt-4">
-        <DateStrip date={date} onChange={setDate} targetKcal={targets.kcal} />
+        <DateStrip date={date} onChange={setDate} targetKcal={(iso) => dayTargets(iso).targets.kcal} />
       </div>
 
       <AnimatePresence mode="wait" custom={direction}>

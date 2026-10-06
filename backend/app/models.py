@@ -377,3 +377,15 @@ class ProgressPhoto(TenantMixin, Base):
         Index("ux_photos_user_client", "user_id", "client_id", unique=True),
         Index("ix_photos_user_date", "user_id", "date"),
     )
+
+
+class DayType(TenantMixin, Base):
+    """Tipo de un día concreto cuando no coincide con los días de entreno por defecto."""
+
+    __tablename__ = "day_types"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    date: Mapped[str] = mapped_column(String(10))
+    kind: Mapped[str] = mapped_column(String(10))  # entreno | descanso
+
+    __table_args__ = (Index("ux_day_types_user_date", "user_id", "date", unique=True),)

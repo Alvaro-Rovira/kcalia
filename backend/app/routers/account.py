@@ -59,6 +59,7 @@ def export_json(db: Session = Depends(get_db)) -> dict:
         ],
         "weekly_summaries": [s.data for s in db.scalars(select(WeeklySummary).order_by(WeeklySummary.week_start))],
         "prefs": services.get_prefs(db).model_dump(),
+        "day_types": services.day_type_overrides(db),
         "measurements": [
             {"date": m.date, **{key: getattr(m, key) for key in MEASURES}}
             for m in db.scalars(select(BodyMeasurement).order_by(BodyMeasurement.date))

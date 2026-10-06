@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -163,6 +163,16 @@ class ProductPatch(BaseModel):
     barcode: str | None = Field(default=None, max_length=20)
 
 
+class DayTargetsIn(BaseModel):
+    kcal: int = Field(ge=800, le=8000)
+    protein: int = Field(ge=20, le=500)
+    carbs: int = Field(ge=0, le=1200)
+    fat: int = Field(ge=10, le=400)
+
+
+Weekday = Annotated[int, Field(ge=0, le=6)]
+
+
 class Prefs(BaseModel):
     """Preferencias guardadas por usuario. Cada campo tiene un valor por defecto: lo nuevo no rompe lo viejo."""
 
@@ -170,12 +180,37 @@ class Prefs(BaseModel):
 
     # Objetivo de agua; None = automático (35 ml por kg de peso).
     water_goal_ml: int | None = Field(default=None, ge=500, le=8000)
+    # Objetivos distintos en días de entreno y de descanso (desactivado: todos los días, el objetivo de siempre).
+    day_types: bool = False
+    training_days: list[Weekday] = Field(default_factory=lambda: [0, 2, 4], max_length=7)  # 0 = lunes
+    training_kcal_adjust: int = Field(default=200, ge=-800, le=800)
+    rest_kcal_adjust: int = Field(default=-100, ge=-800, le=800)
+    # Objetivos fijados a mano para cada tipo de día (None = calculados con el ajuste).
+    training_targets: DayTargetsIn | None = None
+    rest_targets: DayTargetsIn | None = None
+    # Sumar al objetivo del día las calorías estimadas del entrenamiento (si no, solo es informativo).
+    add_exercise_kcal: bool = False
 
 
 class PrefsPatch(BaseModel):
     model_config = {"extra": "forbid"}
 
     water_goal_ml: int | None = Field(default=None, ge=500, le=8000)
+    day_types: bool | None = None
+    training_days: list[Weekday] | None = Field(default=None, max_length=7)
+    training_kcal_adjust: int | None = Field(default=None, ge=-800, le=800)
+    rest_kcal_adjust: int | None = Field(default=None, ge=-800, le=800)
+    training_targets: DayTargetsIn | None = None
+    rest_targets: DayTargetsIn | None = None
+    add_exercise_kcal: bool | None = None
+
+
+class DayTypeIn(BaseModel):
+    date: str
+    # None vuelve al día de la semana por defecto.
+    kind: Literal["entreno", "descanso"] | None = None
+
+    _check_date = field_validator("date")(lambda cls, v: _iso_date(v))
 
 
 class WaterIn(BaseModel):

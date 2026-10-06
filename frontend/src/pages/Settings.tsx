@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
+import { DayTypeSettings } from '@/components/DayTypeSettings'
 import { Logo, Wordmark } from '@/components/Logo'
 import { PlanExplanation } from '@/components/PlanExplanation'
 import { useAdminOverview } from '@/hooks/admin'
@@ -187,6 +188,10 @@ export default function Settings() {
               onClick={() => setSheet('water')}
               icon={<Droplets className="size-[18px]" aria-hidden />}
             />
+          </Section>
+
+          <Section title="Entreno y descanso" id="a-daytypes">
+            <DayTypeSettings />
           </Section>
         </div>
 

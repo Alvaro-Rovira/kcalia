@@ -192,8 +192,25 @@ export interface Plan extends Macros {
 }
 
 /** Preferencias guardadas en el servidor (cada versión añade campos con valor por defecto). */
+export type DayKind = 'entreno' | 'descanso'
+
+export interface DayTargetsValues {
+  kcal: number
+  protein: number
+  carbs: number
+  fat: number
+}
+
 export interface Prefs {
   water_goal_ml: number | null
+  day_types?: boolean
+  /** 0 = lunes. */
+  training_days?: number[]
+  training_kcal_adjust?: number
+  rest_kcal_adjust?: number
+  training_targets?: DayTargetsValues | null
+  rest_targets?: DayTargetsValues | null
+  add_exercise_kcal?: boolean
 }
 
 export interface WaterEntry {
@@ -221,6 +238,8 @@ export interface Bootstrap {
   foods?: FoodEntry[]
   prefs?: Prefs
   water_goal_ml?: number
+  /** Días con el tipo cambiado a mano (fecha -> entreno o descanso). */
+  day_types?: Record<string, DayKind>
   ai: {
     configured: boolean
     model: string
@@ -279,6 +298,8 @@ export interface WeekDay extends Macros {
   status: DayStatus
   balance: number
   protein_met: boolean
+  target_kcal?: number
+  kind?: DayKind | null
   fiber?: number
   alcohol?: number
 }

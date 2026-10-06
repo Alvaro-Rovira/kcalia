@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -32,6 +34,10 @@ def bootstrap(user: User = Depends(require_user), db: Session = Depends(get_db))
         "products": [services.product_dict(p, product_usage.get(p.id)) for p in services.all_products(db)],
         "foods": services.all_foods(db),
         "prefs": prefs.model_dump(),
+        # Días con tipo cambiado a mano (cerca de hoy): con esto y las preferencias, el móvil calcula sin red.
+        "day_types": services.day_type_overrides(
+            db, (today - timedelta(days=120)).isoformat(), (today + timedelta(days=60)).isoformat()
+        ),
         "water_goal_ml": services.water_goal(db, prefs),
         "ai": {
             "configured": get_ai_client().configured,
