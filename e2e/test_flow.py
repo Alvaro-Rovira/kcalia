@@ -632,3 +632,38 @@ def test_20_plan_semanal_y_lista_de_la_compra(page: Page, servers, ai_calls):
     expect(page.get_by_text("Apuntada en el diario")).to_be_visible()
     wait_until(lambda: len(api_get(page, servers, f"/api/meals?date={today.isoformat()}")["meals"]) == meals_before + 1)
     assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_21_sugerencia_para_cerrar_el_dia(page: Page, servers):
+    import re as regex
+    from datetime import date
+
+    today = date.today().isoformat()
+    headers = {"Origin": servers["app"]}
+    # Objetivo alto para que hoy queden calorías (el resto de pruebas ya ha comido bastante).
+    page.request.put(servers["app"] + "/api/targets", data={"kcal": 6000, "protein": 300, "carbs": 700, "fat": 200}, headers=headers)
+    # Sin la caché guardada en el móvil: así arranca con el objetivo nuevo.
+    page.goto(servers["app"])
+    page.evaluate("new Promise((resolve) => { const r = indexedDB.deleteDatabase('keyval-store'); r.onsuccess = r.onerror = r.onblocked = resolve })")
+    page.reload()
+    card = page.get_by_role("region", name="Sugerencia para cerrar el día")
+    finished = page.get_by_role("button", name="Ya terminé de comer")
+    # Antes de la hora y sin cena apuntada, se pide con «Ya terminé de comer».
+    expect(card.or_(finished)).to_be_visible()
+    if finished.is_visible():
+        finished.click()
+    expect(card).to_be_visible()
+    heading = card.get_by_role("heading")
+    before = int(regex.sub(r"\D", "", heading.inner_text()))
+    card.get_by_role("button", name="Añadir").first.click()
+    expect(page.get_by_text("Añadida a hoy")).to_be_visible()
+    # Las calorías que quedan bajan al momento (también la tarjeta, que se recalcula).
+    expect(heading).not_to_have_text(regex.compile(rf"Te quedan {before:,}".replace(",", ".")))
+    wait_until(lambda: any(m["source"] == "sugerencia" for m in api_get(page, servers, f"/api/meals?date={today}")["meals"]))
+    added = next(m for m in api_get(page, servers, f"/api/meals?date={today}")["meals"] if m["source"] == "sugerencia")
+    assert added["kcal"] <= before
+    # «No sugerir más esto» la oculta y se puede recuperar en Ajustes.
+    card.get_by_role("button", name="No sugerir más esto").first.click()
+    wait_until(lambda: len(api_get(page, servers, "/api/prefs")["suggest_hidden"]) >= 1)
+    page.request.post(servers["app"] + "/api/targets/recalculate", headers=headers)
+    assert not page.errors  # type: ignore[attr-defined]

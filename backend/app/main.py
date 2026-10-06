@@ -15,7 +15,21 @@ from .config import get_settings
 from .db import init_db
 from .deps import enforce_access
 from .jobs import start_scheduler
-from .routers import account, admin, auth, meals, planner, products, profile, push, summary, tracking, training, weight
+from .routers import (
+    account,
+    admin,
+    auth,
+    meals,
+    planner,
+    products,
+    profile,
+    push,
+    suggest,
+    summary,
+    tracking,
+    training,
+    weight,
+)
 from .spa import render_index
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -112,7 +126,21 @@ def health() -> dict:
     return {"status": "ok"}
 
 
-for module in (auth, profile, meals, products, weight, summary, tracking, training, planner, push, account, admin):
+for module in (
+    auth,
+    profile,
+    meals,
+    products,
+    weight,
+    summary,
+    tracking,
+    training,
+    planner,
+    suggest,
+    push,
+    account,
+    admin,
+):
     app.include_router(module.router)
 
 

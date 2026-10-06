@@ -56,6 +56,9 @@ class Settings(BaseSettings):
     vapid_private_key: str = ""
     vapid_subject: str = "mailto:admin@localhost"
 
+    # Sugerencia para cerrar el día: a partir de cuántas calorías restantes aparece (cada usuario puede cambiarlo).
+    suggest_min_kcal: int = 80
+
     # Open Food Facts (códigos de barras). Solo se cambia en pruebas, para apuntar a uno simulado.
     off_base_url: str = "https://world.openfoodfacts.org"
 

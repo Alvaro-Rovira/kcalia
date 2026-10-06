@@ -59,3 +59,8 @@ Decisiones tomadas sin poder preguntar, con el motivo. La más reciente, abajo.
     aiohttp y requests. Los recordatorios se revisan cada minuto en el propio proceso; cada aviso tiene una franja de
     45 minutos y se anota para no repetirlo. Vienen apagados: el usuario los activa en Ajustes. Las suscripciones que
     responden 404/410 se borran al momento; las que fallan 5 veces seguidas, también.
+21. **Sugerencia para cerrar el día**: función pura en `lib/suggest.ts` con prueba de propiedades (2.000 escenarios):
+    nunca se pasa de las calorías que quedan medidas como se guardarían (`itemsTotal`). Raciones ×0,5 a ×2, o por
+    gramos (máximo 250 g) en ingredientes y productos por 100 g; parejas entre los 14 más usados. De 23 a 5 h apunta a
+    algo ligero (≤ 350 kcal). Variedad: lo sugerido ayer y lo descartado hoy se guarda en el propio móvil
+    (localStorage); lo ocultado para siempre va en las preferencias. Se guarda con `source = "sugerencia"`.

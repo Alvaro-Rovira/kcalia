@@ -23,6 +23,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 import { DayTypeSettings } from '@/components/DayTypeSettings'
 import { RemindersSettings } from '@/components/RemindersSettings'
+import { SuggestSettings } from '@/components/SuggestSettings'
 import { Logo, Wordmark } from '@/components/Logo'
 import { PlanExplanation } from '@/components/PlanExplanation'
 import { useAdminOverview } from '@/hooks/admin'
@@ -197,6 +198,10 @@ export default function Settings() {
 
           <Section title="Recordatorios" id="a-reminders">
             <RemindersSettings />
+          </Section>
+
+          <Section title="Cerrar el día" id="a-suggest">
+            <SuggestSettings />
           </Section>
         </div>
 

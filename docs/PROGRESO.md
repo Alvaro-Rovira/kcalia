@@ -43,7 +43,7 @@ Tras la fase 3: 383 pytest, 156 Vitest, 19 e2e en verde.
 ## Fase 4 · Constancia y utilidad
 - [x] 4.1 Recordatorios con Web Push
 - [x] 4.2 Planificador semanal y lista de la compra
-- [ ] 4.3 Sugerencia para cerrar el día
+- [x] 4.3 Sugerencia para cerrar el día
 - [ ] 4.4 Compartir el resumen semanal como imagen
 
 ## Fase 5 · Datos
@@ -64,7 +64,6 @@ Tras la fase 3: 383 pytest, 156 Vitest, 19 e2e en verde.
 - Batería: `cd backend && uv run ruff check app tests && uv run pytest -q`; `cd frontend && npx tsc -b --noEmit && npm test
   && npm run build`; e2e: `uv run --project backend --group e2e pytest e2e -q` (19 en verde tras la fase 3).
 - ruff de `scripts/` solo para gen-vapid.py y make-admin.py (los demás scripts ya tenían líneas largas antes).
-- Pendiente: 4.3, 4.4, 5.1, 5.2, 5.3 y la fase final (README para GitHub, capturas, merge, push, redespliegue en el
+- Pendiente: 4.4, 5.1, 5.2, 5.3 y la fase final (README para GitHub, capturas, merge, push, redespliegue en el
   Docker dedicado de Kcalia en la VPS y verificación). Pausado a petición del usuario tras 4.2; seguir cuando lo diga.
-- 4.3 ya tiene el prompt y la validación de la IA en ai.py (SUGGEST_PROMPT, AiClient.suggest_close) y la IA simulada
-  responde «ideas»; falta lib/suggest.ts, la tarjeta en Hoy, el endpoint y sus pruebas.
+

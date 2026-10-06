@@ -7,6 +7,7 @@ import { CopyPanel } from '@/components/CopyPanel'
 import { DateStrip } from '@/components/DateStrip'
 import { MealRow } from '@/components/MealRow'
 import { MealSheet } from '@/components/MealSheet'
+import { SuggestCard } from '@/components/SuggestCard'
 import { WaterCard } from '@/components/WaterCard'
 import { useShell } from '@/components/Shell'
 import { useApp, useDayTargets, useDayTypeActions, useMealActions, useMeals, useStats } from '@/hooks/data'
@@ -345,6 +346,7 @@ export default function Today() {
                 {tip.text}
               </motion.p>
             )}
+            {!loading && isToday && <SuggestCard date={date} eaten={eaten} targets={targets} meals={list} />}
             {!loading && <WaterCard date={date} />}
           </div>
 

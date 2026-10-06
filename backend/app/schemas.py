@@ -7,7 +7,9 @@ Sex = Literal["hombre", "mujer"]
 Activity = Literal["sedentario", "ligero", "moderado", "alto", "muy_alto"]
 Goal = Literal["definicion_ligera", "definicion_agresiva", "volumen", "mantenimiento", "recomposicion"]
 Slot = Literal["desayuno", "comida", "merienda", "cena", "snack"]
-Source = Literal["ai", "exact", "fuzzy", "cache", "favorite", "recent", "manual", "photo", "product", "drink"]
+Source = Literal[
+    "ai", "exact", "fuzzy", "cache", "favorite", "recent", "manual", "photo", "product", "drink", "sugerencia"
+]
 Via = Literal["text", "voice", "photo", "tap"]
 
 
@@ -214,6 +216,11 @@ class Prefs(BaseModel):
     meal_reminders: list[MealReminder] = Field(default_factory=_default_meal_reminders, max_length=5)
     weigh_reminder: HHMM | None = "08:30"
     weigh_days: list[Weekday] = Field(default_factory=lambda: [0, 1, 2, 3, 4, 5, 6], max_length=7)
+    # Sugerencia para cerrar el día (tarjeta en Hoy). Mínimo None = el de SUGGEST_MIN_KCAL.
+    suggest_enabled: bool = True
+    suggest_min_kcal: int | None = Field(default=None, ge=20, le=1000)
+    suggest_hour: HHMM = "21:00"
+    suggest_hidden: list[str] = Field(default_factory=list, max_length=300)
 
 
 class PrefsPatch(BaseModel):
@@ -232,6 +239,18 @@ class PrefsPatch(BaseModel):
     meal_reminders: list[MealReminder] | None = Field(default=None, max_length=5)
     weigh_reminder: HHMM | None = None
     weigh_days: list[Weekday] | None = Field(default=None, max_length=7)
+    suggest_enabled: bool | None = None
+    suggest_min_kcal: int | None = Field(default=None, ge=20, le=1000)
+    suggest_hour: HHMM | None = None
+    suggest_hidden: list[Annotated[str, Field(max_length=120)]] | None = Field(default=None, max_length=300)
+
+
+class SuggestAiIn(BaseModel):
+    kcal: float = Field(gt=0, le=5000)
+    protein: float = Field(ge=-1000, le=1000)
+    carbs: float = Field(ge=-2000, le=2000)
+    fat: float = Field(ge=-1000, le=1000)
+    hour: int = Field(ge=0, le=23)
 
 
 class PushSubscriptionIn(BaseModel):

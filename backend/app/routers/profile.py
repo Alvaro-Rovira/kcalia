@@ -35,6 +35,7 @@ def bootstrap(user: User = Depends(require_user), db: Session = Depends(get_db))
         "products": [services.product_dict(p, product_usage.get(p.id)) for p in services.all_products(db)],
         "foods": services.all_foods(db),
         "prefs": prefs.model_dump(),
+        "suggest_min_kcal_default": settings.suggest_min_kcal,
         "exercise_kcal": estimated_kcal_by_day(db, (today - timedelta(days=60)).isoformat(), today.isoformat()),
         # Días con tipo cambiado a mano (cerca de hoy): con esto y las preferencias, el móvil calcula sin red.
         "day_types": services.day_type_overrides(

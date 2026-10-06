@@ -2,7 +2,7 @@ export type Sex = 'hombre' | 'mujer'
 export type Activity = 'sedentario' | 'ligero' | 'moderado' | 'alto' | 'muy_alto'
 export type Goal = 'definicion_ligera' | 'definicion_agresiva' | 'volumen' | 'mantenimiento' | 'recomposicion'
 export type Slot = 'desayuno' | 'comida' | 'merienda' | 'cena' | 'snack'
-export type Source = 'ai' | 'exact' | 'fuzzy' | 'cache' | 'favorite' | 'recent' | 'manual' | 'photo' | 'product' | 'drink'
+export type Source = 'ai' | 'exact' | 'fuzzy' | 'cache' | 'favorite' | 'recent' | 'manual' | 'photo' | 'product' | 'drink' | 'sugerencia'
 export type Via = 'text' | 'voice' | 'photo' | 'tap'
 export type MacroKey = 'kcal' | 'protein' | 'carbs' | 'fat'
 export type ThemePref = 'dark' | 'light' | 'auto'
@@ -217,6 +217,10 @@ export interface Prefs {
   /** Hora del aviso para pesarse («08:30») o null si está apagado. */
   weigh_reminder?: string | null
   weigh_days?: number[]
+  suggest_enabled?: boolean
+  suggest_min_kcal?: number | null
+  suggest_hour?: string
+  suggest_hidden?: string[]
 }
 
 export interface MealReminder {
@@ -254,6 +258,8 @@ export interface Bootstrap {
   day_types?: Record<string, DayKind>
   /** Calorías estimadas de los entrenos de cada día (recientes). */
   exercise_kcal?: Record<string, number>
+  /** Mínimo de calorías restantes para sugerir algo (SUGGEST_MIN_KCAL del servidor). */
+  suggest_min_kcal_default?: number
   ai: {
     configured: boolean
     model: string
