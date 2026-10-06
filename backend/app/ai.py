@@ -349,6 +349,88 @@ def check_consistency(meal: AiMeal) -> AiMeal:
     return meal
 
 
+PLAN_PROMPT = """Eres un dietista-nutricionista español. Propones comidas sencillas, habituales en España y fáciles \
+de preparar para rellenar huecos de un plan semanal. Respondes SOLO con un objeto JSON válido, sin texto alrededor.
+
+ESQUEMA:
+{
+  "meals": [                  // una por hueco pedido, EN EL MISMO ORDEN
+    {
+      "date": "AAAA-MM-DD",
+      "slot": "desayuno" | "comida" | "merienda" | "cena" | "snack",
+      "name": string,          // título corto, sin cantidades
+      "items": [               // ingredientes, igual que al analizar una comida
+        {"name": string, "qty": number, "unit": string, "grams": number,
+         "kcal100": number, "protein100": number, "carbs100": number, "fat100": number,
+         "fiber100": number, "alcohol100": 0}
+      ]
+    }
+  ]
+}
+
+REGLAS
+- Valores POR CADA 100 g y el peso total en "grams": el sistema hace las cuentas. No calcules totales.
+- Ajusta las cantidades para acercarte a las calorías orientativas de cada hueco SIN pasarte.
+- Prioriza alimentos con proteína. Nada de alcohol.
+- Si la persona ya come ciertos platos, úsalos o propón algo parecido.
+- Valores de referencia: BEDCA y, si no está, USDA. Punto decimal y un decimal."""
+
+
+class PlanMeal(BaseModel):
+    date: str = Field(max_length=10)
+    slot: str = Field(max_length=12)
+    name: str = Field(default="", max_length=160)
+    items: list[AiItem] = Field(min_length=1, max_length=15)
+
+
+class PlanReply(BaseModel):
+    meals: list[PlanMeal] = Field(default_factory=list, max_length=14)
+
+
+def parse_plan(content: str) -> PlanReply:
+    reply = PlanReply.model_validate(extract_json(content))
+    if not reply.meals:
+        raise ValueError('"meals" está vacío')
+    for meal in reply.meals:
+        check_consistency(merge_duplicates(AiMeal(name=meal.name, items=meal.items)))
+    return reply
+
+
+SUGGEST_PROMPT = """Eres un dietista-nutricionista español. La persona ya ha comido hoy y le quedan unas calorías. \
+Propón 3 ideas sencillas y habituales en España para cerrar el día SIN SUPERAR las calorías que le quedan, priorizando \
+la proteína que le falta. Respondes SOLO con un objeto JSON válido, sin texto alrededor.
+
+ESQUEMA:
+{
+  "ideas": [
+    {"name": string, "items": [{"name": string, "qty": number, "unit": string, "grams": number,
+      "kcal100": number, "protein100": number, "carbs100": number, "fat100": number, "fiber100": number,
+      "alcohol100": 0}]}
+  ]
+}
+
+REGLAS
+- Valores POR CADA 100 g y la cantidad total en "grams": el sistema calcula los totales y descarta lo que se pase.
+- Nada de alcohol. Nada copioso si es tarde por la noche.
+- Cantidades realistas (una pieza de fruta, un yogur, una lata de atún...)."""
+
+
+class SuggestIdea(BaseModel):
+    name: str = Field(default="", max_length=160)
+    items: list[AiItem] = Field(min_length=1, max_length=8)
+
+
+class SuggestReply(BaseModel):
+    ideas: list[SuggestIdea] = Field(default_factory=list, max_length=5)
+
+
+def parse_suggestions(content: str) -> SuggestReply:
+    reply = SuggestReply.model_validate(extract_json(content))
+    if not reply.ideas:
+        raise ValueError('"ideas" está vacío')
+    return reply
+
+
 _FENCE = re.compile(r"^```(?:json)?\s*|\s*```$", re.MULTILINE)
 
 
@@ -520,6 +602,16 @@ class AiClient:
             model=self.settings.vision_model,
             base_url=self.settings.vision_base_url,
             api_key=self.settings.vision_api_key,
+        )
+
+    def suggest_plan(self, request: str) -> tuple[PlanReply, dict]:
+        return self._complete(
+            PLAN_PROMPT, request, parse_plan, model=self.settings.ai_model, base_url=None, api_key=None
+        )
+
+    def suggest_close(self, request: str) -> tuple[SuggestReply, dict]:
+        return self._complete(
+            SUGGEST_PROMPT, request, parse_suggestions, model=self.settings.ai_model, base_url=None, api_key=None
         )
 
     def analyze_text(self, text: str) -> tuple[AiMeal, dict]:

@@ -32,6 +32,9 @@ const REJECTED: Record<Op['type'], string> = {
   'set.create': 'No se ha podido guardar una serie',
   'set.patch': 'No se ha podido cambiar una serie',
   'set.delete': 'No se ha podido borrar una serie',
+  'plan.save': 'No se ha podido guardar el plan',
+  'plan.delete': 'No se ha podido quitar algo del plan',
+  'shopping.check': 'No se ha podido marcar la lista de la compra',
 }
 
 preloadRoute(location.pathname)
@@ -47,6 +50,7 @@ outbox.init({
     if ([...types].some((t) => t.startsWith('water.'))) void queryClient.invalidateQueries({ queryKey: ['water'] })
     if ([...types].some((t) => t.startsWith('measure.'))) void queryClient.invalidateQueries({ queryKey: keys.measurements })
     if ([...types].some((t) => /^(exercise|template|workout|set)\./.test(t))) void queryClient.invalidateQueries({ queryKey: keys.training })
+    if ([...types].some((t) => t.startsWith('plan.') || t === 'shopping.check')) void queryClient.invalidateQueries({ queryKey: ['plan'] })
     if ([...types].some((t) => t === 'daytype.put' || t === 'prefs.patch' || t === 'workout.patch')) {
       void queryClient.invalidateQueries({ queryKey: ['week'] })
       void queryClient.invalidateQueries({ queryKey: keys.stats })

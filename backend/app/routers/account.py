@@ -16,6 +16,8 @@ from ..models import (
     Exercise,
     Food,
     Meal,
+    MealPlan,
+    ShoppingCheck,
     User,
     WaterLog,
     WeeklySummary,
@@ -74,6 +76,21 @@ def export_json(db: Session = Depends(get_db)) -> dict:
         "weekly_summaries": [s.data for s in db.scalars(select(WeeklySummary).order_by(WeeklySummary.week_start))],
         "prefs": services.get_prefs(db).model_dump(),
         "day_types": services.day_type_overrides(db),
+        "meal_plans": [
+            {
+                "client_id": p.client_id,
+                "date": p.date,
+                "slot": p.slot,
+                "name": p.name,
+                "items": p.items,
+                "servings": p.servings,
+            }
+            for p in db.scalars(select(MealPlan).order_by(MealPlan.date, MealPlan.created_at))
+        ],
+        "shopping_checks": [
+            {"week_start": c.week_start, "key": c.key, "checked": c.checked}
+            for c in db.scalars(select(ShoppingCheck).order_by(ShoppingCheck.week_start, ShoppingCheck.key))
+        ],
         "exercises": [training_lib.exercise_dict(e) for e in db.scalars(select(Exercise).order_by(Exercise.id))],
         "workout_templates": [
             training_lib.template_dict(t)

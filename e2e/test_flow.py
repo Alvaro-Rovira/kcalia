@@ -595,3 +595,40 @@ def test_19_recordatorios(page: Page, servers):
     section.get_by_role("button", name="sábado").click()
     wait_until(lambda: 5 not in api_get(page, servers, "/api/prefs")["weigh_days"])
     assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_20_plan_semanal_y_lista_de_la_compra(page: Page, servers, ai_calls):
+    from datetime import date
+
+    from app_dates import medium
+
+    today = date.today()
+    page.goto(servers["app"] + "/historial")
+    page.get_by_role("link", name="Plan").click()
+    expect(page.get_by_role("heading", name="Plan semanal")).to_be_visible()
+    page.get_by_role("button", name=f"Planificar comida del {medium(today)}").click()
+    page.get_by_role("dialog").get_by_role("button", name="Pechuga de pollo con arroz").first.click()
+    day = page.get_by_role("region", name=medium(today, capital=True))
+    expect(day.get_by_role("button", name="Pechuga de pollo con arroz")).to_be_visible()
+    shopping = page.get_by_role("region", name="Lista de la compra")
+    expect(shopping.get_by_text("Arroz blanco cocido")).to_be_visible()
+    shopping.get_by_label("Arroz blanco cocido").click()
+    expect(shopping.get_by_label("Arroz blanco cocido")).to_be_checked()
+    wait_until(lambda: any(api_get(page, servers, f"/api/plan?start={today.isoformat()}")["checks"].values()))
+
+    # Ideas de la IA para los huecos: gasta una consulta y se añade la que se elige.
+    before = ai_calls()
+    page.get_by_role("button", name="Pedir ideas a la IA", exact=False).click()
+    dialog = page.get_by_role("dialog")
+    expect(dialog.get_by_text("Tortilla francesa con ensalada").first).to_be_visible()
+    assert ai_calls() == before + 1
+    dialog.get_by_role("button", name="Añadir al plan").first.click()
+    page.keyboard.press("Escape")
+
+    # Apuntar en el diario lo planificado para hoy.
+    meals_before = len(api_get(page, servers, f"/api/meals?date={today.isoformat()}")["meals"])
+    day.get_by_role("button", name="Pechuga de pollo con arroz").click()
+    page.get_by_role("dialog").get_by_role("button", name="Apuntar en el diario").click()
+    expect(page.get_by_text("Apuntada en el diario")).to_be_visible()
+    wait_until(lambda: len(api_get(page, servers, f"/api/meals?date={today.isoformat()}")["meals"]) == meals_before + 1)
+    assert not page.errors  # type: ignore[attr-defined]

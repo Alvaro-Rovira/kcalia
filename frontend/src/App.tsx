@@ -22,6 +22,7 @@ const loaders = {
   '/ajustes': () => import('./pages/Settings'),
   '/admin': () => import('./pages/Admin'),
   '/entreno': () => import('./pages/Workout'),
+  '/plan': () => import('./pages/Plan'),
 }
 
 /** Empieza a descargar la pantalla de la URL actual en paralelo con la sesión y los datos. */
@@ -37,6 +38,7 @@ const WeightPage = lazy(loaders['/peso'])
 const Settings = lazy(loaders['/ajustes'])
 const Admin = lazy(loaders['/admin'])
 const WorkoutPage = lazy(loaders['/entreno'])
+const PlanPage = lazy(loaders['/plan'])
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 function CannotConnect({ onRetry }: { onRetry: () => void }) {
@@ -73,6 +75,7 @@ function AuthedApp() {
           <Route path="/resumen" element={<Summary />} />
           <Route path="/peso" element={<WeightPage />} />
           <Route path="/entreno" element={<WorkoutPage />} />
+          <Route path="/plan" element={<PlanPage />} />
           <Route path="/ajustes" element={<Settings />} />
           {/* Solo existe para el administrador; para el resto es una ruta desconocida (y la API responde 403). */}
           {bootstrap.data.user.is_admin && <Route path="/admin" element={<Admin />} />}

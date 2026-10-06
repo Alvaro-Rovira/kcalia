@@ -20,12 +20,14 @@ from .models import (
     Exercise,
     Food,
     Meal,
+    MealPlan,
     Product,
     ProductImage,
     Profile,
     ProgressPhoto,
     PushSubscription,
     ReminderLog,
+    ShoppingCheck,
     Targets,
     UserPrefs,
     WaterLog,
@@ -744,6 +746,8 @@ def wipe_data(db: Session) -> None:
     if tenancy.current_user_id(db) is None:
         raise tenancy.TenancyError("wipe_data necesita una sesión limitada a un usuario")
     for model in (
+        ShoppingCheck,
+        MealPlan,
         PushSubscription,
         ReminderLog,
         WorkoutSet,

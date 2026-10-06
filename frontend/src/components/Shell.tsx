@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import { AnimatePresence, motion } from 'motion/react'
-import { CalendarDays, ChartColumn, CloudOff, Dumbbell, House, Plus, Scale, Settings, ShieldCheck, type LucideIcon } from 'lucide-react'
+import { CalendarDays, ChartColumn, ClipboardList, CloudOff, Dumbbell, House, Plus, Scale, Settings, ShieldCheck, type LucideIcon } from 'lucide-react'
 import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate, useSearchParams, type Location } from 'react-router'
 import { useAdminOverview } from '@/hooks/admin'
@@ -41,7 +41,7 @@ interface NavItem {
 // En el móvil, cinco pestañas: «Progreso» agrupa el resumen semanal y el cuerpo (peso, medidas y fotos).
 const NAV: NavItem[] = [
   { to: '/', label: 'Hoy', Icon: House },
-  { to: '/historial', label: 'Historial', Icon: CalendarDays },
+  { to: '/historial', label: 'Historial', Icon: CalendarDays, also: ['/plan'] },
   { to: '/entreno', label: 'Entreno', Icon: Dumbbell },
   { to: '/resumen', label: 'Progreso', Icon: ChartColumn, also: ['/peso'] },
   { to: '/ajustes', label: 'Ajustes', Icon: Settings, also: ['/admin'] },
@@ -51,6 +51,7 @@ const NAV: NavItem[] = [
 const SIDEBAR: NavItem[] = [
   { to: '/', label: 'Hoy', Icon: House },
   { to: '/historial', label: 'Historial', Icon: CalendarDays },
+  { to: '/plan', label: 'Plan semanal', Icon: ClipboardList },
   { to: '/entreno', label: 'Entreno', Icon: Dumbbell },
   { to: '/resumen', label: 'Resumen', Icon: ChartColumn },
   { to: '/peso', label: 'Cuerpo', Icon: Scale },

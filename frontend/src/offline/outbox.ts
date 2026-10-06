@@ -6,6 +6,7 @@
 import { del, get, set } from 'idb-keyval'
 import { api, ApiError } from '@/lib/api'
 import type { Intensity, Muscle, TemplateExercise, ExerciseUnit } from '@/lib/training'
+import type { PlanEntry } from '@/lib/shopping'
 import type { DayKind, Item, MealInput, Measurement, Prefs, Slot } from '@/lib/types'
 
 export interface MealPatch {
@@ -49,6 +50,13 @@ export type Op =
     }
   | { id: string; type: 'set.patch'; clientId: string; body: { reps?: number; weight?: number; rpe?: number | null } }
   | { id: string; type: 'set.delete'; clientId: string }
+  | {
+      id: string
+      type: 'plan.save'
+      body: Pick<PlanEntry, 'client_id' | 'date' | 'slot' | 'name' | 'items' | 'servings' | 'dish_id' | 'source'>
+    }
+  | { id: string; type: 'plan.delete'; clientId: string }
+  | { id: string; type: 'shopping.check'; body: { week_start: string; key: string; checked: boolean } }
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never
 export type NewOp = DistributiveOmit<Op, 'id'>
@@ -133,6 +141,12 @@ function send(op: Op): Promise<unknown> {
       return api.patch(`/api/sets/${op.clientId}`, op.body)
     case 'set.delete':
       return api.delete(`/api/sets/${op.clientId}`)
+    case 'plan.save':
+      return api.put('/api/plan', op.body)
+    case 'plan.delete':
+      return api.delete(`/api/plan/${op.clientId}`)
+    case 'shopping.check':
+      return api.put('/api/plan/checks', op.body)
   }
 }
 

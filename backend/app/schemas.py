@@ -336,3 +336,32 @@ class SetPatch(BaseModel):
     reps: int | None = Field(default=None, ge=0, le=600)
     weight: float | None = Field(default=None, ge=0, le=1000)
     rpe: float | None = Field(default=None, ge=1, le=10)
+
+
+class PlanIn(BaseModel):
+    client_id: str = Field(min_length=8, max_length=40)
+    date: str
+    slot: Slot
+    name: str = Field(min_length=1, max_length=160)
+    items: list[Item] = Field(min_length=1, max_length=30)
+    servings: float = Field(default=1.0, gt=0, le=20)
+    dish_id: int | None = None
+    source: Literal["dish", "product", "manual", "ai"] = "dish"
+
+    _check_date = field_validator("date")(lambda cls, v: _iso_date(v))
+
+
+class ShoppingCheckIn(BaseModel):
+    week_start: str
+    key: str = Field(min_length=1, max_length=160)
+    checked: bool
+
+    _check_date = field_validator("week_start")(lambda cls, v: _iso_date(v))
+
+
+class PlanFillIn(BaseModel):
+    start: str
+    # Huecos que rellenar: [{"date": ..., "slot": ...}], como mucho una semana de comidas principales.
+    slots: list[dict] = Field(min_length=1, max_length=14)
+
+    _check_date = field_validator("start")(lambda cls, v: _iso_date(v))

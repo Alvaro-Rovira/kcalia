@@ -491,3 +491,38 @@ class ReminderLog(TenantMixin, Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
     __table_args__ = (Index("ux_reminder_user_day_kind", "user_id", "date", "kind", unique=True),)
+
+
+class MealPlan(TenantMixin, Base):
+    """Comida planificada para un día y momento (aún no comida: no cuenta en el diario)."""
+
+    __tablename__ = "meal_plans"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    client_id: Mapped[str] = mapped_column(String(40))
+    date: Mapped[str] = mapped_column(String(10))
+    slot: Mapped[str] = mapped_column(String(12))
+    name: Mapped[str] = mapped_column(String(160))
+    items: Mapped[list] = mapped_column(JSON)
+    servings: Mapped[float] = mapped_column(Float, default=1.0)
+    dish_id: Mapped[int | None] = mapped_column(ForeignKey("dishes.id", ondelete="SET NULL"), nullable=True)
+    source: Mapped[str] = mapped_column(String(12), default="dish")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    __table_args__ = (
+        Index("ux_meal_plans_user_client", "user_id", "client_id", unique=True),
+        Index("ix_meal_plans_user_date", "user_id", "date"),
+    )
+
+
+class ShoppingCheck(TenantMixin, Base):
+    """Elemento marcado de la lista de la compra de una semana."""
+
+    __tablename__ = "shopping_checks"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    week_start: Mapped[str] = mapped_column(String(10))
+    key: Mapped[str] = mapped_column(String(160))
+    checked: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    __table_args__ = (Index("ux_shopping_user_week_key", "user_id", "week_start", "key", unique=True),)
