@@ -69,3 +69,9 @@ Decisiones tomadas sin poder preguntar, con el motivo. La más reciente, abajo.
     dentro del contenedor (es otro binario); se documenta como alternativa desde el host. Cifrado opcional AES-256-GCM
     con clave derivada por scrypt de una frase; `scripts/restore-backup.py` descifra y comprueba la integridad. Hasta 6
     intentos al día; el estado se ve en Administración y, si la última falló, también en Ajustes del admin.
+23. **Importar datos**: CSV de MyFitnessPal, Yazio o genérico, con las columnas adivinadas por la cabecera y un mapeo
+    manual en la vista previa. Cada fila recibe un `client_id` determinista (`imp-` + SHA-1 de sus datos), así que
+    importar dos veces el mismo fichero no duplica nada. Las filas que coinciden con una comida apuntada a mano (mismo
+    día, momento y calorías) se señalan y se saltan por defecto. Cada fila del CSV se guarda como una comida con un único
+    ingrediente (sus macros totales), con fuente `import`. El JSON de Kcalia solo añade lo que falta y no pisa perfil,
+    objetivos ni preferencias que ya existan. Necesita conexión: no pasa por la cola offline.

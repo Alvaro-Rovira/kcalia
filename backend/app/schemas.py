@@ -8,7 +8,7 @@ Activity = Literal["sedentario", "ligero", "moderado", "alto", "muy_alto"]
 Goal = Literal["definicion_ligera", "definicion_agresiva", "volumen", "mantenimiento", "recomposicion"]
 Slot = Literal["desayuno", "comida", "merienda", "cena", "snack"]
 Source = Literal[
-    "ai", "exact", "fuzzy", "cache", "favorite", "recent", "manual", "photo", "product", "drink", "sugerencia"
+    "ai", "exact", "fuzzy", "cache", "favorite", "recent", "manual", "photo", "product", "drink", "sugerencia", "import"
 ]
 Via = Literal["text", "voice", "photo", "tap"]
 

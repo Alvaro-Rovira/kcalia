@@ -685,3 +685,36 @@ def test_22_compartir_el_resumen_como_imagen(page: Page, servers, tmp_path):
     assert (width, height) == (1080, 1350)
     expect(page.get_by_text("Imagen descargada")).to_be_visible()
     assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_23_importar_csv_de_otra_app(page: Page, servers, tmp_path):
+    from datetime import date, timedelta
+
+    day = (date.today() - timedelta(days=20)).isoformat()
+    path = tmp_path / "myfitnesspal.csv"
+    path.write_text(
+        "Date,Meal,Calories,Fat (g),Carbohydrates (g),Fiber,Protein (g),Note\n"
+        f"{day},Breakfast,350,12,40,5,20,\n"
+        f"{day},Dinner,640,22,60,8,45,\n",
+        encoding="utf-8",
+    )
+    page.goto(servers["app"] + "/ajustes")
+    page.get_by_role("button", name="Importar datos").click()
+    dialog = page.get_by_role("dialog")
+    dialog.get_by_label("Fichero para importar").set_input_files(str(path))
+    expect(dialog.get_by_text("Exportación de MyFitnessPal")).to_be_visible()
+    expect(dialog.get_by_test_id("import-summary")).to_have_text("2 comidas nuevas")
+    expect(dialog.get_by_role("region", name="Primeras comidas que se importarán").get_by_text("Cena")).to_be_visible()
+    dialog.get_by_role("button", name="Importar 2 comidas").click()
+    expect(page.get_by_text("2 comidas importadas")).to_be_visible()
+    meals = api_get(page, servers, f"/api/meals?date={day}")["meals"]
+    assert sorted(m["kcal"] for m in meals) == [350, 640]
+    assert {m["source"] for m in meals} == {"import"}
+
+    # Importar otra vez el mismo fichero no duplica nada.
+    page.get_by_role("button", name="Importar datos").click()
+    dialog = page.get_by_role("dialog")
+    dialog.get_by_label("Fichero para importar").set_input_files(str(path))
+    expect(dialog.get_by_test_id("import-summary")).to_have_text("0 comidas nuevas · 2 ya importadas")
+    expect(dialog.get_by_role("button", name="Nada nuevo que importar")).to_be_disabled()
+    assert not page.errors  # type: ignore[attr-defined]

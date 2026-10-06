@@ -6,6 +6,7 @@ import {
   Droplets,
   FileJson,
   FileSpreadsheet,
+  FileUp,
   LogOut,
   Monitor,
   Moon,
@@ -22,6 +23,7 @@ import {
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 import { DayTypeSettings } from '@/components/DayTypeSettings'
+import { ImportSheet } from '@/components/ImportSheet'
 import { RemindersSettings } from '@/components/RemindersSettings'
 import { SuggestSettings } from '@/components/SuggestSettings'
 import { Logo, Wordmark } from '@/components/Logo'
@@ -90,7 +92,7 @@ export default function Settings() {
   const online = useOnline()
   const install = useInstall()
   const [theme, setTheme] = useState<ThemePref>(getThemePref)
-  const [sheet, setSheet] = useState<'profile' | 'targets' | 'plan' | 'water' | 'delete-data' | 'delete-account' | null>(null)
+  const [sheet, setSheet] = useState<'profile' | 'targets' | 'plan' | 'water' | 'import' | 'delete-data' | 'delete-account' | null>(null)
   const unit = profile.weight_unit
   const isAdmin = !!app.user.is_admin
   const admin = useAdminOverview(isAdmin)
@@ -319,12 +321,13 @@ export default function Settings() {
                 ['/api/export/water.csv', 'Exportar agua (CSV)'],
               ] as const
             ).map(([href, label]) => (
-              <a key={href} href={href} download className="flex min-h-[52px] items-center gap-3 border-b border-border px-4 py-2.5 transition-colors last:border-b-0 hover:bg-surface-2">
+              <a key={href} href={href} download className="flex min-h-[52px] items-center gap-3 border-b border-border px-4 py-2.5 transition-colors hover:bg-surface-2">
                 <FileSpreadsheet className="size-[18px] shrink-0 text-text-3" aria-hidden />
                 <span className="flex-1 text-[15px] text-text">{label}</span>
                 <Download className="size-4 text-text-3" aria-hidden />
               </a>
             ))}
+            <Row label="Importar datos" value="CSV o JSON" onClick={() => setSheet('import')} icon={<FileUp className="size-[18px]" aria-hidden />} />
           </Section>
 
           <Section title="Cuenta" id="a-account">
@@ -370,6 +373,7 @@ export default function Settings() {
         )}
       </Sheet>
       <WaterGoalSheet open={sheet === 'water'} onClose={() => setSheet(null)} current={app.prefs?.water_goal_ml ?? null} weightKg={profile.weight_kg} />
+      <ImportSheet open={sheet === 'import'} onClose={() => setSheet(null)} />
       <DeleteSheet kind={sheet === 'delete-data' ? 'data' : sheet === 'delete-account' ? 'account' : null} onClose={() => setSheet(null)} />
     </main>
   )

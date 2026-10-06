@@ -19,6 +19,7 @@ from .routers import (
     account,
     admin,
     auth,
+    importer,
     meals,
     planner,
     products,
@@ -138,6 +139,7 @@ for module in (
     planner,
     suggest,
     push,
+    importer,
     account,
     admin,
 ):
