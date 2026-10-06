@@ -262,9 +262,11 @@ def test_la_lectura_de_etiquetas_cuenta_para_el_cupo_diario(client, fake):
     assert used >= 6  # las lecturas anteriores (y la corrección) gastaron cupo
     from app import services, tenancy
     from app.db import SessionLocal
+    from app.deps import today_local
 
+    # El «hoy» de la app (zona de TZ), no el del sistema: en CI (UTC) difieren entre las 22:00 y las 24:00.
     with SessionLocal() as db, tenancy.unscoped(db):
-        assert services.ai_calls_today(db, __import__("datetime").date.today(), ("vision",)) >= 5
+        assert services.ai_calls_today(db, today_local(), ("vision",)) >= 5
 
 
 def test_borrar_la_cuenta_borra_productos_y_fotos(client, fake):
