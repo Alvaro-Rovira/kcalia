@@ -38,3 +38,6 @@ Decisiones tomadas sin poder preguntar, con el motivo. La más reciente, abajo.
     como 0. El esquema de la IA pide `fiber100` y `alcohol100`, pero acepta respuestas sin ellos; el alcohol entra en la
     comprobación de coherencia (7 kcal/g). Las bebidas rápidas se guardan como comida con `source = "drink"` y se
     calculan en el móvil: gramos de alcohol = ml × % vol × 0,789 / 100.
+15. **Fotos de progreso solo con conexión.** Se reducen en el móvil (1.280 px) y se suben al momento; guardar
+    imágenes en la cola offline (IndexedDB) arriesga el espacio del navegador en iOS. Las medidas sí van por la cola.
+    Las fotos viven en su propia tabla con la imagen en una columna diferida: los listados nunca la cargan.

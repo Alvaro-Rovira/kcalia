@@ -2,6 +2,9 @@ import { useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'motion/react'
 import { Plus, RefreshCw, Trash2, TrendingDown, TrendingUp } from 'lucide-react'
 import { lazy, Suspense, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router'
+import { MeasurementsPanel } from '@/components/body/MeasurementsPanel'
+import { PhotosPanel } from '@/components/body/PhotosPanel'
 import { useApp, useOnline, useWeightActions, useWeights } from '@/hooks/data'
 import { api, errorMessage } from '@/lib/api'
 import { addDays, relativeDay, todayISO } from '@/lib/dates'
@@ -21,8 +24,18 @@ import { toast } from '@/ui/toast'
 const WeightChart = lazy(() => import('@/components/charts/WeightChart'))
 
 type Range = '30' | '90' | 'all'
+type View = 'peso' | 'medidas' | 'fotos'
+
+const VIEW_TITLE: Record<View, string> = { peso: 'Peso', medidas: 'Medidas', fotos: 'Fotos' }
+const VIEW_TEXT: Record<View, string> = {
+  peso: 'Fíjate en la media, no en el día.',
+  medidas: 'Los centímetros cuentan lo que la báscula no.',
+  fotos: 'Tu progreso, a la vista y solo para ti.',
+}
 
 export default function Weight() {
+  const [params, setParams] = useSearchParams()
+  const view: View = params.get('vista') === 'medidas' ? 'medidas' : params.get('vista') === 'fotos' ? 'fotos' : 'peso'
   const app = useApp()
   const unit = app.profile.weight_unit
   const weights = useWeights()
@@ -93,15 +106,31 @@ export default function Weight() {
     <main className="page">
       <header className="flex items-end justify-between gap-3">
         <div>
-          <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.035em] text-text">Peso</h1>
-          <p className="mt-1 text-[14.5px] text-text-2">Fíjate en la media, no en el día.</p>
+          <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.035em] text-text">{VIEW_TITLE[view]}</h1>
+          <p className="mt-1 text-[14.5px] text-text-2">{VIEW_TEXT[view]}</p>
         </div>
-        <Button size="sm" onClick={openSheet} icon={<Plus className="size-[18px]" aria-hidden />}>
-          Apuntar
-        </Button>
+        {view === 'peso' && (
+          <Button size="sm" onClick={openSheet} icon={<Plus className="size-[18px]" aria-hidden />}>
+            Apuntar
+          </Button>
+        )}
       </header>
 
-      {weights.isPending ? (
+      <Segmented
+        className="mt-4"
+        label="Qué ver"
+        value={view}
+        onChange={(next) => setParams(next === 'peso' ? {} : { vista: next }, { replace: true })}
+        options={[
+          { value: 'peso', label: 'Peso' },
+          { value: 'medidas', label: 'Medidas' },
+          { value: 'fotos', label: 'Fotos' },
+        ]}
+      />
+      {view === 'medidas' && <MeasurementsPanel />}
+      {view === 'fotos' && <PhotosPanel />}
+
+      {view === 'peso' && (weights.isPending ? (
         <div className="mt-4 space-y-4" role="status" aria-label="Cargando peso">
           <Skeleton className="h-[120px] !rounded-[22px]" />
           <Skeleton className="h-[300px] !rounded-[22px]" />
@@ -263,7 +292,7 @@ export default function Weight() {
             </ul>
           </section>
         </div>
-      )}
+      ))}
 
       <Sheet
         open={sheet}

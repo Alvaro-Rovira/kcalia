@@ -13,7 +13,9 @@ import type {
   Item,
   Meal,
   MealInput,
+  Measurement,
   Prefs,
+  ProgressPhoto,
   Stats,
   WaterDay,
   WeekSummary,
@@ -311,4 +313,41 @@ export function usePrefsActions() {
     },
     [client],
   )
+}
+
+export function useMeasurements() {
+  return useQuery({
+    queryKey: keys.measurements,
+    queryFn: () => api.get<{ entries: Measurement[] }>('/api/measurements'),
+    select: (data) => data.entries,
+  })
+}
+
+/** Medidas: un registro por día; se ven al momento y viajan por la cola offline. */
+export function useMeasureActions() {
+  const client = useQueryClient()
+  const set = useCallback(
+    (update: (entries: Measurement[]) => Measurement[]) =>
+      client.setQueryData<{ entries: Measurement[] }>(keys.measurements, (old) => ({ entries: update(old?.entries ?? []) })),
+    [client],
+  )
+  const save = useCallback(
+    (entry: Measurement) => {
+      set((entries) => [...entries.filter((e) => e.date !== entry.date), entry].sort((a, b) => a.date.localeCompare(b.date)))
+      void enqueue({ type: 'measure.put', body: entry })
+    },
+    [set],
+  )
+  const remove = useCallback(
+    (date: string) => {
+      set((entries) => entries.filter((e) => e.date !== date))
+      void enqueue({ type: 'measure.delete', date })
+    },
+    [set],
+  )
+  return { save, remove }
+}
+
+export function usePhotos() {
+  return useQuery({ queryKey: keys.photos, queryFn: () => api.get<{ photos: ProgressPhoto[] }>('/api/photos'), select: (data) => data.photos })
 }

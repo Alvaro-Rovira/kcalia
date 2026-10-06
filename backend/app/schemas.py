@@ -184,3 +184,14 @@ class WaterIn(BaseModel):
     ml: int = Field(ge=10, le=3000)
 
     _check_date = field_validator("date")(lambda cls, v: _iso_date(v))
+
+
+class MeasurementIn(BaseModel):
+    date: str
+    waist: float | None = Field(default=None, ge=30, le=250)
+    chest: float | None = Field(default=None, ge=40, le=250)
+    arm: float | None = Field(default=None, ge=10, le=100)
+    hip: float | None = Field(default=None, ge=40, le=250)
+    thigh: float | None = Field(default=None, ge=20, le=150)
+
+    _check_date = field_validator("date")(lambda cls, v: _iso_date(v))

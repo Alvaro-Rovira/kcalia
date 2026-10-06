@@ -12,6 +12,7 @@ from .models import (
     Achievement,
     AiUsage,
     AppSetting,
+    BodyMeasurement,
     Counter,
     Dish,
     DishAlias,
@@ -20,6 +21,7 @@ from .models import (
     Product,
     ProductImage,
     Profile,
+    ProgressPhoto,
     Targets,
     UserPrefs,
     WaterLog,
@@ -692,6 +694,8 @@ def wipe_data(db: Session) -> None:
     if tenancy.current_user_id(db) is None:
         raise tenancy.TenancyError("wipe_data necesita una sesión limitada a un usuario")
     for model in (
+        ProgressPhoto,
+        BodyMeasurement,
         WaterLog,
         UserPrefs,
         Meal,

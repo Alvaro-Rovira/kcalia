@@ -121,3 +121,67 @@ def test_fibra_y_alcohol_en_comidas_dia_y_semana(client):
     assert patched["fiber"] == 8.4
     csv_text = client.get("/api/export/meals.csv").text
     assert "fibra_g;alcohol_g" in csv_text.splitlines()[0] and "15,8" in csv_text
+
+
+JPEG = b"\xff\xd8\xff\xe0" + b"7" * 3000
+
+
+def test_medidas_por_dia_idempotentes(client):
+    client.put("/api/measurements", json={"date": "2026-09-01", "waist": 82.5, "hip": 98})
+    client.put("/api/measurements", json={"date": "2026-09-01", "waist": 82, "hip": 98})  # mismo día: se corrige
+    entries = client.put("/api/measurements", json={"date": "2026-09-15", "waist": 80.5, "arm": 33}).json()["entries"]
+    assert [(e["date"], e["waist"]) for e in entries] == [("2026-09-01", 82), ("2026-09-15", 80.5)]
+    assert entries[1]["chest"] is None
+    assert client.put("/api/measurements", json={"date": "2026-09-20", "waist": 10}).status_code == 422
+    # Sin ninguna medida, el día desaparece.
+    assert len(client.put("/api/measurements", json={"date": "2026-09-15"}).json()["entries"]) == 1
+    exported = client.get("/api/export/json").json()
+    assert exported["measurements"] == [
+        {"date": "2026-09-01", "waist": 82, "chest": None, "arm": None, "hip": 98, "thigh": None}
+    ]
+    assert "fotos" not in exported and "photos" not in exported
+    assert "2026-09-01;82,0;;;98,0;" in client.get("/api/export/measurements.csv").text
+
+
+def test_fotos_de_progreso(client):
+    first = client.post(
+        "/api/photos",
+        data={"date": "2026-09-01", "client_id": "foto-0001"},
+        files={"image": ("a.jpg", JPEG, "image/jpeg")},
+    )
+    assert first.status_code == 201
+    again = client.post(
+        "/api/photos",
+        data={"date": "2026-09-01", "client_id": "foto-0001"},
+        files={"image": ("a.jpg", JPEG, "image/jpeg")},
+    )
+    assert again.json()["id"] == first.json()["id"]  # reintento sin duplicar
+    client.post(
+        "/api/photos",
+        data={"date": "2026-10-01", "client_id": "foto-0002"},
+        files={"image": ("b.jpg", JPEG, "image/jpeg")},
+    )
+    photos = client.get("/api/photos").json()["photos"]
+    assert [p["date"] for p in photos] == ["2026-10-01", "2026-09-01"]
+    assert "data" not in photos[0] and photos[0]["size"] == len(JPEG)
+    assert client.get(f"/api/photos/{photos[1]['id']}/image").content == JPEG
+    bad = client.post(
+        "/api/photos",
+        data={"date": "2026-10-01", "client_id": "foto-0003"},
+        files={"image": ("x.gif", b"GIF89a", "image/gif")},
+    )
+    assert bad.status_code == 415
+    assert client.delete(f"/api/photos/{photos[0]['id']}").json() == {"ok": True}
+    assert len(client.get("/api/photos").json()["photos"]) == 1
+
+
+def test_fotos_y_medidas_de_otro_usuario_no_se_ven(client):
+    create_user("beto")
+    photo_id = client.get("/api/photos").json()["photos"][0]["id"]
+    login(client, "beto")
+    assert client.get("/api/photos").json()["photos"] == []
+    assert client.get(f"/api/photos/{photo_id}/image").status_code == 404
+    client.delete(f"/api/photos/{photo_id}")
+    assert client.get("/api/measurements").json()["entries"] == []
+    login(client, "ana")
+    assert len(client.get("/api/photos").json()["photos"]) == 1

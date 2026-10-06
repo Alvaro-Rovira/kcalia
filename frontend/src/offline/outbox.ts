@@ -5,7 +5,7 @@
  */
 import { del, get, set } from 'idb-keyval'
 import { api, ApiError } from '@/lib/api'
-import type { Item, MealInput, Prefs, Slot } from '@/lib/types'
+import type { Item, MealInput, Measurement, Prefs, Slot } from '@/lib/types'
 
 export interface MealPatch {
   date?: string
@@ -26,6 +26,8 @@ export type Op =
   | { id: string; type: 'water.add'; body: { client_id: string; date: string; ml: number } }
   | { id: string; type: 'water.delete'; clientId: string }
   | { id: string; type: 'prefs.patch'; body: Partial<Prefs> }
+  | { id: string; type: 'measure.put'; body: Measurement }
+  | { id: string; type: 'measure.delete'; date: string }
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never
 export type NewOp = DistributiveOmit<Op, 'id'>
@@ -86,6 +88,10 @@ function send(op: Op): Promise<unknown> {
       return api.delete(`/api/water/${op.clientId}`)
     case 'prefs.patch':
       return api.patch('/api/prefs', op.body)
+    case 'measure.put':
+      return api.put('/api/measurements', op.body)
+    case 'measure.delete':
+      return api.delete(`/api/measurements/${op.date}`)
   }
 }
 

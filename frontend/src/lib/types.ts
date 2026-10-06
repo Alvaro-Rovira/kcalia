@@ -346,3 +346,16 @@ export interface Stats {
   }
   counts: { meals: number; weights: number; days: number }
 }
+
+export type MeasureKey = 'waist' | 'chest' | 'arm' | 'hip' | 'thigh'
+
+/** Medidas de un día, en centímetros. */
+export type Measurement = { date: string } & Record<MeasureKey, number | null>
+
+export interface ProgressPhoto {
+  id: number
+  client_id: string
+  date: string
+  size: number
+  created_at: string
+}

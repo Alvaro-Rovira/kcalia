@@ -338,3 +338,42 @@ class WaterLog(TenantMixin, Base):
         Index("ux_water_user_client", "user_id", "client_id", unique=True),
         Index("ix_water_user_date", "user_id", "date"),
     )
+
+
+MEASURES = ("waist", "chest", "arm", "hip", "thigh")
+
+
+class BodyMeasurement(TenantMixin, Base):
+    """Medidas corporales de un día, en centímetros (cintura, pecho, brazo, cadera y muslo)."""
+
+    __tablename__ = "body_measurements"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    date: Mapped[str] = mapped_column(String(10))
+    waist: Mapped[float | None] = mapped_column(Float, nullable=True)
+    chest: Mapped[float | None] = mapped_column(Float, nullable=True)
+    arm: Mapped[float | None] = mapped_column(Float, nullable=True)
+    hip: Mapped[float | None] = mapped_column(Float, nullable=True)
+    thigh: Mapped[float | None] = mapped_column(Float, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
+
+    __table_args__ = (Index("ux_measurements_user_date", "user_id", "date", unique=True),)
+
+
+class ProgressPhoto(TenantMixin, Base):
+    """Foto de progreso, ya reducida en el móvil. Los listados no cargan `data` (se pide aparte)."""
+
+    __tablename__ = "progress_photos"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    client_id: Mapped[str] = mapped_column(String(40))
+    date: Mapped[str] = mapped_column(String(10))
+    mime: Mapped[str] = mapped_column(String(30))
+    size: Mapped[int] = mapped_column(Integer, default=0)
+    data: Mapped[bytes] = mapped_column(LargeBinary, deferred=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    __table_args__ = (
+        Index("ux_photos_user_client", "user_id", "client_id", unique=True),
+        Index("ix_photos_user_date", "user_id", "date"),
+    )

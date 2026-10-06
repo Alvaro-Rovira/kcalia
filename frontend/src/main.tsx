@@ -20,6 +20,8 @@ const REJECTED: Record<Op['type'], string> = {
   'water.add': 'No se ha podido guardar el agua',
   'water.delete': 'No se ha podido quitar el agua',
   'prefs.patch': 'No se ha podido guardar un ajuste',
+  'measure.put': 'No se han podido guardar unas medidas',
+  'measure.delete': 'No se han podido borrar unas medidas',
 }
 
 preloadRoute(location.pathname)
@@ -33,6 +35,7 @@ outbox.init({
       void queryClient.invalidateQueries({ queryKey: keys.summaries })
     }
     if ([...types].some((t) => t.startsWith('water.'))) void queryClient.invalidateQueries({ queryKey: ['water'] })
+    if ([...types].some((t) => t.startsWith('measure.'))) void queryClient.invalidateQueries({ queryKey: keys.measurements })
     if ([...types].some((t) => t.startsWith('weight.'))) {
       void queryClient.invalidateQueries({ queryKey: keys.weight })
       void queryClient.invalidateQueries({ queryKey: ['week'] })

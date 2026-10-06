@@ -29,7 +29,9 @@ Tras la fase 1: 319 pytest, 133 Vitest, 14 e2e en verde.
 ## Fase 2 · Seguimiento
 - [x] 2.1 Agua
 - [x] 2.2 Fibra y alcohol
-- [ ] 2.3 Medidas corporales y fotos de progreso
+- [x] 2.3 Medidas corporales y fotos de progreso
+
+Tras la fase 2: 347 pytest, 141 Vitest, 17 e2e en verde.
 
 ## Fase 3 · Entrenamiento
 - [ ] 3.1 Tipo de día entreno/descanso con objetivos propios

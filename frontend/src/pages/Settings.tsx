@@ -292,11 +292,19 @@ export default function Settings() {
               <span className="flex-1 text-[15px] text-text">Exportar comidas (CSV)</span>
               <Download className="size-4 text-text-3" aria-hidden />
             </a>
-            <a href="/api/export/weights.csv" download className="flex min-h-[52px] items-center gap-3 px-4 py-2.5 transition-colors hover:bg-surface-2">
-              <FileSpreadsheet className="size-[18px] shrink-0 text-text-3" aria-hidden />
-              <span className="flex-1 text-[15px] text-text">Exportar peso (CSV)</span>
-              <Download className="size-4 text-text-3" aria-hidden />
-            </a>
+            {(
+              [
+                ['/api/export/weights.csv', 'Exportar peso (CSV)'],
+                ['/api/export/measurements.csv', 'Exportar medidas (CSV)'],
+                ['/api/export/water.csv', 'Exportar agua (CSV)'],
+              ] as const
+            ).map(([href, label]) => (
+              <a key={href} href={href} download className="flex min-h-[52px] items-center gap-3 border-b border-border px-4 py-2.5 transition-colors last:border-b-0 hover:bg-surface-2">
+                <FileSpreadsheet className="size-[18px] shrink-0 text-text-3" aria-hidden />
+                <span className="flex-1 text-[15px] text-text">{label}</span>
+                <Download className="size-4 text-text-3" aria-hidden />
+              </a>
+            ))}
           </Section>
 
           <Section title="Cuenta" id="a-account">

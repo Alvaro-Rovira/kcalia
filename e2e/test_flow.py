@@ -460,3 +460,52 @@ def test_15_bebida_con_alcohol_y_fibra(page: Page, servers):
     expect(page.get_by_role("region", name="Alcohol de la semana")).to_be_visible()
     expect(page.get_by_text("Fibra media")).to_be_visible()
     page.get_by_role("link", name="Hoy").click()
+
+
+def test_16_medidas_y_fotos(page: Page, servers, tmp_path):
+    page.goto(servers["app"] + "/peso")
+    page.get_by_role("radio", name="Medidas").click()
+    expect(page.get_by_text("Aún no hay medidas")).to_be_visible()
+    page.get_by_role("button", name="Apuntar medidas").click()
+    dialog = page.get_by_role("dialog")
+    dialog.get_by_label("Cintura en centímetros").fill("84,5")
+    dialog.get_by_label("Brazo en centímetros").fill("33")
+    dialog.get_by_role("button", name="Guardar medidas").click()
+    expect(page.get_by_text("Medidas guardadas")).to_be_visible()
+    expect(page.get_by_role("region", name="Historial de medidas").get_by_text("Cintura 84,5 · Brazo 33")).to_be_visible()
+    wait_until(lambda: len(api_get(page, servers, "/api/measurements")["entries"]) == 1)
+
+    # Sin red también: se apunta y se sincroniza después.
+    page.wait_for_timeout(1000)
+    page.context.set_offline(True)
+    page.get_by_role("button", name="Apuntar medidas").click()
+    dialog.get_by_label("Cambiar el día").fill("2026-09-01")
+    dialog.get_by_label("Cintura en centímetros").fill("87")
+    dialog.get_by_role("button", name="Guardar medidas").click()
+    expect(page.get_by_text("cambio pendiente").first).to_be_visible()
+    page.context.set_offline(False)
+    wait_until(lambda: len(api_get(page, servers, "/api/measurements")["entries"]) == 2)
+    expect(page.get_by_text("−2,5 cm desde el")).to_be_visible()
+
+    # Fotos: se suben reducidas y se comparan dos.
+    data_url = page.evaluate(
+        """() => { const c = document.createElement('canvas'); c.width = 900; c.height = 1200
+          const x = c.getContext('2d'); x.fillStyle = '#4a7'; x.fillRect(0, 0, 900, 1200); return c.toDataURL('image/jpeg', 0.9) }"""
+    )
+    import base64
+
+    photo = tmp_path / "progreso.jpg"
+    photo.write_bytes(base64.b64decode(data_url.split(",", 1)[1]))
+    page.get_by_role("radio", name="Fotos").click()
+    for _ in range(2):
+        page.locator("input[type=file]:not([capture])").set_input_files(str(photo))
+        expect(page.get_by_text("Foto guardada").first).to_be_visible()
+    wait_until(lambda: len(api_get(page, servers, "/api/photos")["photos"]) == 2)
+    page.get_by_role("button", name="Comparar").click()
+    photos = page.get_by_role("button", name="Foto del")
+    photos.nth(0).click()
+    photos.nth(1).click()
+    expect(page.get_by_role("heading", name="Comparación")).to_be_visible()
+    expect(page.get_by_text("0 días entre una y otra")).to_be_visible()
+    page.keyboard.press("Escape")
+    assert not page.errors  # type: ignore[attr-defined]

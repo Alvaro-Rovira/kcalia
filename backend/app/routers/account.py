@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from .. import services
 from ..db import get_db
 from ..deps import require_approved_user, require_user
-from ..models import Food, Meal, User, WaterLog, WeeklySummary, Weight
+from ..models import MEASURES, BodyMeasurement, Food, Meal, User, WaterLog, WeeklySummary, Weight
 from ..schemas import PasswordConfirm
 from ..security import SESSION_COOKIE, verify_password
 
@@ -59,6 +59,11 @@ def export_json(db: Session = Depends(get_db)) -> dict:
         ],
         "weekly_summaries": [s.data for s in db.scalars(select(WeeklySummary).order_by(WeeklySummary.week_start))],
         "prefs": services.get_prefs(db).model_dump(),
+        "measurements": [
+            {"date": m.date, **{key: getattr(m, key) for key in MEASURES}}
+            for m in db.scalars(select(BodyMeasurement).order_by(BodyMeasurement.date))
+        ],
+        # Las fotos de progreso no se exportan (son imágenes; siguen en la base y en sus copias).
         "water": [
             {"client_id": w.client_id, "date": w.date, "ml": w.ml}
             for w in db.scalars(select(WaterLog).order_by(WaterLog.date, WaterLog.created_at))
@@ -132,6 +137,16 @@ def export_water_csv(db: Session = Depends(get_db)) -> Response:
     for day, ml in rows:
         writer.writerow([day, int(ml or 0)])
     return _download("\ufeff" + out.getvalue(), f"kcalia-agua-{_stamp()}.csv", "text/csv; charset=utf-8")
+
+
+@router.get("/export/measurements.csv")
+def export_measurements_csv(db: Session = Depends(get_db)) -> Response:
+    out = io.StringIO()
+    writer = csv.writer(out, delimiter=";")
+    writer.writerow(["fecha", "cintura_cm", "pecho_cm", "brazo_cm", "cadera_cm", "muslo_cm"])
+    for row in db.scalars(select(BodyMeasurement).order_by(BodyMeasurement.date)):
+        writer.writerow([row.date, *("" if getattr(row, m) is None else _es(getattr(row, m)) for m in MEASURES)])
+    return _download("\ufeff" + out.getvalue(), f"kcalia-medidas-{_stamp()}.csv", "text/csv; charset=utf-8")
 
 
 def _confirm(user: User, body: PasswordConfirm) -> None:
