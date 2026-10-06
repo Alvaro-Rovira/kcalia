@@ -8,6 +8,7 @@ import httpx
 import pytest
 from playwright.sync_api import Page, expect
 
+from app_dates import app_today
 from conftest import PASSWORD
 
 pytestmark = pytest.mark.filterwarnings("ignore")
@@ -352,10 +353,10 @@ def test_11_ingrediente_a_mano(page: Page, servers):
 
 
 def test_12_copiar_comida_y_dia(page: Page, servers):
-    from datetime import date, timedelta
+    from datetime import timedelta
 
     page.goto(servers["app"])
-    today = date.today().isoformat()
+    today = app_today().isoformat()
     on_server = len(api_get(page, servers, f"/api/meals?date={today}")["meals"])
     rows = page.get_by_role("button", name="Pechuga de pollo con arroz")
     before = rows.count()
@@ -371,7 +372,7 @@ def test_12_copiar_comida_y_dia(page: Page, servers):
     dialog.get_by_role("radio", name="Ayer").click()
     dialog.get_by_role("button", name="Copiar a ayer").click()
     expect(page.get_by_text(f"{today_meals} comidas copiadas a ayer")).to_be_visible()
-    yesterday = (date.today() - timedelta(days=1)).isoformat()
+    yesterday = (app_today() - timedelta(days=1)).isoformat()
     wait_until(lambda: len(api_get(page, servers, f"/api/meals?date={yesterday}")["meals"]) == today_meals)
 
 
@@ -414,9 +415,8 @@ def test_13_codigo_de_barras(page: Page, servers, ai_calls):
 
 
 def test_14_agua_con_y_sin_conexion(page: Page, servers):
-    from datetime import date
 
-    today = date.today().isoformat()
+    today = app_today().isoformat()
     page.goto(servers["app"])
     water = page.get_by_role("region", name="Agua")
     expect(water.get_by_text("de 2,75 L")).to_be_visible()  # 75,5 kg × 35 ml, redondeado a 250
@@ -447,9 +447,8 @@ def test_14_agua_con_y_sin_conexion(page: Page, servers):
 
 
 def test_15_bebida_con_alcohol_y_fibra(page: Page, servers):
-    from datetime import date
 
-    today = date.today().isoformat()
+    today = app_today().isoformat()
     page.goto(servers["app"])
     expect(page.get_by_text("Fibra", exact=False).first).to_be_visible()
     page.get_by_role("button", name="Añadir comida").last.click()
@@ -513,9 +512,8 @@ def test_16_medidas_y_fotos(page: Page, servers, tmp_path):
 
 
 def test_17_dias_de_entreno_y_descanso(page: Page, servers):
-    from datetime import date
 
-    today = date.today()
+    today = app_today()
     page.goto(servers["app"] + "/ajustes")
     base = api_get(page, servers, "/api/bootstrap")["targets"]["kcal"]
     page.get_by_role("switch", name="Objetivos distintos para entreno y descanso").click()
@@ -598,11 +596,10 @@ def test_19_recordatorios(page: Page, servers):
 
 
 def test_20_plan_semanal_y_lista_de_la_compra(page: Page, servers, ai_calls):
-    from datetime import date
 
     from app_dates import medium
 
-    today = date.today()
+    today = app_today()
     page.goto(servers["app"] + "/historial")
     page.get_by_role("link", name="Plan").click()
     expect(page.get_by_role("heading", name="Plan semanal")).to_be_visible()
@@ -636,9 +633,8 @@ def test_20_plan_semanal_y_lista_de_la_compra(page: Page, servers, ai_calls):
 
 def test_21_sugerencia_para_cerrar_el_dia(page: Page, servers):
     import re as regex
-    from datetime import date
 
-    today = date.today().isoformat()
+    today = app_today().isoformat()
     headers = {"Origin": servers["app"]}
     # Objetivo alto para que hoy queden calorías (el resto de pruebas ya ha comido bastante).
     page.request.put(servers["app"] + "/api/targets", data={"kcal": 6000, "protein": 300, "carbs": 700, "fat": 200}, headers=headers)
@@ -688,9 +684,9 @@ def test_22_compartir_el_resumen_como_imagen(page: Page, servers, tmp_path):
 
 
 def test_23_importar_csv_de_otra_app(page: Page, servers, tmp_path):
-    from datetime import date, timedelta
+    from datetime import timedelta
 
-    day = (date.today() - timedelta(days=20)).isoformat()
+    day = (app_today() - timedelta(days=20)).isoformat()
     path = tmp_path / "myfitnesspal.csv"
     path.write_text(
         "Date,Meal,Calories,Fat (g),Carbohydrates (g),Fiber,Protein (g),Note\n"
@@ -721,7 +717,6 @@ def test_23_importar_csv_de_otra_app(page: Page, servers, tmp_path):
 
 
 def test_24_atajos_de_la_pwa_y_de_voz(page: Page, servers, ai_calls):
-    from datetime import date
 
     manifest = page.request.get(servers["app"] + "/manifest.webmanifest").json()
     assert [s["url"] for s in manifest["shortcuts"]] == ["/?nueva=1", "/?agua=250", "/entreno", "/peso"]
@@ -729,7 +724,7 @@ def test_24_atajos_de_la_pwa_y_de_voz(page: Page, servers, ai_calls):
         assert page.request.get(servers["app"] + shortcut["icons"][0]["src"]).ok
 
     # Un vaso de agua desde el atajo: se apunta una sola vez y la URL queda limpia.
-    today = date.today().isoformat()
+    today = app_today().isoformat()
     before = api_get(page, servers, f"/api/water?date={today}")["total_ml"]
     page.goto(servers["app"] + "/?agua=250")
     expect(page.get_by_text("+250 ml de agua")).to_be_visible()
@@ -758,7 +753,6 @@ def test_24_atajos_de_la_pwa_y_de_voz(page: Page, servers, ai_calls):
 def test_25_foto_con_descripcion(page: Page, servers, ai_calls, tmp_path):
     """Describir (o dictar) y adjuntar una foto: se analizan juntas, solo al pulsar «Analizar»."""
     import base64
-    from datetime import date
 
     data_url = page.evaluate(
         """() => { const c = document.createElement('canvas'); c.width = 800; c.height = 600
@@ -788,7 +782,7 @@ def test_25_foto_con_descripcion(page: Page, servers, ai_calls, tmp_path):
     assert ai_calls() == before + 1  # una sola consulta, con la foto y la descripción
     assert text in httpx.get(f"{servers['ai']}/last-photo").json()["prompt"]
     page.get_by_role("button", name=" Guardar ·").click()
-    today = date.today().isoformat()
+    today = app_today().isoformat()
     wait_until(
         lambda: any(
             m["text"] == text and m["source"] == "photo"
