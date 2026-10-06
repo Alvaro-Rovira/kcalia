@@ -34,9 +34,16 @@ SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 
 
 def init_db() -> None:
-    from . import models  # noqa: F401
+    """Migra la base si viene de una versión anterior y crea las tablas que falten."""
+    from . import migrations, models  # noqa: F401
 
+    settings = get_settings()
+    fresh = migrations.is_fresh(settings.db_path)
+    if not fresh:
+        migrations.run(settings.db_path, settings.backup_dir)
     Base.metadata.create_all(engine)
+    if fresh:
+        migrations.set_version(settings.db_path)
 
 
 def get_db() -> Iterator[Session]:
