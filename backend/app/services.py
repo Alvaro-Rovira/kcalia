@@ -415,6 +415,7 @@ def product_dict(product: Product, slot_counts: dict[str, int] | None = None) ->
         "unit_label": product.unit_label,
         "unit_grams": product.unit_grams,
         "has_image": product.has_image,
+        "barcode": product.barcode,
         "slot_counts": slot_counts or {},
         "use_count": product.use_count,
         "last_used_at": product.last_used_at.isoformat() + "Z",

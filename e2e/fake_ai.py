@@ -225,6 +225,31 @@ def next_label(kind: str = "yogur"):
     return {"next": NEXT_LABEL[0]}
 
 
+# Open Food Facts simulado (OFF_BASE_URL apunta aquí en las pruebas): un producto conocido y el resto, 404.
+OFF_PRODUCTS = {
+    "8410000123456": {
+        "code": "8410000123456",
+        "product_name_es": "Queso fresco batido 0 %",
+        "brands": "Marca Blanca",
+        "quantity": "500 g",
+        "serving_size": "1 tarrina (250 g)",
+        "serving_quantity": 250,
+        "nutriments": {"energy-kcal_100g": 46, "proteins_100g": 8, "carbohydrates_100g": 3.5, "fat_100g": 0.2},
+    }
+}
+
+
+@app.get("/api/v2/product/{code}")
+def off_product(code: str):
+    from fastapi.responses import JSONResponse
+
+    CALLS["off"] = CALLS.get("off", 0) + 1
+    product = OFF_PRODUCTS.get(code.removesuffix(".json"))
+    if product is None:
+        return JSONResponse({"status": 0, "status_verbose": "product not found"}, status_code=404)
+    return {"status": 1, "product": product}
+
+
 @app.get("/calls")
 def calls():
     return CALLS

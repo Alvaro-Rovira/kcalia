@@ -174,7 +174,12 @@ def _v1_multiuser(conn: sqlite3.Connection) -> None:
             rebuild_table(conn, Base.metadata.tables[name], {"user_id": owner})
 
 
-MIGRATIONS: list[Callable[[sqlite3.Connection], None]] = [_v1_multiuser]
+def _v2_barcodes(conn: sqlite3.Connection) -> None:
+    """Productos con código de barras (columna nueva y única por usuario)."""
+    rebuild_table(conn, Base.metadata.tables["products"])
+
+
+MIGRATIONS: list[Callable[[sqlite3.Connection], None]] = [_v1_multiuser, _v2_barcodes]
 CURRENT_VERSION = len(MIGRATIONS)
 
 

@@ -52,6 +52,7 @@ export interface Product {
   unit_label: string
   unit_grams: number | null
   has_image: boolean
+  barcode?: string | null
   use_count: number
   last_used_at: string
   created_at: string
@@ -75,6 +76,8 @@ export interface LabelDraft {
   confidence: number
   warnings: string[]
   missing: string[]
+  /** Si el borrador viene de escanear un código de barras (Open Food Facts). */
+  barcode?: string | null
 }
 
 export interface Draft extends Macros {

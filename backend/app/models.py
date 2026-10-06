@@ -249,9 +249,13 @@ class Product(TenantMixin, Base):
     unit_label: Mapped[str] = mapped_column(String(30), default="")
     unit_grams: Mapped[float | None] = mapped_column(Float, nullable=True)
     has_image: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Código de barras (EAN/UPC), si se guardó escaneándolo. Único por usuario; varios sin código, sin problema.
+    barcode: Mapped[str | None] = mapped_column(String(14), nullable=True)
     use_count: Mapped[int] = mapped_column(Integer, default=0)
     last_used_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    __table_args__ = (Index("ux_products_user_barcode", "user_id", "barcode", unique=True),)
 
 
 class ProductImage(TenantMixin, Base):
@@ -288,3 +292,14 @@ class AdminAudit(Base):
     target_username: Mapped[str] = mapped_column(String(64), default="")
     details: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
+
+
+class BarcodeCache(Base):
+    """Respuestas de Open Food Facts por código (también «no existe»). Datos públicos, sin nada del usuario."""
+
+    __tablename__ = "barcode_cache"
+
+    code: Mapped[str] = mapped_column(String(14), primary_key=True)
+    found: Mapped[bool] = mapped_column(Boolean, default=False)
+    data: Mapped[dict] = mapped_column(JSON, default=dict)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)

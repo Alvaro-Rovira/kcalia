@@ -19,10 +19,12 @@ Orden: la infraestructura y el multiusuario (5.4, 5.5) van primero; ver DECISION
 Tras 5.5: 304 pytest, 111 Vitest, 11 e2e en verde.
 
 ## Fase 1 · Registro diario
-- [ ] 1.1 Ingrediente a mano dentro de una comida, con autocompletado de la caché
-- [ ] 1.2 Copiar comida y día entero
-- [ ] 1.3 Favoritos y recientes ordenados por momento del día
-- [ ] 1.4 Escáner de códigos de barras con Open Food Facts
+- [x] 1.1 Ingrediente a mano dentro de una comida, con autocompletado de la caché
+- [x] 1.2 Copiar comida y día entero
+- [x] 1.3 Favoritos y recientes ordenados por momento del día
+- [x] 1.4 Escáner de códigos de barras con Open Food Facts
+
+Tras la fase 1: 319 pytest, 133 Vitest, 14 e2e en verde.
 
 ## Fase 2 · Seguimiento
 - [ ] 2.1 Agua

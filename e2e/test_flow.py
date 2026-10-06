@@ -302,3 +302,111 @@ def test_10_solicitud_de_cuenta_aprobada_desde_el_panel(page: Page, browser_inst
     assert tab.request.get(servers["app"] + "/api/admin/overview").status == 403
     other.close()
     assert not page.errors  # type: ignore[attr-defined]
+
+
+def api_get(page: Page, servers, path: str):
+    return page.request.get(servers["app"] + path).json()
+
+
+def wait_until(check, timeout: float = 15) -> None:
+    """Espera a que la cola offline haya llevado los cambios al servidor."""
+    import time
+
+    deadline = time.time() + timeout
+    while not check():
+        assert time.time() < deadline, "no se ha sincronizado a tiempo"
+        time.sleep(0.25)
+
+
+def test_11_ingrediente_a_mano(page: Page, servers):
+    page.goto(servers["app"])
+    page.get_by_role("button", name="Pechuga de pollo con arroz").first.click()
+    sheet = page.get_by_role("dialog")
+    expect(sheet.get_by_role("heading", name="Detalle de la comida")).to_be_visible()
+    sheet.get_by_role("button", name="Añadir ingrediente a mano").click()
+    sheet.get_by_placeholder("Por ejemplo: queso fresco batido").fill("salsa de yogur casera")
+    sheet.get_by_label("Gramos del ingrediente").fill("50")
+    sheet.get_by_label("Calorías", exact=True).fill("120")
+    sheet.get_by_label("Proteínas en gramos").fill("3")
+    sheet.get_by_label("Hidratos en gramos").fill("4")
+    sheet.get_by_label("Grasas en gramos").fill("10")
+    sheet.get_by_role("button", name="Añadir · 60 kcal").click()
+    expect(sheet.get_by_text("Salsa de yogur casera")).to_be_visible()
+    sheet.get_by_role("button", name="Guardar cambios").click()
+    expect(page.get_by_text("Cambios guardados")).to_be_visible()
+    expect(page.get_by_text("cambio pendiente")).to_have_count(0, timeout=15_000)
+    wait_until(
+        lambda: any(
+            f["name"] == "salsa de yogur casera" and f["kcal100"] == 120 for f in api_get(page, servers, "/api/foods")["foods"]
+        )
+    )
+
+    # La próxima vez sale al autocompletar (también sin red: viaja en los datos del móvil).
+    page.get_by_role("button", name="Pechuga de pollo con arroz").first.click()
+    page.get_by_role("dialog").get_by_role("button", name="Añadir ingrediente a mano").click()
+    page.get_by_role("dialog").get_by_placeholder("Por ejemplo: queso fresco batido").fill("salsa yog")
+    page.get_by_role("option").filter(has_text="Salsa de yogur casera").click()
+    expect(page.get_by_role("dialog").get_by_label("Calorías", exact=True)).to_have_value("120")
+    page.keyboard.press("Escape")
+
+
+def test_12_copiar_comida_y_dia(page: Page, servers):
+    from datetime import date, timedelta
+
+    page.goto(servers["app"])
+    today = date.today().isoformat()
+    on_server = len(api_get(page, servers, f"/api/meals?date={today}")["meals"])
+    rows = page.get_by_role("button", name="Pechuga de pollo con arroz")
+    before = rows.count()
+    rows.first.click()
+    page.get_by_role("dialog").get_by_role("button", name="Copiar a hoy").click()
+    expect(page.get_by_text("Copiada a hoy")).to_be_visible()
+    expect(rows).to_have_count(before + 1)
+
+    today_meals = on_server + 1
+    wait_until(lambda: len(api_get(page, servers, f"/api/meals?date={today}")["meals"]) == today_meals)
+    page.get_by_role("button", name="Copiar este día a otro").click()
+    dialog = page.get_by_role("dialog")
+    dialog.get_by_role("radio", name="Ayer").click()
+    dialog.get_by_role("button", name="Copiar a ayer").click()
+    expect(page.get_by_text(f"{today_meals} comidas copiadas a ayer")).to_be_visible()
+    yesterday = (date.today() - timedelta(days=1)).isoformat()
+    wait_until(lambda: len(api_get(page, servers, f"/api/meals?date={yesterday}")["meals"]) == today_meals)
+
+
+def test_13_codigo_de_barras(page: Page, servers, ai_calls):
+    before = ai_calls()
+    page.goto(servers["app"] + "/historial")
+    page.get_by_role("radio", name="Productos").click()
+    page.get_by_role("button", name="Añadir", exact=True).click()
+    dialog = page.get_by_role("dialog")
+    dialog.get_by_role("button", name="Escanear el código de barras").click()
+    # En las pruebas no hay cámara: se escribe el código a mano.
+    dialog.get_by_label("Código de barras").fill("8410000123456")
+    dialog.get_by_role("button", name="Buscar").click()
+    expect(dialog.get_by_role("heading", name="Revisa el producto")).to_be_visible()
+    expect(dialog.get_by_label("Nombre del producto")).to_have_value("Queso fresco batido 0 % (Marca Blanca)")
+    expect(dialog.get_by_role("textbox", name="Calorías")).to_have_value("46")
+    expect(dialog.get_by_text("Código de barras 8410000123456")).to_be_visible()
+    dialog.get_by_role("button", name="Guardar producto").click()
+    expect(page.get_by_text("Guardado: queso fresco batido 0 %")).to_be_visible()
+    assert ai_calls() == before  # Open Food Facts no es IA
+
+    # Volver a escanearlo lo reconoce sin buscar fuera.
+    page.get_by_role("button", name="Añadir", exact=True).click()
+    page.get_by_role("dialog").get_by_role("button", name="Escanear el código de barras").click()
+    page.get_by_role("dialog").get_by_label("Código de barras").fill("8410000123456")
+    page.get_by_role("dialog").get_by_role("button", name="Buscar").click()
+    expect(page.get_by_text("Ya lo tienes guardado")).to_be_visible()
+    expect(page.get_by_role("heading", name="Editar producto")).to_be_visible()
+    page.keyboard.press("Escape")
+
+    # Un código que Open Food Facts no tiene: se ofrece la foto de la etiqueta.
+    page.get_by_role("button", name="Añadir", exact=True).click()
+    page.get_by_role("dialog").get_by_role("button", name="Escanear el código de barras").click()
+    page.get_by_role("dialog").get_by_label("Código de barras").fill("8410000999990")
+    page.get_by_role("dialog").get_by_role("button", name="Buscar").click()
+    expect(page.get_by_text("Este código no está en Open Food Facts")).to_be_visible()
+    expect(page.get_by_role("dialog").get_by_role("button", name="Hacer foto a la etiqueta")).to_be_visible()
+    page.keyboard.press("Escape")
+    assert not page.errors  # type: ignore[attr-defined]

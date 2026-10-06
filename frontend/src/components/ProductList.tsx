@@ -39,7 +39,7 @@ export function ProductsLibrary({ products }: { products: Product[] }) {
       <div className="flex items-end justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-[19px] font-semibold tracking-[-0.02em] text-text">Tus productos</h2>
-          <p className="mt-0.5 text-[13.5px] leading-snug text-text-3">Con la foto de su etiqueta: escribe «2 yogures ligeros» y sumo sus calorías exactas.</p>
+          <p className="mt-0.5 text-[13.5px] leading-snug text-text-3">Con su código de barras o la foto de su etiqueta: escribe «2 yogures ligeros» y sumo sus calorías exactas.</p>
         </div>
         {products.length > 0 && (
           <Button size="sm" onClick={() => openProduct(null)} icon={<Plus className="size-[18px]" aria-hidden />}>
@@ -53,7 +53,7 @@ export function ProductsLibrary({ products }: { products: Product[] }) {
           <EmptyState
             art="label"
             title="Aún no tienes productos"
-            text="Haz una foto a la parte de atrás de un yogur, unas galletas… y la app guarda sus calorías y macros."
+            text="Escanea el código de barras de un yogur, unas galletas… o haz una foto a su etiqueta, y la app guarda sus calorías y macros."
             action={
               <Button onClick={() => openProduct(null)} icon={<Plus className="size-5" aria-hidden />}>
                 Guardar una etiqueta

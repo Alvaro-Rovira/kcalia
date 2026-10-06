@@ -135,6 +135,7 @@ class ProductIn(BaseModel):
     salt100: float | None = Field(default=None, ge=0, le=100)
     unit_label: str = Field(default="", max_length=30)
     unit_grams: float | None = Field(default=None, gt=0, le=5000)
+    barcode: str | None = Field(default=None, max_length=20)
 
     @model_validator(mode="after")
     def _plausible(self):
@@ -156,3 +157,4 @@ class ProductPatch(BaseModel):
     salt100: float | None = Field(default=None, ge=0, le=100)
     unit_label: str | None = Field(default=None, max_length=30)
     unit_grams: float | None = Field(default=None, gt=0, le=5000)
+    barcode: str | None = Field(default=None, max_length=20)

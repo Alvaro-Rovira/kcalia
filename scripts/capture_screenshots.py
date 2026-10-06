@@ -56,6 +56,7 @@ def start_servers() -> tuple[dict, list[subprocess.Popen], Path]:
         "AI_API_KEY": "demo",
         "STT_BASE_URL": f"http://127.0.0.1:{ai_port}/v1",
         "AI_DAILY_LIMIT": "200",
+        "OFF_BASE_URL": f"http://127.0.0.1:{ai_port}",
         "TZ": "Europe/Madrid",
         "FAKE_AI_DELAY": "1.6",
     }

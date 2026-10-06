@@ -27,3 +27,10 @@ Decisiones tomadas sin poder preguntar, con el motivo. La más reciente, abajo.
    bloqueada» en lugar de un login sin explicación. Para echarla del todo está «Cerrar sesiones».
 10. **Precios del panel en dólares** (los de Moonshot): `AI_PRICE_INPUT`/`AI_PRICE_OUTPUT` por millón de tokens y
     `STT_PRICE_PER_CALL` (0 con el Whisper propio). Es una estimación, no la factura.
+11. **Escáner.** `BarcodeDetector` nativo (Android) y, si no existe (Safari en iPhone), `zxing-wasm` cargado bajo
+    demanda desde el propio servidor (≈ 420 KB gzip, fuera de la precarga; se guarda en caché la primera vez). La CSP
+    añade `'wasm-unsafe-eval'`, que solo permite compilar WebAssembly. Siempre se puede escribir el código a mano.
+12. **Open Food Facts** se consulta desde el servidor con User-Agent identificable, 6 s de espera, caché de 30 días
+    (3 para «no existe») y un tope de 150 búsquedas por usuario y día. `OFF_BASE_URL` solo existe para las pruebas.
+13. **Copias de comidas** cuentan como «a un toque» (`source = recent`), no gastan IA y no vuelven a enseñar a la caché
+    los ingredientes hechos a mano.

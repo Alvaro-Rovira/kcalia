@@ -53,6 +53,8 @@ export default defineConfig({
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
         cleanupOutdatedCaches: true,
+        // El lector de códigos de respaldo (iPhone) no va en la precarga: se guarda la primera vez que se usa.
+        runtimeCaching: [{ urlPattern: /\/assets\/.*\.wasm$/, handler: 'CacheFirst', options: { cacheName: 'kcalia-wasm', expiration: { maxEntries: 2 } } }],
       },
     }),
   ],

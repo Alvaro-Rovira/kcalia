@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     # Coste estimado de cada audio (0 con el Whisper propio).
     stt_price_per_call: float = 0.0
 
+    # Open Food Facts (códigos de barras). Solo se cambia en pruebas, para apuntar a uno simulado.
+    off_base_url: str = "https://world.openfoodfacts.org"
+
     # Registro de cuentas: abierto (toda cuenta nueva espera aprobación) o cerrado del todo.
     allow_signup: bool = True
     # Con tantas solicitudes pendientes, el registro se pausa hasta que el admin las revise.
