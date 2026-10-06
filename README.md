@@ -23,7 +23,7 @@ Cuenta lo que comes con una frase, una foto, un audio o el código de barras. Lo
 
 </div>
 
-Kcalia es una PWA en español, pensada primero para el móvil, que vive en tu propio servidor. Se instala en el iPhone o en Android como una app más, funciona sin conexión para lo que ya conoce y tus datos no salen de tu máquina. Es para ti y para las personas a las que tú des acceso: cada cuenta nueva espera tu aprobación y cada una ve solo lo suyo.
+Kcalia es una PWA en español, pensada primero para el móvil, que vive en tu propio servidor. La instalación de referencia está en **[kcalia.space](https://kcalia.space)**. Se instala en el iPhone o en Android como una app más, funciona sin conexión para lo que ya conoce y tus datos no salen de tu máquina. Es para ti y para las personas a las que tú des acceso: cada cuenta nueva espera tu aprobación y cada una ve solo lo suyo.
 
 <div align="center">
 <img src="docs/demo.gif" width="270" alt="Animación: se escribe «bocadillo de jamón serrano con tomate y aceite», la IA devuelve el desglose, se sube la ración a ×1,5 y se guarda" />
@@ -298,7 +298,8 @@ Todas viven en `.env`. `.env.example` las trae comentadas; las que no pongas usa
 
 | Variable | Por defecto | Para qué sirve |
 |---|---|---|
-| `DOMAIN` | `kcalia.roviradev.duckdns.org` | Dominio público. Es el único sitio donde aparece. |
+| `DOMAIN` | `kcalia.space` | Dominio público. Es el único sitio donde aparece. |
+| `REDIRECT_DOMAINS` | `www.kcalia.space` | Dominios que redirigen con 301 al principal (www, dominios antiguos), separados por espacios. |
 | `APP_PORT` | `8095` | Puerto local (solo loopback) al que llega el proxy. |
 | `TZ` | `Europe/Madrid` | Zona horaria para las copias, los recordatorios y el resumen del domingo. |
 | `AI_BASE_URL` | `https://api.moonshot.ai/v1` | Base de la API compatible con OpenAI. |
@@ -346,7 +347,7 @@ El script, en este orden:
 2. Crea `.env` a partir de `.env.example` si no existe; si ya existe, **añade solo las variables nuevas** con su valor por defecto, sin mostrar ni cambiar las que tienes.
 3. Construye las imágenes y, si faltan, genera las claves VAPID dentro del contenedor y las guarda en `.env` sin mostrarlas.
 4. Arranca los contenedores. Al arrancar, la app migra la base de datos si hace falta, guardando antes una copia en el volumen de copias.
-5. Ejecuta `deploy/caddy-site.sh`, que añade **solo** el bloque de Kcalia al `Caddyfile` del host. Hace copia antes, valida la configuración y, si no valida, restaura la copia y no recarga.
+5. Ejecuta `deploy/caddy-site.sh`, que añade **solo** el bloque de Kcalia al `Caddyfile` del host: el dominio principal con HTTPS de Let's Encrypt (Caddy lo renueva solo), las redirecciones 301 de `REDIRECT_DOMAINS` y de HTTP a HTTPS. Hace copia antes, valida la configuración y, si no valida, restaura la copia y no recarga. Con `--check` solo enseña el bloque y lo valida.
 6. Comprueba que `https://$DOMAIN/api/health` responde.
 
 **La clave de la IA** se pone en el servidor sin que pase por ningún chat ni quede en el historial de la terminal:
@@ -382,17 +383,23 @@ cd /opt/kcalia && docker compose exec -T app python - OTRA_CUENTA < scripts/make
 
 ## Migrar a un dominio propio
 
-El dominio es una sola variable. Para cambiarlo:
+El dominio es una sola variable. Para cambiarlo (así se pasó de `kcalia.roviradev.duckdns.org` a `kcalia.space`):
 
-1. Apunta el registro `A` del dominio nuevo a la IP de la VPS.
-2. Cambia `DOMAIN` en `/opt/kcalia/.env`.
+1. Apunta los registros `A` del dominio nuevo y de su `www` a la IP de la VPS.
+2. En `/opt/kcalia/.env`, cambia `DOMAIN` y añade el dominio antiguo a `REDIRECT_DOMAINS`:
+
+```bash
+DOMAIN=kcalia.space
+REDIRECT_DOMAINS=www.kcalia.space kcalia.roviradev.duckdns.org
+```
+
 3. Aplica el cambio:
 
 ```bash
 cd /opt/kcalia && docker compose up -d app && ./deploy/caddy-site.sh
 ```
 
-Caddy pide el certificado nuevo solo. Al cambiar de dominio tendrás que iniciar sesión otra vez, reinstalar la app en el móvil y volver a activar las notificaciones, porque para el navegador es un sitio distinto. Tus datos siguen en el servidor.
+Caddy pide los certificados nuevos solo y los renueva antes de que caduquen. El dominio antiguo y el `www` responden con una redirección 301 al nuevo, conservando la ruta. Si alguien tenía la app instalada desde el dominio antiguo, el dominio antiguo le sirve un service worker que da de baja el anterior y le lleva al nuevo, porque si no seguiría abriéndose desde la caché. Para el navegador es un sitio distinto: hay que iniciar sesión otra vez, reinstalar la app en el móvil y volver a activar las notificaciones. Tus datos siguen en el servidor.
 
 ## Instalar la app en el móvil
 
