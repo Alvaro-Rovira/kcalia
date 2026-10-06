@@ -45,6 +45,8 @@ export default defineConfig({
         ],
         shortcuts: [
           { name: 'Añadir comida', short_name: 'Añadir', url: '/?nueva=1', icons: [{ src: '/icons/shortcut-add.png', sizes: '96x96', type: 'image/png' }] },
+          { name: 'Un vaso de agua (250 ml)', short_name: 'Agua', url: '/?agua=250', icons: [{ src: '/icons/shortcut-water.png', sizes: '96x96', type: 'image/png' }] },
+          { name: 'Entrenar', short_name: 'Entreno', url: '/entreno', icons: [{ src: '/icons/shortcut-workout.png', sizes: '96x96', type: 'image/png' }] },
           { name: 'Apuntar peso', short_name: 'Peso', url: '/peso', icons: [{ src: '/icons/shortcut-weight.png', sizes: '96x96', type: 'image/png' }] },
         ],
       },

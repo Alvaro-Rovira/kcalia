@@ -718,3 +718,38 @@ def test_23_importar_csv_de_otra_app(page: Page, servers, tmp_path):
     expect(dialog.get_by_test_id("import-summary")).to_have_text("0 comidas nuevas · 2 ya importadas")
     expect(dialog.get_by_role("button", name="Nada nuevo que importar")).to_be_disabled()
     assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_24_atajos_de_la_pwa_y_de_voz(page: Page, servers, ai_calls):
+    from datetime import date
+
+    manifest = page.request.get(servers["app"] + "/manifest.webmanifest").json()
+    assert [s["url"] for s in manifest["shortcuts"]] == ["/?nueva=1", "/?agua=250", "/entreno", "/peso"]
+    for shortcut in manifest["shortcuts"]:
+        assert page.request.get(servers["app"] + shortcut["icons"][0]["src"]).ok
+
+    # Un vaso de agua desde el atajo: se apunta una sola vez y la URL queda limpia.
+    today = date.today().isoformat()
+    before = api_get(page, servers, f"/api/water?date={today}")["total_ml"]
+    page.goto(servers["app"] + "/?agua=250")
+    expect(page.get_by_text("+250 ml de agua")).to_be_visible()
+    wait_until(lambda: api_get(page, servers, f"/api/water?date={today}")["total_ml"] == before + 250)
+    assert "agua" not in page.url
+    page.wait_for_timeout(1000)
+    assert api_get(page, servers, f"/api/water?date={today}")["total_ml"] == before + 250
+
+    # Atajo de voz: abre la hoja con el texto dictado, sin gastar IA hasta que se pulse «Analizar».
+    calls = ai_calls()
+    page.goto(servers["app"] + "/?nueva=1&texto=" + "un%20pl%C3%A1tano%20y%20un%20yogur")
+    dialog = page.get_by_role("dialog")
+    expect(dialog.get_by_label("Describe lo que has comido")).to_have_value("un plátano y un yogur")
+    assert "texto" not in page.url
+    page.wait_for_timeout(800)
+    assert ai_calls() == calls
+    dialog.get_by_role("button", name="Cerrar").click()
+
+    # La guía del atajo de iPhone enseña la dirección de este servidor.
+    page.goto(servers["app"] + "/ajustes")
+    page.get_by_role("button", name="Atajo de voz en iPhone").click()
+    expect(page.get_by_test_id("voice-url")).to_have_text(servers["app"] + "/?nueva=1&texto=")
+    assert not page.errors  # type: ignore[attr-defined]

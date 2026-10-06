@@ -51,7 +51,9 @@ Tras la fase 4: 413 pytest, 176 Vitest, 23 e2e en verde.
 ## Fase 5 · Datos
 - [x] 5.1 Copia de seguridad fuera del servidor
 - [x] 5.2 Importar datos (CSV y JSON propio)
-- [ ] 5.3 Atajos de la PWA y atajo de iOS por voz
+- [x] 5.3 Atajos de la PWA y atajo de iOS por voz
+
+Tras la fase 5: 431 pytest, 182 Vitest, 25 e2e en verde.
 
 ## Fase final
 - [ ] A Revisión global, README, .env.example, capturas, RESUMEN-FINAL

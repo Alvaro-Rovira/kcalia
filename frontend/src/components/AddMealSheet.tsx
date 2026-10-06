@@ -46,6 +46,8 @@ interface Props {
   open: boolean
   date: string
   slot?: Slot
+  /** Texto ya escrito al abrir (atajo de voz). Se muestra para revisarlo: no se analiza solo. */
+  text?: string
   onClose: () => void
   onSaved: (date: string) => void
   /** Abre la hoja para guardar la etiqueta de un producto nuevo. */
@@ -128,7 +130,7 @@ function QuickChip({ dish, onPick }: { dish: Dish; onPick: (dish: Dish) => void 
   )
 }
 
-export default function AddMealSheet({ open, date: initialDate, slot: initialSlot, onClose, onSaved, onNewProduct }: Props) {
+export default function AddMealSheet({ open, date: initialDate, slot: initialSlot, text: initialText, onClose, onSaved, onNewProduct }: Props) {
   const client = useQueryClient()
   const { data: bootstrap } = useBootstrap()
   const online = useOnline()
@@ -155,14 +157,14 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
       return
     }
     setPhase({ kind: 'input' })
-    setText('')
+    setText(initialText ?? '')
     setNotice('')
     setServings(1)
     setSaved(false)
     setDate(initialDate)
     setSlot(initialSlot ?? (initialDate === todayISO() ? slotForTime() : 'comida'))
-    via.current = 'text'
-  }, [open, initialDate, initialSlot])
+    via.current = initialText ? 'voice' : 'text'
+  }, [open, initialDate, initialSlot, initialText])
 
   useEffect(
     () => () => {

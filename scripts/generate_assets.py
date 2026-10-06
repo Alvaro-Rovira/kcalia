@@ -1,6 +1,7 @@
 """Genera los activos gráficos de la PWA (iconos, favicon, splash de iOS y Open Graph).
 
-    uv run --with playwright python scripts/generate_assets.py
+    uv run --with playwright python scripts/generate_assets.py            # todo
+    uv run --with playwright python scripts/generate_assets.py --atajos   # solo los iconos de los atajos
 
 Renderiza el isotipo con un navegador headless, así que salen nítidos a cualquier tamaño y con
 la tipografía real de la app. Los resultados se guardan en frontend/public y se versionan.
@@ -64,6 +65,51 @@ def icon_html(size: int, *, maskable: bool, scale: float | None = None) -> str:
     return page(size, size, body)
 
 
+# Glifos de Lucide (ISC) en una vista de 24×24 para los iconos de los atajos de la PWA.
+SHORTCUTS = {
+    "shortcut-add": (ACCENT, ["M5 12h14", "M12 5v14"]),
+    "shortcut-water": (
+        "#6cb6ff",
+        ["M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"],
+    ),
+    "shortcut-workout": (
+        ORANGE,
+        [
+            "M17.596 12.768a2 2 0 1 0 2.829-2.829l-1.768-1.767a2 2 0 0 0 2.828-2.829l-2.828-2.828a2 2 0 0 0-2.829 2.828"
+            "l-1.767-1.768a2 2 0 1 0-2.829 2.829z",
+            "m2.5 21.5 1.4-1.4",
+            "m20.1 3.9 1.4-1.4",
+            "M5.343 21.485a2 2 0 1 0 2.829-2.828l1.767 1.768a2 2 0 1 0 2.829-2.829l-6.364-6.364a2 2 0 1 0-2.829 2.829"
+            "l1.768 1.767a2 2 0 0 0-2.828 2.829z",
+            "m9.6 14.4 4.8-4.8",
+        ],
+    ),
+    "shortcut-weight": (
+        "#7f95ff",
+        [
+            "M12 3v18",
+            "m19 8 3 8a5 5 0 0 1-6 0zV7",
+            "M3 7h1a17 17 0 0 0 8-2 17 17 0 0 0 8 2h1",
+            "m5 8 3 8a5 5 0 0 1-6 0zV7",
+            "M7 21h10",
+        ],
+    ),
+}
+
+
+def shortcut_html(size: int, color: str, paths: list[str]) -> str:
+    """Icono de atajo: fondo de la app y el glifo de la acción en su color (Android lo recorta en círculo)."""
+    glyph = size * 0.5
+    offset = (size - glyph) / 2
+    strokes = "".join(f'<path d="{d}"/>' for d in paths)
+    body = f"""<svg width="{size}" height="{size}" viewBox="0 0 {size} {size}" xmlns="http://www.w3.org/2000/svg">
+  <rect width="{size}" height="{size}" rx="{size / 2}" fill="{BG}"/>
+  <svg x="{offset}" y="{offset}" width="{glyph}" height="{glyph}" viewBox="0 0 24 24" fill="none" stroke="{color}"
+       stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">{strokes}</svg>
+</svg>"""
+    return page(size, size, body)
+
+
 def opaque_icon_html(size: int) -> str:
     """Apple Touch Icon: cuadrada y opaca; iOS pone las esquinas."""
     return icon_html(size, maskable=True, scale=0.70)
@@ -117,7 +163,7 @@ SPLASH = [
 ]
 
 
-def main() -> None:
+def main(only_shortcuts: bool = False) -> None:
     (PUBLIC / "icons").mkdir(parents=True, exist_ok=True)
     (PUBLIC / "splash").mkdir(parents=True, exist_ok=True)
     (PUBLIC / "favicon.svg").write_text(favicon_svg())
@@ -137,13 +183,16 @@ def main() -> None:
 
     with sync_playwright() as p:
         browser = p.chromium.launch()
+        for name, (color, paths) in SHORTCUTS.items():
+            render(browser, shortcut_html(96, color, paths), 96, 96, PUBLIC / "icons" / f"{name}.png", transparent=True)
+        if only_shortcuts:
+            browser.close()
+            return
         for size in (192, 512):
             render(browser, icon_html(size, maskable=False), size, size, PUBLIC / "icons" / f"icon-{size}.png", transparent=True)
             render(browser, icon_html(size, maskable=True), size, size, PUBLIC / "icons" / f"maskable-{size}.png")
         render(browser, opaque_icon_html(180), 180, 180, PUBLIC / "apple-touch-icon.png")
         render(browser, icon_html(32, maskable=False), 32, 32, PUBLIC / "favicon-32.png", transparent=True)
-        for size, name in ((96, "shortcut-add"), (96, "shortcut-weight")):
-            render(browser, icon_html(size, maskable=False), size, size, PUBLIC / "icons" / f"{name}.png", transparent=True)
         render(browser, og_html(), 1200, 630, PUBLIC / "og-image.png")
         links = []
         for width, height, ratio in SPLASH:
@@ -164,4 +213,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    main(only_shortcuts="--atajos" in sys.argv)

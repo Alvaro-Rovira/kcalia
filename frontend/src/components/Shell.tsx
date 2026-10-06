@@ -1,15 +1,18 @@
 import clsx from 'clsx'
 import { AnimatePresence, motion } from 'motion/react'
 import { CalendarDays, ChartColumn, ClipboardList, CloudOff, Dumbbell, House, Plus, Scale, Settings, ShieldCheck, type LucideIcon } from 'lucide-react'
-import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate, useSearchParams, type Location } from 'react-router'
 import { useAdminOverview } from '@/hooks/admin'
-import { useBootstrap, useOnline, usePendingCount } from '@/hooks/data'
+import { useBootstrap, useOnline, usePendingCount, useWaterActions } from '@/hooks/data'
 import { isValidISO, todayISO } from '@/lib/dates'
 import { plural } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
+import { readShortcut, withoutShortcut } from '@/lib/shortcuts'
 import type { Product, Slot } from '@/lib/types'
+import { fmtWater } from '@/lib/water'
 import { Confetti } from '@/ui/Confetti'
+import { toast } from '@/ui/toast'
 import { Logo, Wordmark } from './Logo'
 
 const AddMealSheet = lazy(() => import('./AddMealSheet'))
@@ -18,6 +21,8 @@ const ProductSheet = lazy(() => import('./ProductSheet'))
 interface AddMealOptions {
   date?: string
   slot?: Slot
+  /** Texto ya escrito (atajo de voz de iPhone: /?nueva=1&texto=...). */
+  text?: string
 }
 
 interface ShellContext {
@@ -231,7 +236,7 @@ export function Shell({ children }: { children: (location: Location) => ReactNod
   const location = useLocation()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
-  const [sheet, setSheet] = useState<{ open: boolean; date: string; slot?: Slot }>({ open: false, date: todayISO() })
+  const [sheet, setSheet] = useState<{ open: boolean; date: string; slot?: Slot; text?: string }>({ open: false, date: todayISO() })
   const [confetti, setConfetti] = useState(0)
   const [productSheet, setProductSheet] = useState<{ open: boolean; product: Product | null }>({ open: false, product: null })
   const [productEver, setProductEver] = useState(false)
@@ -271,14 +276,26 @@ export function Shell({ children }: { children: (location: Location) => ReactNod
     window.scrollTo(0, 0)
   }, [location.pathname])
 
-  // Atajo de la PWA instalada: /?nueva=1 abre directamente la hoja de añadir.
+  // Atajos de la PWA instalada y del atajo de voz de iPhone:
+  // /?nueva=1 abre la hoja de añadir (con &texto=... ya escrito, sin analizar: no se gasta IA desde un enlace)
+  // y /?agua=250 apunta un vaso de agua hoy, con «Deshacer».
+  const { add: addWater, remove: removeWater } = useWaterActions()
+  // Una sola vez por navegación (StrictMode monta los efectos dos veces y el agua se apuntaría doble).
+  const handled = useRef<string | null>(null)
   useEffect(() => {
-    if (params.get('nueva') !== '1') return
-    const next = new URLSearchParams(params)
-    next.delete('nueva')
-    setParams(next, { replace: true })
-    setSheet({ open: true, date: todayISO() })
-  }, [params, setParams])
+    const shortcut = readShortcut(params)
+    if (!shortcut || handled.current === location.key) return
+    handled.current = location.key
+    setParams(withoutShortcut(params), { replace: true })
+    if (shortcut.add) setSheet({ open: true, date: todayISO(), text: shortcut.text })
+    if (shortcut.waterMl) {
+      const today = todayISO()
+      const ml = shortcut.waterMl
+      const entry = addWater(today, ml)
+      haptic('success')
+      toast({ title: `+${fmtWater(ml)} de agua`, action: { label: 'Deshacer', onClick: () => removeWater(today, entry.client_id) } })
+    }
+  }, [params, setParams, location.key, addWater, removeWater])
 
   return (
     <Context.Provider value={value}>
@@ -335,6 +352,7 @@ export function Shell({ children }: { children: (location: Location) => ReactNod
             open={sheet.open}
             date={sheet.date}
             slot={sheet.slot}
+            text={sheet.text}
             onClose={() => setSheet((s) => ({ ...s, open: false }))}
             onNewProduct={() => {
               setSheet((s) => ({ ...s, open: false }))

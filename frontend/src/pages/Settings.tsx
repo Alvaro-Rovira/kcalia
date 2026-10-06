@@ -8,6 +8,7 @@ import {
   FileSpreadsheet,
   FileUp,
   LogOut,
+  Mic,
   Monitor,
   Moon,
   Pencil,
@@ -26,6 +27,7 @@ import { DayTypeSettings } from '@/components/DayTypeSettings'
 import { ImportSheet } from '@/components/ImportSheet'
 import { RemindersSettings } from '@/components/RemindersSettings'
 import { SuggestSettings } from '@/components/SuggestSettings'
+import { VoiceShortcutSheet } from '@/components/VoiceShortcutSheet'
 import { Logo, Wordmark } from '@/components/Logo'
 import { PlanExplanation } from '@/components/PlanExplanation'
 import { useAdminOverview } from '@/hooks/admin'
@@ -92,7 +94,7 @@ export default function Settings() {
   const online = useOnline()
   const install = useInstall()
   const [theme, setTheme] = useState<ThemePref>(getThemePref)
-  const [sheet, setSheet] = useState<'profile' | 'targets' | 'plan' | 'water' | 'import' | 'delete-data' | 'delete-account' | null>(null)
+  const [sheet, setSheet] = useState<'profile' | 'targets' | 'plan' | 'water' | 'import' | 'voice' | 'delete-data' | 'delete-account' | null>(null)
   const unit = profile.weight_unit
   const isAdmin = !!app.user.is_admin
   const admin = useAdminOverview(isAdmin)
@@ -303,6 +305,14 @@ export default function Settings() {
             </Section>
           )}
 
+          <Section title="Atajos" id="a-shortcuts">
+            <p className="border-b border-border px-4 py-3 text-[13.5px] leading-relaxed text-text-2">
+              Con la app instalada en Android o en el ordenador, mantén pulsado su icono (o clic derecho) para ir directo a: añadir comida, un vaso de agua, entrenar
+              o apuntar el peso.
+            </p>
+            <Row label="Atajo de voz en iPhone" value="Siri" onClick={() => setSheet('voice')} icon={<Mic className="size-[18px]" aria-hidden />} />
+          </Section>
+
           <Section title="Tus datos" id="a-data">
             <a href="/api/export/json" download="kcalia-datos.json" className="flex min-h-[52px] items-center gap-3 border-b border-border px-4 py-2.5 transition-colors hover:bg-surface-2">
               <FileJson className="size-[18px] shrink-0 text-text-3" aria-hidden />
@@ -374,6 +384,7 @@ export default function Settings() {
       </Sheet>
       <WaterGoalSheet open={sheet === 'water'} onClose={() => setSheet(null)} current={app.prefs?.water_goal_ml ?? null} weightKg={profile.weight_kg} />
       <ImportSheet open={sheet === 'import'} onClose={() => setSheet(null)} />
+      <VoiceShortcutSheet open={sheet === 'voice'} onClose={() => setSheet(null)} />
       <DeleteSheet kind={sheet === 'delete-data' ? 'data' : sheet === 'delete-account' ? 'account' : null} onClose={() => setSheet(null)} />
     </main>
   )

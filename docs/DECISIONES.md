@@ -75,3 +75,7 @@ Decisiones tomadas sin poder preguntar, con el motivo. La más reciente, abajo.
     día, momento y calorías) se señalan y se saltan por defecto. Cada fila del CSV se guarda como una comida con un único
     ingrediente (sus macros totales), con fuente `import`. El JSON de Kcalia solo añade lo que falta y no pisa perfil,
     objetivos ni preferencias que ya existan. Necesita conexión: no pasa por la cola offline.
+24. **Atajos**: cuatro atajos en el manifiesto (añadir comida, un vaso de agua, entrenar, peso) y un atajo de Siri que
+    abre `/?nueva=1&texto=...`. El texto dictado se rellena pero **no se analiza solo**, para que ningún enlace pueda
+    gastar IA. El agua por URL sí se apunta (es inocuo y se puede deshacer), una sola vez por navegación. `haptic()` no
+    vibra sin un toque previo en la página: Chrome lo bloquea y lo anota como error.
