@@ -65,7 +65,8 @@ class Settings(BaseSettings):
     # Web Push (recordatorios y avisos al admin). Se generan con scripts/gen-vapid.py; vacías = sin notificaciones.
     vapid_public_key: str = ""
     vapid_private_key: str = ""
-    vapid_subject: str = "mailto:admin@localhost"
+    # Contacto para los servicios de push (mailto: o https:). Vacío = https://DOMAIN (Apple rechaza «localhost»).
+    vapid_subject: str = ""
 
     # Sugerencia para cerrar el día: a partir de cuántas calorías restantes aparece (cada usuario puede cambiarlo).
     suggest_min_kcal: int = 80

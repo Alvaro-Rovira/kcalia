@@ -18,8 +18,33 @@ if [ ! -f .env ]; then
   cp .env.example .env
   chmod 600 .env
   echo "Creado .env a partir de .env.example: falta poner la clave con scripts/set-ai-key.sh"
+else
+  # Variables nuevas de .env.example que aún no están: se añaden con su valor por defecto.
+  # Solo se muestran los nombres; las que ya existen no se tocan ni se leen en pantalla.
+  added=""
+  while IFS= read -r line; do
+    key="\${line%%=*}"
+    if ! grep -qE "^\${key}=" .env; then
+      printf '%s\n' "\$line" >> .env
+      added="\$added \$key"
+    fi
+  done < <(grep -E '^[A-Z][A-Z0-9_]*=' .env.example)
+  [ -z "\$added" ] || echo "Variables nuevas en .env:\$added"
 fi
-docker compose up -d --build
+docker compose build
+# Claves de las notificaciones: se generan una sola vez, dentro del contenedor y sin mostrarlas.
+if ! grep -qE '^VAPID_PRIVATE_KEY=.+' .env; then
+  tmp="\$(mktemp)"
+  chmod 600 "\$tmp"
+  docker compose run --rm --no-deps -T app python - --stdout < scripts/gen-vapid.py > "\$tmp"
+  if grep -qE '^VAPID_PRIVATE_KEY=.+' "\$tmp"; then
+    sed -i '/^VAPID_PUBLIC_KEY=/d;/^VAPID_PRIVATE_KEY=/d' .env
+    cat "\$tmp" >> .env
+    echo "Claves VAPID generadas y guardadas en .env (no se muestran)."
+  fi
+  rm -f "\$tmp"
+fi
+docker compose up -d
 chmod +x deploy/*.sh scripts/*.sh
 ./deploy/caddy-site.sh
 REMOTE

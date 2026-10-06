@@ -35,7 +35,7 @@ def generate() -> tuple[str, str]:
 
 def write_env(path: Path, private: str, public: str, subject: str | None) -> bool:
     text = path.read_text() if path.exists() else ""
-    current = re.search(r"^VAPID_PRIVATE_KEY=(.+)$", text, re.M)
+    current = re.search(r"^VAPID_PRIVATE_KEY=(.+)$", text, re.MULTILINE)
     if current and current.group(1).strip():
         return False
     values = {"VAPID_PUBLIC_KEY": public, "VAPID_PRIVATE_KEY": private}
@@ -43,8 +43,8 @@ def write_env(path: Path, private: str, public: str, subject: str | None) -> boo
         values["VAPID_SUBJECT"] = subject
     for name, value in values.items():
         line = f"{name}={value}"
-        if re.search(rf"^{name}=.*$", text, re.M):
-            text = re.sub(rf"^{name}=.*$", line, text, flags=re.M)
+        if re.search(rf"^{name}=.*$", text, re.MULTILINE):
+            text = re.sub(rf"^{name}=.*$", line, text, flags=re.MULTILINE)
         else:
             text = text.rstrip("\n") + ("\n" if text else "") + line + "\n"
     path.write_text(text)

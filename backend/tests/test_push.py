@@ -1,6 +1,8 @@
 """Notificaciones: suscripción, envío simulado (nunca a un servicio real), limpieza de caducadas, recordatorios y
 aviso al administrador de nuevas solicitudes."""
 
+import base64
+import json
 import os
 from datetime import datetime
 
@@ -86,6 +88,10 @@ def test_suscribirse_y_notificacion_de_prueba(client, service):
     assert client.post("/api/push/test").json() == {"sent": 1}
     request = service.requests[-1]
     assert request.headers["content-encoding"] == "aes128gcm" and int(request.headers["ttl"]) > 0
+    # El contacto VAPID por defecto es la web de la app (Apple rechaza «localhost» y direcciones inventadas).
+    token = request.headers["authorization"].removeprefix("vapid t=").split(",")[0]
+    claims = json.loads(base64.urlsafe_b64decode(token.split(".")[1] + "=="))
+    assert claims["sub"] == f"https://{get_settings().domain}"
     assert request.headers["authorization"].startswith("vapid t=") and len(request.content) > 86
 
 

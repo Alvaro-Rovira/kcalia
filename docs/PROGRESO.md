@@ -67,7 +67,7 @@ Tras la fase 5: 431 pytest, 182 Vitest, 25 e2e en verde.
 ## Notas para retomar
 - Batería: `cd backend && uv run ruff check app tests && uv run pytest -q`; `cd frontend && npx tsc -b --noEmit && npm test
   && npm run build`; e2e: `uv run --project backend --group e2e pytest e2e -q` (19 en verde tras la fase 3).
-- ruff de `scripts/` solo para gen-vapid.py y make-admin.py (los demás scripts ya tenían líneas largas antes).
+- ruff limpio también en `scripts/` (y en CI).
 - Pendiente: 5.2, 5.3 y la fase final (README para GitHub, capturas, merge, push, redespliegue en el
   Docker dedicado de Kcalia en la VPS y verificación). Pausado a petición del usuario tras 4.2; seguir cuando lo diga.
 

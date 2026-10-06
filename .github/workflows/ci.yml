@@ -19,7 +19,7 @@ jobs:
       - name: Dependencias
         run: uv sync --project backend
       - name: Lint
-        run: uv run --project backend ruff check backend
+        run: uv run --project backend ruff check backend scripts
       - name: Tests
         run: uv run --project backend pytest backend -q
 

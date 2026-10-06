@@ -79,3 +79,7 @@ Decisiones tomadas sin poder preguntar, con el motivo. La más reciente, abajo.
     abre `/?nueva=1&texto=...`. El texto dictado se rellena pero **no se analiza solo**, para que ningún enlace pueda
     gastar IA. El agua por URL sí se apunta (es inocuo y se puede deshacer), una sola vez por navegación. `haptic()` no
     vibra sin un toque previo en la página: Chrome lo bloquea y lo anota como error.
+25. **Despliegue sin tocar secretos**: `deploy/deploy.sh` añade a `.env` solo las variables nuevas de `.env.example`
+    (con su valor por defecto, mostrando únicamente los nombres) y genera las claves VAPID dentro del contenedor la
+    primera vez, sin que pasen por la pantalla. El contacto VAPID por defecto es `https://DOMAIN` porque Apple rechaza
+    `mailto:` con dominios como `localhost`.

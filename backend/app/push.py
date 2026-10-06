@@ -47,7 +47,7 @@ def send_to_user(db: Session, user_id: int, payload: dict) -> int:
                 payload,
                 private_key=settings.vapid_private_key,
                 public_key=settings.vapid_public_key,
-                subject=settings.vapid_subject,
+                subject=settings.vapid_subject or f"https://{settings.domain}",
                 http=http_client(),
             )
             if result.ok:
