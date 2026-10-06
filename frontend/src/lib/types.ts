@@ -184,6 +184,25 @@ export interface Plan extends Macros {
   warnings: Warning[]
 }
 
+/** Preferencias guardadas en el servidor (cada versión añade campos con valor por defecto). */
+export interface Prefs {
+  water_goal_ml: number | null
+}
+
+export interface WaterEntry {
+  client_id: string
+  ml: number
+  created_at: string
+  pending?: boolean
+}
+
+export interface WaterDay {
+  date: string
+  total_ml: number
+  goal_ml: number
+  entries: WaterEntry[]
+}
+
 export interface Bootstrap {
   user: { username: string; is_admin?: boolean }
   profile: Profile | null
@@ -193,6 +212,8 @@ export interface Bootstrap {
   products: Product[]
   /** Caché de ingredientes (las versiones anteriores no la traían). */
   foods?: FoodEntry[]
+  prefs?: Prefs
+  water_goal_ml?: number
   ai: {
     configured: boolean
     model: string

@@ -158,3 +158,26 @@ class ProductPatch(BaseModel):
     unit_label: str | None = Field(default=None, max_length=30)
     unit_grams: float | None = Field(default=None, gt=0, le=5000)
     barcode: str | None = Field(default=None, max_length=20)
+
+
+class Prefs(BaseModel):
+    """Preferencias guardadas por usuario. Cada campo tiene un valor por defecto: lo nuevo no rompe lo viejo."""
+
+    model_config = {"extra": "ignore"}
+
+    # Objetivo de agua; None = automático (35 ml por kg de peso).
+    water_goal_ml: int | None = Field(default=None, ge=500, le=8000)
+
+
+class PrefsPatch(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    water_goal_ml: int | None = Field(default=None, ge=500, le=8000)
+
+
+class WaterIn(BaseModel):
+    client_id: str = Field(min_length=8, max_length=40)
+    date: str
+    ml: int = Field(ge=10, le=3000)
+
+    _check_date = field_validator("date")(lambda cls, v: _iso_date(v))

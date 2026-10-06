@@ -3,13 +3,13 @@ import io
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Response
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .. import services
 from ..db import get_db
 from ..deps import require_approved_user, require_user
-from ..models import Food, Meal, User, WeeklySummary, Weight
+from ..models import Food, Meal, User, WaterLog, WeeklySummary, Weight
 from ..schemas import PasswordConfirm
 from ..security import SESSION_COOKIE, verify_password
 
@@ -56,6 +56,11 @@ def export_json(db: Session = Depends(get_db)) -> dict:
             for f in db.scalars(select(Food).order_by(Food.name))
         ],
         "weekly_summaries": [s.data for s in db.scalars(select(WeeklySummary).order_by(WeeklySummary.week_start))],
+        "prefs": services.get_prefs(db).model_dump(),
+        "water": [
+            {"client_id": w.client_id, "date": w.date, "ml": w.ml}
+            for w in db.scalars(select(WaterLog).order_by(WaterLog.date, WaterLog.created_at))
+        ],
     }
 
 
@@ -110,6 +115,17 @@ def export_weights_csv(db: Session = Depends(get_db)) -> Response:
     for weight in db.scalars(select(Weight).order_by(Weight.date)):
         writer.writerow([weight.date, f"{weight.kg:.2f}".replace(".", ",")])
     return _download("﻿" + out.getvalue(), f"kcalia-peso-{_stamp()}.csv", "text/csv; charset=utf-8")
+
+
+@router.get("/export/water.csv")
+def export_water_csv(db: Session = Depends(get_db)) -> Response:
+    out = io.StringIO()
+    writer = csv.writer(out, delimiter=";")
+    writer.writerow(["fecha", "agua_ml"])
+    rows = db.execute(select(WaterLog.date, func.sum(WaterLog.ml)).group_by(WaterLog.date).order_by(WaterLog.date))
+    for day, ml in rows:
+        writer.writerow([day, int(ml or 0)])
+    return _download("\ufeff" + out.getvalue(), f"kcalia-agua-{_stamp()}.csv", "text/csv; charset=utf-8")
 
 
 def _confirm(user: User, body: PasswordConfirm) -> None:

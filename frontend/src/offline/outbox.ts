@@ -5,7 +5,7 @@
  */
 import { del, get, set } from 'idb-keyval'
 import { api, ApiError } from '@/lib/api'
-import type { Item, MealInput, Slot } from '@/lib/types'
+import type { Item, MealInput, Prefs, Slot } from '@/lib/types'
 
 export interface MealPatch {
   date?: string
@@ -23,6 +23,9 @@ export type Op =
   | { id: string; type: 'weight.put'; body: { date: string; kg: number } }
   | { id: string; type: 'weight.delete'; date: string }
   | { id: string; type: 'dish.patch'; dishId: number; body: { favorite: boolean } }
+  | { id: string; type: 'water.add'; body: { client_id: string; date: string; ml: number } }
+  | { id: string; type: 'water.delete'; clientId: string }
+  | { id: string; type: 'prefs.patch'; body: Partial<Prefs> }
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never
 export type NewOp = DistributiveOmit<Op, 'id'>
@@ -77,6 +80,12 @@ function send(op: Op): Promise<unknown> {
       return api.delete(`/api/weight/${op.date}`)
     case 'dish.patch':
       return api.patch(`/api/dishes/${op.dishId}`, op.body)
+    case 'water.add':
+      return api.post('/api/water', op.body)
+    case 'water.delete':
+      return api.delete(`/api/water/${op.clientId}`)
+    case 'prefs.patch':
+      return api.patch('/api/prefs', op.body)
   }
 }
 

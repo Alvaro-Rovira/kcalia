@@ -7,6 +7,7 @@ import { CopyPanel } from '@/components/CopyPanel'
 import { DateStrip } from '@/components/DateStrip'
 import { MealRow } from '@/components/MealRow'
 import { MealSheet } from '@/components/MealSheet'
+import { WaterCard } from '@/components/WaterCard'
 import { useShell } from '@/components/Shell'
 import { useApp, useMealActions, useMeals, useStats } from '@/hooks/data'
 import { dailyTip } from '@/lib/coach'
@@ -292,6 +293,7 @@ export default function Today() {
                 {tip.text}
               </motion.p>
             )}
+            {!loading && <WaterCard date={date} />}
           </div>
 
           <section className="mt-6 lg:mt-0" aria-label="Comidas del día">

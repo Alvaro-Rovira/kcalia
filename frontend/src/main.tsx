@@ -17,6 +17,9 @@ const REJECTED: Record<Op['type'], string> = {
   'weight.put': 'No se ha podido guardar un peso',
   'weight.delete': 'No se ha podido borrar un peso',
   'dish.patch': 'No se ha podido actualizar un favorito',
+  'water.add': 'No se ha podido guardar el agua',
+  'water.delete': 'No se ha podido quitar el agua',
+  'prefs.patch': 'No se ha podido guardar un ajuste',
 }
 
 preloadRoute(location.pathname)
@@ -29,6 +32,7 @@ outbox.init({
       for (const key of ['meals', 'days', 'week'] as const) void queryClient.invalidateQueries({ queryKey: [key] })
       void queryClient.invalidateQueries({ queryKey: keys.summaries })
     }
+    if ([...types].some((t) => t.startsWith('water.'))) void queryClient.invalidateQueries({ queryKey: ['water'] })
     if ([...types].some((t) => t.startsWith('weight.'))) {
       void queryClient.invalidateQueries({ queryKey: keys.weight })
       void queryClient.invalidateQueries({ queryKey: ['week'] })

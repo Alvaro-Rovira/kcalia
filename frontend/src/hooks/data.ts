@@ -3,6 +3,7 @@ import { useCallback, useSyncExternalStore } from 'react'
 import { api, newClientId } from '@/lib/api'
 import { itemsTotal } from '@/lib/macros'
 import { foodKey } from '@/lib/textnorm'
+import { autoWaterGoal } from '@/lib/water'
 import type {
   AuthStatus,
   Bootstrap,
@@ -12,7 +13,9 @@ import type {
   Item,
   Meal,
   MealInput,
+  Prefs,
   Stats,
+  WaterDay,
   WeekSummary,
   WeightData,
 } from '@/lib/types'
@@ -247,4 +250,64 @@ export function useWeightActions() {
     [client],
   )
   return { save, remove }
+}
+
+export function useWater(date: string) {
+  return useQuery({ queryKey: keys.water(date), queryFn: () => api.get<WaterDay>(`/api/water?date=${date}`) })
+}
+
+export function useWaterDays(start: string, end: string) {
+  return useQuery({
+    queryKey: keys.waterDays(start, end),
+    queryFn: () => api.get<{ goal_ml: number; days: { date: string; ml: number }[] }>(`/api/water/days?start=${start}&end=${end}`),
+  })
+}
+
+/** Agua: se suma al instante en pantalla y viaja por la cola offline (cada toque, su propio id). */
+export function useWaterActions() {
+  const client = useQueryClient()
+  const goal = useBootstrap().data?.water_goal_ml ?? 2000
+  const patch = useCallback(
+    (date: string, update: (day: WaterDay) => WaterDay) => {
+      client.setQueryData<WaterDay>(keys.water(date), (old) => {
+        const day = update(old ?? { date, total_ml: 0, goal_ml: goal, entries: [] })
+        return { ...day, total_ml: day.entries.reduce((sum, e) => sum + e.ml, 0) }
+      })
+    },
+    [client, goal],
+  )
+  const add = useCallback(
+    (date: string, ml: number) => {
+      const entry = { client_id: newClientId(), ml, created_at: new Date().toISOString(), pending: true }
+      patch(date, (day) => ({ ...day, entries: [...day.entries, entry] }))
+      void enqueue({ type: 'water.add', body: { client_id: entry.client_id, date, ml } })
+      return entry
+    },
+    [patch],
+  )
+  const remove = useCallback(
+    (date: string, clientId: string) => {
+      patch(date, (day) => ({ ...day, entries: day.entries.filter((e) => e.client_id !== clientId) }))
+      void enqueue({ type: 'water.delete', clientId })
+    },
+    [patch],
+  )
+  return { add, remove }
+}
+
+/** Preferencias: se aplican al momento en los datos del móvil y se guardan por la cola offline. */
+export function usePrefsActions() {
+  const client = useQueryClient()
+  return useCallback(
+    (changes: Partial<Prefs>) => {
+      client.setQueryData<Bootstrap>(keys.bootstrap, (old) => {
+        if (!old) return old
+        const prefs = { ...(old.prefs ?? { water_goal_ml: null }), ...changes }
+        const water_goal_ml = prefs.water_goal_ml ?? autoWaterGoal(old.profile?.weight_kg)
+        return { ...old, prefs, water_goal_ml }
+      })
+      void enqueue({ type: 'prefs.patch', body: changes })
+    },
+    [client],
+  )
 }

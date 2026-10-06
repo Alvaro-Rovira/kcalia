@@ -410,3 +410,36 @@ def test_13_codigo_de_barras(page: Page, servers, ai_calls):
     expect(page.get_by_role("dialog").get_by_role("button", name="Hacer foto a la etiqueta")).to_be_visible()
     page.keyboard.press("Escape")
     assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_14_agua_con_y_sin_conexion(page: Page, servers):
+    from datetime import date
+
+    today = date.today().isoformat()
+    page.goto(servers["app"])
+    water = page.get_by_role("region", name="Agua")
+    expect(water.get_by_text("de 2,75 L")).to_be_visible()  # 75,5 kg × 35 ml, redondeado a 250
+    water.get_by_role("button", name="Añadir 250 ml de agua").click()
+    water.get_by_role("button", name="Añadir 500 ml de agua").click()
+    expect(water.get_by_text("750 ml", exact=True)).to_be_visible()
+    wait_until(lambda: api_get(page, servers, f"/api/water?date={today}")["total_ml"] == 750)
+
+    # Sin red se suma igual y se sincroniza al volver.
+    page.wait_for_timeout(1000)
+    page.context.set_offline(True)
+    water.get_by_role("button", name="Otra").click()
+    water.get_by_label("Mililitros de agua").fill("330")
+    water.get_by_role("button", name="Añadir esa cantidad").click()
+    expect(water.get_by_text("1,08 L", exact=True)).to_be_visible()
+    expect(page.get_by_text("cambio pendiente").first).to_be_visible()
+    page.context.set_offline(False)
+    wait_until(lambda: api_get(page, servers, f"/api/water?date={today}")["total_ml"] == 1080)
+
+    # Deshacer quita solo el último (su aviso es el más reciente).
+    water.get_by_role("button", name="Añadir 250 ml de agua").click()
+    page.get_by_role("status").filter(has_text="+250 ml de agua").get_by_role("button", name="Deshacer").last.click()
+    expect(water.get_by_text("1,08 L", exact=True)).to_be_visible()
+
+    page.get_by_role("link", name="Resumen").click()
+    expect(page.get_by_role("region", name="Agua de la semana")).to_be_visible()
+    page.get_by_role("link", name="Hoy").click()

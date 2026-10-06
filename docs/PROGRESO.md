@@ -27,7 +27,7 @@ Tras 5.5: 304 pytest, 111 Vitest, 11 e2e en verde.
 Tras la fase 1: 319 pytest, 133 Vitest, 14 e2e en verde.
 
 ## Fase 2 · Seguimiento
-- [ ] 2.1 Agua
+- [x] 2.1 Agua
 - [ ] 2.2 Fibra y alcohol
 - [ ] 2.3 Medidas corporales y fotos de progreso
 

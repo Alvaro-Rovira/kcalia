@@ -3,6 +3,7 @@ import clsx from 'clsx'
 import {
   ChevronRight,
   Download,
+  Droplets,
   FileJson,
   FileSpreadsheet,
   LogOut,
@@ -23,7 +24,7 @@ import { useNavigate } from 'react-router'
 import { Logo, Wordmark } from '@/components/Logo'
 import { PlanExplanation } from '@/components/PlanExplanation'
 import { useAdminOverview } from '@/hooks/admin'
-import { useApp, useOnline, useStats } from '@/hooks/data'
+import { useApp, useOnline, usePrefsActions, useStats } from '@/hooks/data'
 import { useInstall } from '@/hooks/useInstall'
 import { api, errorMessage } from '@/lib/api'
 import { fmt, kgTo, toKg } from '@/lib/format'
@@ -31,15 +32,17 @@ import { haptic } from '@/lib/haptics'
 import { GRAM_MACROS, KCAL_PER_GRAM, MACROS } from '@/lib/macros'
 import { ACTIVITIES, ACTIVITY_LABEL, GOAL_LABEL, GOALS } from '@/lib/options'
 import { getThemePref, setThemePref } from '@/lib/theme'
+import { autoWaterGoal, fmtWater } from '@/lib/water'
 import type { Activity, Bootstrap, Goal, Plan, Profile, Sex, Targets, ThemePref, Warning } from '@/lib/types'
 import { clearOutbox } from '@/offline/outbox'
 import { clearLocalData, keys } from '@/offline/queryClient'
 import { AnimatedNumber } from '@/ui/AnimatedNumber'
 import { Button } from '@/ui/Button'
-import { Field, NumberInput } from '@/ui/Field'
+import { Field, NumberInput, Stepper } from '@/ui/Field'
 import { Notice } from '@/ui/Notice'
 import { Segmented } from '@/ui/Segmented'
 import { Sheet } from '@/ui/Sheet'
+import { Switch } from '@/ui/Switch'
 import { toast } from '@/ui/toast'
 
 function Section({ title, children, id }: { title: string; children: ReactNode; id: string }) {
@@ -84,7 +87,7 @@ export default function Settings() {
   const online = useOnline()
   const install = useInstall()
   const [theme, setTheme] = useState<ThemePref>(getThemePref)
-  const [sheet, setSheet] = useState<'profile' | 'targets' | 'plan' | 'delete-data' | 'delete-account' | null>(null)
+  const [sheet, setSheet] = useState<'profile' | 'targets' | 'plan' | 'water' | 'delete-data' | 'delete-account' | null>(null)
   const unit = profile.weight_unit
   const isAdmin = !!app.user.is_admin
   const admin = useAdminOverview(isAdmin)
@@ -178,6 +181,12 @@ export default function Settings() {
             <Row label="Cómo se calculan" onClick={() => setSheet('plan')} />
             <Row label="Editar a mano" onClick={() => setSheet('targets')} icon={<Pencil className="size-[18px]" aria-hidden />} />
             <Row label="Recalcular con mi perfil" onClick={() => void recalculate()} icon={<RefreshCw className="size-[18px]" aria-hidden />} />
+            <Row
+              label="Objetivo de agua"
+              value={`${fmtWater(app.water_goal_ml ?? autoWaterGoal(profile.weight_kg))}${app.prefs?.water_goal_ml ? '' : ' · auto'}`}
+              onClick={() => setSheet('water')}
+              icon={<Droplets className="size-[18px]" aria-hidden />}
+            />
           </Section>
         </div>
 
@@ -332,6 +341,7 @@ export default function Settings() {
           </div>
         )}
       </Sheet>
+      <WaterGoalSheet open={sheet === 'water'} onClose={() => setSheet(null)} current={app.prefs?.water_goal_ml ?? null} weightKg={profile.weight_kg} />
       <DeleteSheet kind={sheet === 'delete-data' ? 'data' : sheet === 'delete-account' ? 'account' : null} onClose={() => setSheet(null)} />
     </main>
   )
@@ -605,6 +615,52 @@ function DeleteSheet({ kind, onClose }: { kind: 'data' | 'account' | null; onClo
           onChange={(event) => setPassword(event.target.value)}
           error={error || undefined}
         />
+      </div>
+    </Sheet>
+  )
+}
+
+function WaterGoalSheet({ open, onClose, current, weightKg }: { open: boolean; onClose: () => void; current: number | null; weightKg: number }) {
+  const savePrefs = usePrefsActions()
+  const auto = autoWaterGoal(weightKg)
+  const [manual, setManual] = useState(current !== null)
+  const [value, setValue] = useState(current ?? auto)
+  useEffect(() => {
+    if (!open) return
+    setManual(current !== null)
+    setValue(current ?? auto)
+  }, [open, current, auto])
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title="Objetivo de agua"
+      footer={
+        <Button
+          size="lg"
+          block
+          onClick={() => {
+            savePrefs({ water_goal_ml: manual ? value : null })
+            haptic('success')
+            toast.success('Objetivo de agua guardado', fmtWater(manual ? value : auto))
+            onClose()
+          }}
+        >
+          Guardar
+        </Button>
+      }
+    >
+      <div className="space-y-5">
+        <div className="card overflow-hidden">
+          <Switch
+            label="Calcularlo con mi peso"
+            description={`35 ml por kilo: ${fmtWater(auto)} al día con tu peso actual.`}
+            checked={!manual}
+            onChange={(automatic) => setManual(!automatic)}
+          />
+        </div>
+        {manual && <Stepper label="Mililitros al día" value={value} onChange={setValue} step={250} min={500} max={8000} unit="ml" />}
+        <p className="text-[13px] leading-relaxed text-text-3">Es una referencia general: con calor o mucho deporte se necesita más. No es consejo médico.</p>
       </div>
     </Sheet>
   )

@@ -22,6 +22,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
+import { WaterWeek } from '@/components/WaterWeek'
 import { useStats, useSummaries, useWeek } from '@/hooks/data'
 import { addDays, fmtRange, fmtWeekday, todayISO, weekdayInitial, weekStart } from '@/lib/dates'
 import { capitalize, fmt, fmtSigned, plural } from '@/lib/format'
@@ -401,6 +402,8 @@ export default function Summary() {
               </div>
             </section>
           </div>
+
+          <WaterWeek start={start} />
 
           {summary.vs_previous && (
             <section className="card p-4" aria-label="Comparación con la semana anterior">

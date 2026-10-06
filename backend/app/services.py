@@ -21,12 +21,15 @@ from .models import (
     ProductImage,
     Profile,
     Targets,
+    UserPrefs,
+    WaterLog,
     WeeklySummary,
     Weight,
     utcnow,
 )
 from .nutrition import calculate_targets
 from .products import ProductInfo
+from .schemas import Prefs
 from .textnorm import normalize
 
 SAVED_KEYS = ("saved_exact", "saved_fuzzy", "saved_cache", "saved_quick", "saved_product")
@@ -104,6 +107,36 @@ def record_usage(db: Session, today: date, kind: str, usage: dict) -> None:
     row.prompt_tokens += usage.get("prompt_tokens", 0)
     row.completion_tokens += usage.get("completion_tokens", 0)
     db.commit()
+
+
+# ---------------------------------------------------------------- preferencias
+
+
+def get_prefs(db: Session) -> Prefs:
+    row = db.scalar(select(UserPrefs))
+    return Prefs.model_validate(row.data if row else {})
+
+
+def update_prefs(db: Session, changes: dict) -> Prefs:
+    row = db.scalar(select(UserPrefs))
+    if row is None:
+        row = UserPrefs(data={})
+        db.add(row)
+    merged = Prefs.model_validate({**(row.data or {}), **changes})
+    row.data = merged.model_dump(mode="json")
+    row.updated_at = utcnow()
+    return merged
+
+
+def water_goal(db: Session, prefs: Prefs | None = None) -> int:
+    """Objetivo de agua: el elegido o 35 ml por kg, redondeado a 250 ml (entre 1,5 y 4 litros)."""
+    prefs = prefs or get_prefs(db)
+    if prefs.water_goal_ml:
+        return prefs.water_goal_ml
+    profile = get_profile(db)
+    if profile is None:
+        return 2000
+    return int(min(4000, max(1500, round(profile.weight_kg * 35 / 250) * 250)))
 
 
 # ---------------------------------------------------------------- perfil y objetivos
@@ -619,6 +652,8 @@ def wipe_data(db: Session) -> None:
     if tenancy.current_user_id(db) is None:
         raise tenancy.TenancyError("wipe_data necesita una sesión limitada a un usuario")
     for model in (
+        WaterLog,
+        UserPrefs,
         Meal,
         DishAlias,
         Dish,

@@ -303,3 +303,33 @@ class BarcodeCache(Base):
     found: Mapped[bool] = mapped_column(Boolean, default=False)
     data: Mapped[dict] = mapped_column(JSON, default=dict)
     fetched_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class UserPrefs(TenantMixin, Base):
+    """Preferencias del usuario (objetivo de agua, días de entreno, avisos...). JSON validado por schemas.Prefs."""
+
+    __tablename__ = "user_prefs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    data: Mapped[dict] = mapped_column(JSON, default=dict)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
+
+    __table_args__ = (Index("ux_user_prefs_user", "user_id", unique=True),)
+
+
+class WaterLog(TenantMixin, Base):
+    """Un vaso, una botella...: cada toque en +250 es una fila, para poder deshacerlo."""
+
+    __tablename__ = "water_logs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # Generado en el cliente: hace idempotente la cola offline.
+    client_id: Mapped[str] = mapped_column(String(40))
+    date: Mapped[str] = mapped_column(String(10))
+    ml: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    __table_args__ = (
+        Index("ux_water_user_client", "user_id", "client_id", unique=True),
+        Index("ix_water_user_date", "user_id", "date"),
+    )
