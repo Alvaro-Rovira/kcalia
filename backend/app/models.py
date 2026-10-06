@@ -1,13 +1,24 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Index, Integer, LargeBinary, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Index, Integer, LargeBinary, String, Text, text
+from sqlalchemy.orm import Mapped, declared_attr, mapped_column
 
 from .db import Base
 
 
 def utcnow() -> datetime:
     return datetime.now(UTC).replace(tzinfo=None)
+
+
+class TenantMixin:
+    """Datos que pertenecen a un usuario. La sesión los filtra sola por `user_id` (ver tenancy.py)."""
+
+    @declared_attr
+    def user_id(cls) -> Mapped[int]:
+        return mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+
+
+ACCOUNT_STATUSES = ("pending", "approved", "suspended")
 
 
 class User(Base):
@@ -17,6 +28,19 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(64), unique=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    # pending (recién solicitada), approved o suspended. Solo una cuenta aprobada puede usar la app.
+    status: Mapped[str] = mapped_column(String(12), default="pending")
+    # Como mucho uno (índice único parcial). Solo lo asignan la migración y scripts/make-admin.py.
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    last_seen_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    # Límites diarios propios; None = el valor por defecto de la configuración.
+    ai_daily_limit: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    stt_daily_limit: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    __table_args__ = (
+        Index("ux_users_single_admin", "is_admin", unique=True, sqlite_where=text("is_admin = 1")),
+        Index("ix_users_status", "status"),
+    )
 
 
 class AuthSession(Base):
@@ -30,8 +54,9 @@ class AuthSession(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime)
 
 
-class Profile(Base):
+class Profile(TenantMixin, Base):
     __tablename__ = "profile"
+    __table_args__ = (Index("ux_profile_user", "user_id", unique=True),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     sex: Mapped[str] = mapped_column(String(8))
@@ -45,8 +70,9 @@ class Profile(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
 
 
-class Targets(Base):
+class Targets(TenantMixin, Base):
     __tablename__ = "targets"
+    __table_args__ = (Index("ux_targets_user", "user_id", unique=True),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     kcal: Mapped[int] = mapped_column(Integer)
@@ -61,7 +87,7 @@ class Targets(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
 
 
-class Dish(Base):
+class Dish(TenantMixin, Base):
     """Comida conocida: la biblioteca contra la que se busca antes de llamar a la IA."""
 
     __tablename__ = "dishes"
@@ -69,7 +95,7 @@ class Dish(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(160))
     text: Mapped[str] = mapped_column(Text)
-    norm: Mapped[str] = mapped_column(String(400), unique=True, index=True)
+    norm: Mapped[str] = mapped_column(String(400))
     items: Mapped[list] = mapped_column(JSON)
     kcal: Mapped[float] = mapped_column(Float)
     protein: Mapped[float] = mapped_column(Float)
@@ -83,23 +109,28 @@ class Dish(Base):
     last_used_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
+    __table_args__ = (Index("ux_dishes_user_norm", "user_id", "norm", unique=True),)
 
-class DishAlias(Base):
+
+class DishAlias(TenantMixin, Base):
     """Otra forma de escribir una comida conocida, aprendida al confirmar un "¿es esta?"."""
 
     __tablename__ = "dish_aliases"
 
-    norm: Mapped[str] = mapped_column(String(400), primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    norm: Mapped[str] = mapped_column(String(400))
     dish_id: Mapped[int] = mapped_column(ForeignKey("dishes.id", ondelete="CASCADE"), index=True)
 
+    __table_args__ = (Index("ux_dish_aliases_user_norm", "user_id", "norm", unique=True),)
 
-class Meal(Base):
+
+class Meal(TenantMixin, Base):
     __tablename__ = "meals"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     # Generado en el cliente: hace idempotente la cola offline.
-    client_id: Mapped[str] = mapped_column(String(40), unique=True, index=True)
-    date: Mapped[str] = mapped_column(String(10), index=True)
+    client_id: Mapped[str] = mapped_column(String(40))
+    date: Mapped[str] = mapped_column(String(10))
     slot: Mapped[str] = mapped_column(String(12))
     name: Mapped[str] = mapped_column(String(160))
     text: Mapped[str] = mapped_column(Text, default="")
@@ -117,17 +148,20 @@ class Meal(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
-    __table_args__ = (Index("ix_meals_date_live", "date", "deleted_at"),)
+    __table_args__ = (
+        Index("ux_meals_user_client", "user_id", "client_id", unique=True),
+        Index("ix_meals_user_date", "user_id", "date", "deleted_at"),
+    )
 
 
-class Food(Base):
+class Food(TenantMixin, Base):
     """Caché de ingredientes: macros por 100 g y gramos por unidad habitual."""
 
     __tablename__ = "foods"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(120))
-    norm: Mapped[str] = mapped_column(String(160), unique=True, index=True)
+    norm: Mapped[str] = mapped_column(String(160))
     kcal100: Mapped[float] = mapped_column(Float)
     protein100: Mapped[float] = mapped_column(Float)
     carbs100: Mapped[float] = mapped_column(Float)
@@ -136,40 +170,52 @@ class Food(Base):
     hits: Mapped[int] = mapped_column(Integer, default=0)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
 
+    __table_args__ = (Index("ux_foods_user_norm", "user_id", "norm", unique=True),)
 
-class Weight(Base):
+
+class Weight(TenantMixin, Base):
     __tablename__ = "weights"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    date: Mapped[str] = mapped_column(String(10), unique=True, index=True)
+    date: Mapped[str] = mapped_column(String(10))
     kg: Mapped[float] = mapped_column(Float)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
+    __table_args__ = (Index("ux_weights_user_date", "user_id", "date", unique=True),)
 
-class WeeklySummary(Base):
+
+class WeeklySummary(TenantMixin, Base):
     __tablename__ = "weekly_summaries"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    week_start: Mapped[str] = mapped_column(String(10), unique=True, index=True)
+    week_start: Mapped[str] = mapped_column(String(10))
     data: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
+    __table_args__ = (Index("ux_weekly_user_week", "user_id", "week_start", unique=True),)
 
-class Achievement(Base):
+
+class Achievement(TenantMixin, Base):
     __tablename__ = "achievements"
 
-    key: Mapped[str] = mapped_column(String(40), primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    key: Mapped[str] = mapped_column(String(40))
     unlocked_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
+    __table_args__ = (Index("ux_achievements_user_key", "user_id", "key", unique=True),)
 
-class Counter(Base):
+
+class Counter(TenantMixin, Base):
     __tablename__ = "counters"
 
-    key: Mapped[str] = mapped_column(String(40), primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    key: Mapped[str] = mapped_column(String(40))
     value: Mapped[int] = mapped_column(Integer, default=0)
 
+    __table_args__ = (Index("ux_counters_user_key", "user_id", "key", unique=True),)
 
-class AiUsage(Base):
+
+class AiUsage(TenantMixin, Base):
     __tablename__ = "ai_usage"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -179,10 +225,10 @@ class AiUsage(Base):
     prompt_tokens: Mapped[int] = mapped_column(Integer, default=0)
     completion_tokens: Mapped[int] = mapped_column(Integer, default=0)
 
-    __table_args__ = (Index("ux_ai_usage_date_kind", "date", "kind", unique=True),)
+    __table_args__ = (Index("ux_ai_usage_user_date_kind", "user_id", "date", "kind", unique=True),)
 
 
-class Product(Base):
+class Product(TenantMixin, Base):
     """Producto envasado del usuario, con las cifras de su etiqueta nutricional."""
 
     __tablename__ = "products"
@@ -208,7 +254,7 @@ class Product(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
 
-class ProductImage(Base):
+class ProductImage(TenantMixin, Base):
     """Foto de la etiqueta. Aparte de Product para no arrastrarla en cada listado."""
 
     __tablename__ = "product_images"
@@ -216,3 +262,29 @@ class ProductImage(Base):
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id", ondelete="CASCADE"), primary_key=True)
     mime: Mapped[str] = mapped_column(String(30))
     data: Mapped[bytes] = mapped_column(LargeBinary)
+
+
+class AppSetting(Base):
+    """Ajustes globales de la instalación que cambia el administrador (pausar la IA, abrir el registro...)."""
+
+    __tablename__ = "app_settings"
+
+    key: Mapped[str] = mapped_column(String(40), primary_key=True)
+    value: Mapped[dict | list | str | int | bool | None] = mapped_column(JSON, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
+
+
+class AdminAudit(Base):
+    """Registro de cada acción de administración: quién, qué, a quién y cuándo."""
+
+    __tablename__ = "admin_audit"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    admin_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    admin_username: Mapped[str] = mapped_column(String(64))
+    action: Mapped[str] = mapped_column(String(40))
+    # Sin clave foránea: la fila sobrevive al borrado de la cuenta afectada.
+    target_user_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    target_username: Mapped[str] = mapped_column(String(64), default="")
+    details: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)

@@ -3,17 +3,17 @@ import io
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Response
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .. import services
 from ..db import get_db
-from ..deps import require_user
-from ..models import AuthSession, Food, Meal, User, WeeklySummary, Weight
+from ..deps import require_approved_user, require_user
+from ..models import Food, Meal, User, WeeklySummary, Weight
 from ..schemas import PasswordConfirm
 from ..security import SESSION_COOKIE, verify_password
 
-router = APIRouter(prefix="/api", tags=["cuenta"], dependencies=[Depends(require_user)])
+router = APIRouter(prefix="/api", tags=["cuenta"], dependencies=[Depends(require_approved_user)])
 
 
 def _stamp() -> str:
@@ -129,11 +129,13 @@ def delete_data(body: PasswordConfirm, user: User = Depends(require_user), db: S
 def delete_account(
     body: PasswordConfirm, response: Response, user: User = Depends(require_user), db: Session = Depends(get_db)
 ) -> dict:
-    """Borra datos y cuenta. El registro vuelve a quedar abierto."""
+    """Borra los datos y la cuenta de quien lo pide (y nada de nadie más)."""
     _confirm(user, body)
-    services.wipe_data(db)
-    db.execute(delete(AuthSession))
-    db.execute(delete(User))
-    db.commit()
+    if user.is_admin:
+        raise HTTPException(
+            409,
+            "Eres el administrador: antes de borrar tu cuenta, pasa el rol a otra con scripts/make-admin.py.",
+        )
+    services.delete_user(db, user)
     response.delete_cookie(SESSION_COOKIE, path="/")
     return {"ok": True}

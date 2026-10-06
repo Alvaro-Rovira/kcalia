@@ -30,14 +30,31 @@ class Settings(BaseSettings):
     ai_vision_model: str = ""
     ai_vision_base_url: str = ""
     ai_vision_api_key: str = ""
+    # Tope GLOBAL de consultas de IA al día entre todos los usuarios (texto y foto).
     ai_daily_limit: int = 60
+    # Tope por usuario; el admin puede cambiarlo a cada uno desde el panel.
+    ai_user_daily_limit: int = 20
+    # Límite propio del administrador: no le bloquea lo que gasten los demás. 0 = igual que AI_DAILY_LIMIT.
+    admin_ai_daily_limit: int = 0
     ai_timeout: float = 45.0
+    # Precios por millón de tokens, solo para estimar el coste en el panel de administración.
+    ai_price_input: float = 0.95
+    ai_price_output: float = 4.00
 
     stt_base_url: str = "http://stt:8000/v1"
     stt_api_key: str = ""
     stt_model: str = "small"
+    # Tope global de audios al día y tope por usuario.
     stt_daily_limit: int = 100
+    stt_user_daily_limit: int = 30
     stt_timeout: float = 60.0
+    # Coste estimado de cada audio (0 con el Whisper propio).
+    stt_price_per_call: float = 0.0
+
+    # Registro de cuentas: abierto (toda cuenta nueva espera aprobación) o cerrado del todo.
+    allow_signup: bool = True
+    # Con tantas solicitudes pendientes, el registro se pausa hasta que el admin las revise.
+    max_pending_accounts: int = 20
 
     @property
     def db_path(self) -> Path:
@@ -58,6 +75,10 @@ class Settings(BaseSettings):
     @property
     def vision_api_key(self) -> str:
         return self.ai_vision_api_key or self.ai_api_key
+
+    @property
+    def admin_ai_limit(self) -> int:
+        return self.admin_ai_daily_limit or self.ai_daily_limit
 
 
 @lru_cache

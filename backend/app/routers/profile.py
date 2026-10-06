@@ -5,12 +5,13 @@ from sqlalchemy.orm import Session
 from .. import services
 from ..config import get_settings
 from ..db import get_db
-from ..deps import get_ai_client, require_user, today_local
+from ..deps import get_ai_client, require_approved_user, require_user, today_local
 from ..models import Profile, User, Weight
 from ..nutrition import calculate_targets, validate_custom_targets
 from ..schemas import PrefsIn, ProfileIn, ProfileSave, TargetsIn
+from ..usage import ai_limit_for, stt_limit_for
 
-router = APIRouter(prefix="/api", tags=["perfil"], dependencies=[Depends(require_user)])
+router = APIRouter(prefix="/api", tags=["perfil"], dependencies=[Depends(require_approved_user)])
 
 
 @router.get("/bootstrap")
@@ -21,7 +22,7 @@ def bootstrap(user: User = Depends(require_user), db: Session = Depends(get_db))
     targets = services.get_targets(db)
     today = today_local(settings)
     return {
-        "user": {"username": user.username},
+        "user": {"username": user.username, "is_admin": user.is_admin},
         "profile": services.profile_dict(profile) if profile else None,
         "targets": services.targets_dict(targets) if targets else None,
         "plan": services.plan_for(profile) if profile else None,
@@ -31,7 +32,10 @@ def bootstrap(user: User = Depends(require_user), db: Session = Depends(get_db))
             "configured": get_ai_client().configured,
             "model": settings.ai_model,
             "used_today": services.ai_calls_today(db, today),
-            "limit": settings.ai_daily_limit,
+            "limit": ai_limit_for(user, settings),
+            "paused": services.ai_paused(db),
+            "stt_used_today": services.ai_calls_today(db, today, ("stt",)),
+            "stt_limit": stt_limit_for(user, settings),
         },
         "server_date": today.isoformat(),
     }

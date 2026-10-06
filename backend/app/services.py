@@ -6,10 +6,12 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from . import summary as summary_lib
+from . import tenancy
 from .matching import FoodInfo, FoodUpdate, find_similar, learn_foods, resolve_from_foods, totals
 from .models import (
     Achievement,
     AiUsage,
+    AppSetting,
     Counter,
     Dish,
     DishAlias,
@@ -42,7 +44,7 @@ SAVED_BY_SOURCE = {
 
 
 def bump(db: Session, key: str, amount: int = 1) -> None:
-    counter = db.get(Counter, key)
+    counter = db.scalar(select(Counter).where(Counter.key == key))
     if counter is None:
         db.add(Counter(key=key, value=amount))
     else:
@@ -53,13 +55,44 @@ def counters(db: Session) -> dict[str, int]:
     return {c.key: c.value for c in db.scalars(select(Counter))}
 
 
-def ai_calls_today(db: Session, today: date, kinds: tuple[str, ...] = ("text", "vision")) -> int:
+AI_KINDS = ("text", "vision")
+
+
+def ai_calls_today(db: Session, today: date, kinds: tuple[str, ...] = AI_KINDS) -> int:
+    """Consultas de hoy del usuario de la sesión."""
     total = db.scalar(
         select(func.coalesce(func.sum(AiUsage.calls), 0)).where(
             AiUsage.date == today.isoformat(), AiUsage.kind.in_(kinds)
         )
     )
     return int(total or 0)
+
+
+def global_calls_today(db: Session, today: date, kinds: tuple[str, ...] = AI_KINDS) -> int:
+    """Consultas de hoy de todos los usuarios juntos: el tope global de la instalación."""
+    with tenancy.unscoped(db):
+        return ai_calls_today(db, today, kinds)
+
+
+# ---------------------------------------------------------------- ajustes globales
+
+
+def app_setting(db: Session, key: str, default=None):
+    row = db.get(AppSetting, key)
+    return default if row is None or row.value is None else row.value
+
+
+def set_app_setting(db: Session, key: str, value) -> None:
+    row = db.get(AppSetting, key)
+    if row is None:
+        db.add(AppSetting(key=key, value=value))
+    else:
+        row.value = value
+        row.updated_at = utcnow()
+
+
+def ai_paused(db: Session) -> bool:
+    return bool(app_setting(db, "ai_paused", False))
 
 
 def record_usage(db: Session, today: date, kind: str, usage: dict) -> None:
@@ -215,11 +248,15 @@ def draft_from_dish(dish: Dish, source: str, score: float | None = None) -> dict
     return draft
 
 
+def find_alias(db: Session, norm: str) -> DishAlias | None:
+    return db.scalar(select(DishAlias).where(DishAlias.norm == norm))
+
+
 def find_exact_dish(db: Session, norm: str) -> Dish | None:
     dish = db.scalar(select(Dish).where(Dish.norm == norm))
     if dish is not None:
         return dish
-    alias = db.get(DishAlias, norm)
+    alias = find_alias(db, norm)
     return db.get(Dish, alias.dish_id) if alias else None
 
 
@@ -445,6 +482,7 @@ def refresh_week_if_stored(db: Session, iso_date: str, today: date) -> None:
 
 
 def compute_stats(db: Session, today: date, ai_limit: int) -> dict:
+    """Racha, logros y uso de IA del usuario de la sesión; `ai_limit` es su límite diario."""
     targets = get_targets(db)
     profile = get_profile(db)
     days = day_totals(db)
@@ -486,7 +524,7 @@ def compute_stats(db: Session, today: date, ai_limit: int) -> dict:
             "voice": count.get("voice_meals", 0),
         }
     )
-    stored = {a.key: a for a in db.scalars(select(Achievement))}
+    stored = {a.key: a for a in db.scalars(select(Achievement))}  # solo los del usuario de la sesión
     fresh = sorted(unlocked_now - stored.keys())
     for key in fresh:
         achievement = Achievement(key=key)
@@ -525,6 +563,9 @@ def compute_stats(db: Session, today: date, ai_limit: int) -> dict:
 
 
 def wipe_data(db: Session) -> None:
+    """Borra todos los datos del usuario de la sesión (el filtro por usuario se aplica también a los DELETE)."""
+    if tenancy.current_user_id(db) is None:
+        raise tenancy.TenancyError("wipe_data necesita una sesión limitada a un usuario")
     for model in (
         Meal,
         DishAlias,
@@ -541,4 +582,15 @@ def wipe_data(db: Session) -> None:
         Profile,
     ):
         db.execute(delete(model))
+    db.commit()
+
+
+def delete_user(db: Session, user) -> None:
+    """Borra la cuenta y todo lo suyo. Las tablas de datos también caen en cascada desde `users`."""
+    from .models import AuthSession, User
+
+    with tenancy.as_user(db, user.id):
+        wipe_data(db)
+    db.execute(delete(AuthSession).where(AuthSession.user_id == user.id))
+    db.execute(delete(User).where(User.id == user.id))
     db.commit()

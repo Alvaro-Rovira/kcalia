@@ -4,6 +4,7 @@ import json
 
 import httpx
 import pytest
+from conftest import reset_database
 from fastapi.testclient import TestClient
 
 from app.ai import AiClient
@@ -70,6 +71,7 @@ def fake_ai():
 
 @pytest.fixture(scope="module")
 def client(fake_ai):
+    reset_database()
     ai = AiClient(get_settings(), http=httpx.Client(transport=httpx.MockTransport(fake_ai.handler)))
     app.dependency_overrides[get_ai_client] = lambda: ai
     with TestClient(app) as c:
@@ -93,19 +95,22 @@ def meal_body(draft, client_id, **extra):
 
 def test_todo_requiere_sesion(client):
     assert client.get("/api/bootstrap").status_code == 401
-    assert client.get("/api/auth/status").json() == {"registered": False, "authenticated": False, "username": None}
+    status = client.get("/api/auth/status").json()
+    assert status["registered"] is False and status["authenticated"] is False and status["signup"] == "first"
 
 
-def test_registro_unico_y_login(client):
+def test_la_primera_cuenta_es_la_del_administrador(client):
     assert client.post("/api/auth/register", json={"username": "alvaro", "password": "corta"}).status_code == 422
-    assert (
-        client.post("/api/auth/register", json={"username": "alvaro", "password": "contraseña-larga"}).status_code
-        == 200
-    )
-    # El registro se cierra en cuanto existe la cuenta.
-    assert (
-        client.post("/api/auth/register", json={"username": "otro", "password": "contraseña-larga"}).status_code == 403
-    )
+    first = client.post("/api/auth/register", json={"username": "alvaro", "password": "contraseña-larga"})
+    assert first.status_code == 200 and first.json()["status"] == "approved"
+    status = client.get("/api/auth/status").json()
+    assert status["is_admin"] is True and status["status"] == "approved" and status["signup"] == "open"
+    # Las siguientes solo piden cuenta: quedan pendientes y no inician sesión.
+    client.cookies.clear()
+    other = client.post("/api/auth/register", json={"username": "otro", "password": "contraseña-larga"})
+    assert other.status_code == 200 and other.json()["status"] == "received"
+    assert client.get("/api/auth/status").json()["authenticated"] is False
+    client.post("/api/auth/login", json={"username": "alvaro", "password": "contraseña-larga"})
     client.post("/api/auth/logout")
     assert client.get("/api/bootstrap").status_code == 401
     assert client.post("/api/auth/login", json={"username": "alvaro", "password": "incorrecta1"}).status_code == 401
@@ -272,7 +277,8 @@ def test_exportar(client):
     assert len(csv_text.strip().splitlines()) == 6
 
 
-def test_borrar_cuenta_reabre_el_registro(client):
+def test_el_administrador_no_puede_borrar_su_cuenta(client):
     assert client.post("/api/account/delete", json={"password": "mala"}).status_code == 403
-    assert client.post("/api/account/delete", json={"password": "contraseña-larga"}).json() == {"ok": True}
-    assert client.get("/api/auth/status").json()["registered"] is False
+    r = client.post("/api/account/delete", json={"password": "contraseña-larga"})
+    assert r.status_code == 409 and "make-admin" in r.json()["detail"]
+    assert client.get("/api/auth/status").json()["is_admin"] is True

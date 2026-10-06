@@ -7,11 +7,12 @@ from sqlalchemy.orm import Session
 from .. import services
 from ..config import get_settings
 from ..db import get_db
-from ..deps import require_user, today_local
-from ..models import WeeklySummary
+from ..deps import require_approved_user, require_user, today_local
+from ..models import User, WeeklySummary
 from ..summary import week_start
+from ..usage import ai_limit_for
 
-router = APIRouter(prefix="/api", tags=["resumen"], dependencies=[Depends(require_user)])
+router = APIRouter(prefix="/api", tags=["resumen"], dependencies=[Depends(require_approved_user)])
 
 
 @router.get("/summary/week")
@@ -37,6 +38,6 @@ def history(db: Session = Depends(get_db)) -> dict:
 
 
 @router.get("/stats")
-def stats(db: Session = Depends(get_db)) -> dict:
+def stats(db: Session = Depends(get_db), user: User = Depends(require_user)) -> dict:
     settings = get_settings()
-    return services.compute_stats(db, today_local(settings), settings.ai_daily_limit)
+    return services.compute_stats(db, today_local(settings), ai_limit_for(user, settings))

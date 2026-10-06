@@ -3,15 +3,17 @@ import threading
 from contextlib import asynccontextmanager
 from urllib.parse import urlparse
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from . import tenancy  # noqa: F401  (registra el filtro por usuario en las sesiones)
 from .ai import AiError
 from .config import get_settings
 from .db import init_db
+from .deps import enforce_access
 from .jobs import start_scheduler
 from .routers import account, auth, meals, products, profile, summary, weight
 from .spa import render_index
@@ -45,7 +47,15 @@ async def lifespan(_: FastAPI):
     stop.set()
 
 
-app = FastAPI(title="Kcalia", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+# enforce_access se aplica a TODAS las rutas: lo que no sea público exige una cuenta aprobada.
+app = FastAPI(
+    title="Kcalia",
+    lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
+    dependencies=[Depends(enforce_access)],
+)
 
 
 if get_settings().gzip:

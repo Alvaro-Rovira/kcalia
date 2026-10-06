@@ -8,9 +8,12 @@ import threading
 from datetime import datetime
 from pathlib import Path
 
-from . import services
+from sqlalchemy import select
+
+from . import services, tenancy
 from .config import Settings, get_settings
 from .db import SessionLocal
+from .models import User
 from .summary import week_start
 
 log = logging.getLogger("kcalia.jobs")
@@ -57,14 +60,18 @@ def _tick(settings: Settings) -> None:
         if path:
             log.info("Copia de seguridad creada: %s", path.name)
 
+    closing_week = now.weekday() == SUMMARY_WEEKDAY and now.hour >= SUMMARY_HOUR
     with SessionLocal() as db:
-        closing_week = now.weekday() == SUMMARY_WEEKDAY and now.hour >= SUMMARY_HOUR
-        created = services.ensure_summaries(db, today, include_current=closing_week)
-        if closing_week:
-            # Si se añade algo el domingo por la noche, el resumen ya guardado se rehace.
-            services.store_week(db, week_start(today), today)
-        if created:
-            log.info("Resúmenes semanales generados: %s", created)
+        user_ids = list(db.scalars(select(User.id).where(User.status == "approved")))
+    for user_id in user_ids:
+        # Una sesión por usuario: cada resumen solo ve los datos de su dueño.
+        with SessionLocal() as db, tenancy.as_user(db, user_id):
+            created = services.ensure_summaries(db, today, include_current=closing_week)
+            if closing_week:
+                # Si se añade algo el domingo por la noche, el resumen ya guardado se rehace.
+                services.store_week(db, week_start(today), today)
+            if created:
+                log.info("Resúmenes semanales generados para la cuenta %s: %s", user_id, created)
 
 
 def start_scheduler(stop: threading.Event) -> threading.Thread:

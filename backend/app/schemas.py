@@ -16,14 +16,17 @@ def _iso_date(value: str) -> str:
     return value
 
 
-class Credentials(BaseModel):
-    username: str = Field(min_length=2, max_length=64)
-    password: str = Field(min_length=8, max_length=200)
+class LoginIn(BaseModel):
+    username: str = Field(min_length=1, max_length=64)
+    password: str = Field(min_length=1, max_length=200)
 
-    @field_validator("username")
-    @classmethod
-    def _strip(cls, value: str) -> str:
-        return value.strip()
+
+class RegisterIn(BaseModel):
+    # Las reglas (longitud, caracteres, contraseñas débiles) las aplica security.py con mensajes claros.
+    username: str = Field(min_length=1, max_length=64)
+    password: str = Field(min_length=1, max_length=200)
+    # Campo trampa: invisible para las personas; si llega relleno, es un robot.
+    website: str = Field(default="", max_length=200)
 
 
 class PasswordConfirm(BaseModel):

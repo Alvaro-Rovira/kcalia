@@ -7,12 +7,12 @@ from sqlalchemy.orm import Session
 from .. import services
 from ..ai import AiClient, finalize_label
 from ..db import get_db
-from ..deps import get_ai_client, require_user
-from ..models import Product, ProductImage, utcnow
+from ..deps import get_ai_client, require_approved_user, require_user
+from ..models import Product, ProductImage, User, utcnow
 from ..schemas import ProductIn, ProductPatch
 from ..usage import check_ai_budget, run_ai
 
-router = APIRouter(prefix="/api/products", tags=["productos"], dependencies=[Depends(require_user)])
+router = APIRouter(prefix="/api/products", tags=["productos"], dependencies=[Depends(require_approved_user)])
 
 MAX_IMAGE_BYTES = 6 * 1024 * 1024
 IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
@@ -38,10 +38,15 @@ def _get(db: Session, product_id: int) -> Product:
 
 
 @router.post("/scan")
-def scan(image: UploadFile = File(...), db: Session = Depends(get_db), ai: AiClient = Depends(get_ai_client)) -> dict:
+def scan(
+    image: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    ai: AiClient = Depends(get_ai_client),
+    user: User = Depends(require_user),
+) -> dict:
     """Lee la tabla nutricional de la foto. No guarda nada: devuelve un borrador para que el usuario lo revise."""
     data, mime = _read_image(image)
-    check_ai_budget(db)
+    check_ai_budget(db, user)
     draft = run_ai(db, "vision", lambda: ai.analyze_label(data, mime))
     if not draft.is_label:
         return {
