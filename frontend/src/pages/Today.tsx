@@ -10,10 +10,10 @@ import { MealSheet } from '@/components/MealSheet'
 import { SuggestCard } from '@/components/SuggestCard'
 import { WaterCard } from '@/components/WaterCard'
 import { useShell } from '@/components/Shell'
-import { useApp, useDayTargets, useDayTypeActions, useMealActions, useMeals, useStats } from '@/hooks/data'
+import { useApp, useDayTargets, useDayTypeActions, useMealActions, useMeals, usePrefsActions, useStats } from '@/hooks/data'
 import { dailyTip } from '@/lib/coach'
 import { copyInputs } from '@/lib/copy'
-import { KIND_LABEL, targetsFor } from '@/lib/dayTargets'
+import { DEFAULT_TRAINING_DAYS, KIND_LABEL, targetsFor, trainingDaysText } from '@/lib/dayTargets'
 import { addDays, fmtLong, greeting, isValidISO, relativeDay, todayISO } from '@/lib/dates'
 import { capitalize, fmt, plural } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
@@ -51,6 +51,7 @@ export default function Today() {
   const app = useApp()
   const dayTargets = useDayTargets()
   const setDayType = useDayTypeActions()
+  const savePrefs = usePrefsActions()
   const { openAddMeal, celebrate } = useShell()
   const actions = useMealActions()
   const reduce = useReducedMotion()
@@ -98,6 +99,26 @@ export default function Today() {
       toast({ tone: 'success', title: 'Calorías en objetivo', description: 'Justo donde tenían que estar.' })
     }
   }, [loading, date, isToday, onTarget, proteinDone, celebrate])
+
+  /** Con entreno/descanso apagado: marca el día como de entreno y activa la opción (con «Deshacer»). */
+  function markTraining() {
+    const previous = app.day_types?.[date] ?? null
+    const prefs = { ...app.prefs, day_types: true }
+    savePrefs({ day_types: true })
+    setDayType(date, 'entreno')
+    haptic('select')
+    toast({
+      title: `${KIND_LABEL.entreno}: ${fmt(targetsFor(app.targets, prefs, 'entreno').kcal)} kcal`,
+      description: `Activados los días de entreno y descanso. Habituales: ${trainingDaysText(prefs.training_days ?? DEFAULT_TRAINING_DAYS)}. Cámbialo en Ajustes.`,
+      action: {
+        label: 'Deshacer',
+        onClick: () => {
+          setDayType(date, previous)
+          savePrefs({ day_types: false })
+        },
+      },
+    })
+  }
 
   function copyAll(target: { date: string }) {
     const copies = copyInputs(list, target)
@@ -163,6 +184,16 @@ export default function Today() {
               <span className="text-text-3" data-num>
                 · {fmt(day.targets.kcal)} kcal
               </span>
+            </button>
+          )}
+          {!day.kind && (
+            <button
+              type="button"
+              onClick={markTraining}
+              className="mt-1.5 inline-flex h-9 items-center gap-1.5 rounded-full border border-dashed border-border-strong px-3 text-[13px] font-medium text-text-2 transition-colors hover:bg-surface-2 hover:text-text"
+            >
+              <Dumbbell className="size-3.5 text-text-3" aria-hidden />
+              {isToday ? '¿Entrenas hoy?' : '¿Entrenaste este día?'}
             </button>
           )}
         </div>

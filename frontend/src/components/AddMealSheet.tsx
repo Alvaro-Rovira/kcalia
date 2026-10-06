@@ -145,6 +145,8 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
   const [notice, setNotice] = useState('')
   const [servings, setServings] = useState(1)
   const [saved, setSaved] = useState(false)
+  // Foto adjunta, ya reducida: se envía junto a la descripción al pulsar «Analizar», no al elegirla.
+  const [photo, setPhoto] = useState<{ blob: Blob; url: string } | null>(null)
   const via = useRef<Via>('text')
   const abort = useRef<AbortController | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
@@ -157,6 +159,7 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
       return
     }
     setPhase({ kind: 'input' })
+    setPhoto(null)
     setText(initialText ?? '')
     setNotice('')
     setServings(1)
@@ -271,9 +274,11 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
       form.append('audio', blob, filename)
       try {
         const { text: heard } = await api.post<{ text: string }>('/api/transcribe', form)
+        // No se analiza solo: se revisa lo que se ha oído y se puede añadir una foto antes de enviar.
         via.current = 'voice'
-        setText(heard)
-        await analyze(heard)
+        setText((current) => [current.trim(), heard.trim()].filter(Boolean).join(' ').slice(0, 600))
+        setPhase({ kind: 'input' })
+        textarea.current?.focus()
       } catch (error) {
         setNotice(errorMessage(error))
         setPhase({ kind: 'input' })
@@ -285,19 +290,36 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
     },
   )
 
-  async function onPhoto(file: File | undefined) {
+  async function attachPhoto(file: File | undefined) {
     if (!file) return
-    if (!navigator.onLine) return setPhase({ kind: 'offline' })
     setNotice('')
     try {
       const image = await downscaleImage(file)
       if (previewUrl.current) URL.revokeObjectURL(previewUrl.current)
       previewUrl.current = URL.createObjectURL(image)
-      setPhase({ kind: 'busy', mode: 'photo', preview: previewUrl.current })
-      const form = new FormData()
-      form.append('image', image, 'comida.jpg')
-      form.append('note', text.trim())
-      abort.current = new AbortController()
+      setPhoto({ blob: image, url: previewUrl.current })
+      haptic('select')
+    } catch {
+      setNotice('No he podido leer esa imagen. Prueba con otra foto.')
+    }
+  }
+
+  function removePhoto() {
+    if (previewUrl.current) URL.revokeObjectURL(previewUrl.current)
+    previewUrl.current = null
+    setPhoto(null)
+  }
+
+  async function analyzePhoto() {
+    if (!photo) return
+    if (!navigator.onLine) return setPhase({ kind: 'offline' })
+    setNotice('')
+    setPhase({ kind: 'busy', mode: 'photo', preview: photo.url })
+    const form = new FormData()
+    form.append('image', photo.blob, 'comida.jpg')
+    form.append('note', text.trim())
+    abort.current = new AbortController()
+    try {
       const result = await api.post<ResolveResult>('/api/meals/photo', form, abort.current.signal)
       if (result.status === 'clarify') return setPhase({ kind: 'clarify', question: result.question })
       if (result.status !== 'ai') return setPhase({ kind: 'input' })
@@ -311,6 +333,14 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
       setNotice(error instanceof ApiError ? error.message : 'No he podido leer esa imagen. Prueba con otra foto.')
       setPhase({ kind: 'input' })
     }
+  }
+
+  /** Con foto, foto + descripción a la IA de visión; sin foto, el camino de siempre (historial, productos, IA). */
+  function submit(options: { skipHistory?: boolean } = {}) {
+    if (photo) return void analyzePhoto()
+    if (!text.trim()) return
+    via.current = via.current === 'voice' ? 'voice' : 'text'
+    void analyze(text, options)
   }
 
   const quickProduct = (product: Product) => {
@@ -379,7 +409,7 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
         aria-hidden
         tabIndex={-1}
         onChange={(event) => {
-          void onPhoto(event.target.files?.[0])
+          void attachPhoto(event.target.files?.[0])
           event.target.value = ''
         }}
       />
@@ -399,11 +429,24 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
               <form
                 onSubmit={(event) => {
                   event.preventDefault()
-                  via.current = via.current === 'voice' ? 'voice' : 'text'
-                  void analyze(text)
+                  submit()
                 }}
               >
                 <div className="rounded-lg border border-border bg-surface-2 transition-colors focus-within:border-accent">
+                  {photo && (
+                    <div className="flex items-center gap-3 px-3 pt-3">
+                      <img src={photo.url} alt="Foto de la comida" className="size-16 shrink-0 rounded-md border border-border object-cover" />
+                      <p className="min-w-0 flex-1 text-[13px] leading-snug text-text-3">Se analizará junto a lo que escribas o dictes.</p>
+                      <button
+                        type="button"
+                        onClick={removePhoto}
+                        aria-label="Quitar la foto"
+                        className="grid size-11 shrink-0 place-items-center rounded-full text-text-3 transition-colors hover:bg-surface-3 hover:text-text"
+                      >
+                        <X className="size-[18px]" aria-hidden />
+                      </button>
+                    </div>
+                  )}
                   <label htmlFor="meal-text" className="sr-only">
                     Describe lo que has comido
                   </label>
@@ -418,14 +461,18 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' && !event.shiftKey) {
                         event.preventDefault()
-                        void analyze(text)
+                        submit()
                       }
                     }}
                     autoFocus
                     rows={3}
                     maxLength={600}
                     enterKeyHint="send"
-                    placeholder="¿Qué has comido? Por ejemplo: dos huevos revueltos con una tostada de pan integral y aceite"
+                    placeholder={
+                      photo
+                        ? 'Añade lo que no se ve en la foto: el aceite, la salsa, cuánto era…'
+                        : '¿Qué has comido? Por ejemplo: dos huevos revueltos con una tostada de pan integral y aceite'
+                    }
                     className="block w-full resize-none bg-transparent px-4 pt-3.5 pb-1 text-[17px] leading-snug text-text outline-none placeholder:text-text-3"
                   />
                   <div className="flex items-center gap-1 px-2 pb-2">
@@ -440,7 +487,7 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
                     <button
                       type="button"
                       onClick={() => fileInput.current?.click()}
-                      aria-label="Hacer o elegir una foto de la comida"
+                      aria-label={photo ? 'Cambiar la foto' : 'Añadir una foto de la comida'}
                       className="grid size-11 place-items-center rounded-full text-text-2 transition-colors hover:bg-surface-3 hover:text-text"
                     >
                       <Camera className="size-[21px]" aria-hidden />
@@ -449,7 +496,7 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
                     <motion.button
                       type="submit"
                       whileTap={{ scale: 0.9 }}
-                      disabled={!text.trim()}
+                      disabled={!text.trim() && !photo}
                       aria-label="Analizar comida"
                       className="grid size-11 place-items-center rounded-full bg-accent text-on-accent transition-opacity disabled:opacity-30"
                     >
@@ -622,7 +669,7 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
                 <Button variant="secondary" className="flex-1" onClick={() => setPhase({ kind: 'input' })}>
                   Volver
                 </Button>
-                <Button className="flex-[2]" onClick={() => void analyze(text, { skipHistory: true })}>
+                <Button className="flex-[2]" onClick={() => submit({ skipHistory: true })}>
                   Analizar de nuevo
                 </Button>
               </div>

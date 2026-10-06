@@ -621,7 +621,12 @@ class AiClient:
         data_uri = f"data:{mime};base64,{base64.b64encode(image).decode()}"
         prompt = PHOTO_INSTRUCTIONS
         if note.strip():
-            prompt += f"\n\nNota de quien la ha comido: {note.strip()}"
+            prompt += (
+                f"\n\nDescripción de quien la ha comido: {note.strip()}\n"
+                "Usa la foto para el tamaño de las raciones y lo que la descripción no mencione. Si la descripción y "
+                "la foto no coinciden, manda la descripción: incluye lo que diga aunque no se vea (aceite, salsas, lo "
+                "que había debajo, otros platos) y respeta las cantidades que indique."
+            )
         content = [
             {"type": "image_url", "image_url": {"url": data_uri}},
             {"type": "text", "text": prompt},

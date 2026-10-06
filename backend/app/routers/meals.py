@@ -143,7 +143,8 @@ def resolve(
 @router.post("/meals/photo")
 def analyze_photo(
     image: UploadFile = File(...),
-    note: str = Form(default="", max_length=300),
+    # Descripción escrita o dictada que acompaña a la foto (mismo límite que el cuadro de texto).
+    note: str = Form(default="", max_length=600),
     db: Session = Depends(get_db),
     ai: AiClient = Depends(get_ai_client),
     user: User = Depends(require_user),
@@ -158,7 +159,8 @@ def analyze_photo(
     meal = run_ai(db, "vision", lambda: ai.analyze_photo(data, mime, note))
     if not meal.items:
         return {"status": "clarify", "question": meal.clarification}
-    return {"status": "ai", "draft": _draft_from_ai(meal, "", "photo")}
+    # Con el texto de la descripción, la próxima vez que se escriba igual sale del historial sin IA.
+    return {"status": "ai", "draft": _draft_from_ai(meal, note.strip(), "photo")}
 
 
 @router.post("/transcribe")

@@ -57,8 +57,8 @@ Kcalia es una PWA en español, pensada primero para el móvil, que vive en tu pr
 **Registrar lo que comes**
 
 - **Texto libre.** «Dos huevos revueltos con una tostada de pan integral y aceite» se convierte en ingredientes con gramos, calorías, proteínas, hidratos, grasas y fibra. Antes de guardar ves el desglose y puedes corregir cualquier cantidad o añadir un ingrediente a mano (con autocompletado de los que ya conoce).
-- **Foto.** La imagen se reduce en el móvil y el modelo de visión estima el plato. Puedes añadir una nota («era media ración»).
-- **Voz.** Grabas, se transcribe con un Whisper propio que corre en tu servidor (unos 4-5 segundos por frase en CPU) y el texto sigue el mismo camino que si lo hubieras escrito. En el iPhone, además, un atajo de Siri: «Oye Siri, apuntar en Kcalia».
+- **Foto, sola o con tu descripción.** Adjuntas la foto (se reduce en el móvil) y, antes o después, escribes o dictas lo que no se ve: «debajo había dos cucharadas de aceite», «era media ración». La IA de visión recibe las dos cosas en una sola consulta; la foto marca el tamaño de las raciones y tu descripción manda en lo que no se ve o no cuadra. La comida queda guardada con tu texto, así que la próxima vez que lo escribas igual sale del historial sin IA.
+- **Voz.** Grabas, se transcribe con un Whisper propio que corre en tu servidor (unos 4-5 segundos por frase en CPU) y el texto aparece en el cuadro para que lo revises, le añadas una foto si quieres y lo envíes. En el iPhone, además, un atajo de Siri: «Oye Siri, apuntar en Kcalia».
 - **Código de barras.** Se escanea con la cámara (con el detector nativo del navegador o, en iPhone, un lector WebAssembly que se descarga solo la primera vez) y los valores llegan de Open Food Facts. Los revisas y queda guardado como producto propio, sin IA.
 - **Productos con etiqueta.** Haces una foto a la tabla nutricional de un envase. La IA la lee, la revisas con la foto al lado y queda guardada. Desde entonces «dos yogures ligeros» usa sus cifras exactas multiplicadas por dos, también sin conexión.
 - **Bebidas**, con su alcohol contado aparte (7 kcal por gramo) y fuera de los macros.
@@ -77,7 +77,7 @@ Kcalia es una PWA en español, pensada primero para el móvil, que vive en tu pr
 
 **Entrenamiento**
 
-- **Días de entreno y de descanso** con objetivos propios: por defecto +200 kcal los días que entrenas y −100 los que no, o cifras a mano. Se marca por día de la semana o día a día.
+- **Días de entreno y de descanso** con objetivos propios: por defecto +200 kcal los días que entrenas y −100 los que no, o cifras a mano. Se marca por día de la semana o día a día; en Hoy, «¿Entrenas hoy?» lo activa con un toque (y «Deshacer» lo revierte).
 - **Registro de entrenos** en `/entreno`: rutinas de ejemplo (empuje, tirón, pierna, cuerpo completo) y las tuyas, series con peso y repeticiones, «Repetir» la anterior, temporizador de descanso, última marca de cada ejercicio, 1RM estimado y progresión. Funciona sin conexión.
 - **Calorías del entreno** estimadas con MET × peso × duración según la intensidad. Por defecto son solo una referencia; se pueden sumar al objetivo del día desde Ajustes.
 

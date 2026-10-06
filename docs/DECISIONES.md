@@ -83,3 +83,11 @@ Decisiones tomadas sin poder preguntar, con el motivo. La más reciente, abajo.
     (con su valor por defecto, mostrando únicamente los nombres) y genera las claves VAPID dentro del contenedor la
     primera vez, sin que pasen por la pantalla. El contacto VAPID por defecto es `https://DOMAIN` porque Apple rechaza
     `mailto:` con dominios como `localhost`.
+26. **Foto con descripción** (2026-10-07, a petición del usuario): la foto es un adjunto que se envía con el texto al
+    pulsar «Analizar», no al elegirla. Dictar ya no analiza solo: rellena el cuadro para revisarlo y añadir la foto (un
+    toque más, pero no se gasta IA con una transcripción mal oída). Con foto siempre se usa la IA de visión, con la
+    instrucción de que la descripción manda en lo que no se ve o no cuadra; la comida se guarda con ese texto para
+    reconocerla después sin IA. Límite de la descripción: 600 caracteres, como el cuadro.
+27. **«¿Entrenas hoy?»**: con entreno/descanso desactivado (lo está de fábrica), Hoy muestra este botón; al pulsarlo
+    marca el día como de entreno y activa la opción con sus valores por defecto, con «Deshacer». Antes la función solo
+    se descubría en Ajustes.

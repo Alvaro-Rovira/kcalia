@@ -753,3 +753,65 @@ def test_24_atajos_de_la_pwa_y_de_voz(page: Page, servers, ai_calls):
     page.get_by_role("button", name="Atajo de voz en iPhone").click()
     expect(page.get_by_test_id("voice-url")).to_have_text(servers["app"] + "/?nueva=1&texto=")
     assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_25_foto_con_descripcion(page: Page, servers, ai_calls, tmp_path):
+    """Describir (o dictar) y adjuntar una foto: se analizan juntas, solo al pulsar «Analizar»."""
+    import base64
+    from datetime import date
+
+    data_url = page.evaluate(
+        """() => { const c = document.createElement('canvas'); c.width = 800; c.height = 600
+          const x = c.getContext('2d'); x.fillStyle = '#c96'; x.fillRect(0, 0, 800, 600); return c.toDataURL('image/jpeg', 0.9) }"""
+    )
+    photo = tmp_path / "plato.jpg"
+    photo.write_bytes(base64.b64decode(data_url.split(",", 1)[1]))
+    text = "pechuga de pollo con arroz y dos cucharadas de aceite debajo"
+
+    page.goto(servers["app"])
+    page.get_by_role("button", name="Añadir comida").last.click()
+    dialog = page.get_by_role("dialog")
+    dialog.get_by_label("Describe lo que has comido").fill(text)
+    before = ai_calls()
+    dialog.locator("input[type=file]").set_input_files(str(photo))
+    expect(dialog.get_by_role("img", name="Foto de la comida")).to_be_visible()
+    page.wait_for_timeout(600)
+    assert ai_calls() == before  # elegir la foto no la envía
+    # Se puede quitar y volver a poner sin perder lo escrito.
+    dialog.get_by_role("button", name="Quitar la foto").click()
+    expect(dialog.get_by_role("img", name="Foto de la comida")).to_have_count(0)
+    dialog.locator("input[type=file]").set_input_files(str(photo))
+    expect(dialog.get_by_label("Describe lo que has comido")).to_have_value(text)
+
+    dialog.get_by_role("button", name="Analizar comida").click()
+    expect(page.get_by_text("Estimado desde tu foto")).to_be_visible()
+    assert ai_calls() == before + 1  # una sola consulta, con la foto y la descripción
+    assert text in httpx.get(f"{servers['ai']}/last-photo").json()["prompt"]
+    page.get_by_role("button", name=" Guardar ·").click()
+    today = date.today().isoformat()
+    wait_until(
+        lambda: any(
+            m["text"] == text and m["source"] == "photo"
+            for m in api_get(page, servers, f"/api/meals?date={today}")["meals"]
+        )
+    )
+    assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_26_marcar_entreno_desde_hoy(page: Page, servers):
+    """Con entreno/descanso desactivado, Hoy ofrece «¿Entrenas hoy?»: lo marca y lo activa; «Deshacer» lo revierte."""
+    page.request.patch(
+        servers["app"] + "/api/prefs",
+        data={"day_types": False, "training_days": [0, 2, 4]},
+        headers={"Origin": servers["app"]},
+    )
+    page.goto(servers["app"])
+    page.reload()
+    page.get_by_role("button", name="¿Entrenas hoy?").click()
+    expect(page.get_by_role("button", name="Día de entreno. Cambiar a descanso")).to_be_visible()
+    expect(page.get_by_text("Activados los días de entreno y descanso")).to_be_visible()
+    wait_until(lambda: api_get(page, servers, "/api/prefs")["day_types"] is True)
+    page.get_by_role("button", name="Deshacer").first.click()
+    expect(page.get_by_role("button", name="¿Entrenas hoy?")).to_be_visible()
+    wait_until(lambda: api_get(page, servers, "/api/prefs")["day_types"] is False)
+    assert not page.errors  # type: ignore[attr-defined]

@@ -54,7 +54,16 @@ def client(service):
         login(c, "ana")
         c.put(
             "/api/profile",
-            json=dict(sex="mujer", age=34, height_cm=165, weight_kg=61, activity="ligero", goal="mantenimiento"),
+            # Fecha fija: con la de hoy, el día simulado (NOW) podría coincidir con el peso del perfil y no avisar.
+            json=dict(
+                sex="mujer",
+                age=34,
+                height_cm=165,
+                weight_kg=61,
+                activity="ligero",
+                goal="mantenimiento",
+                today="2026-10-01",
+            ),
         )
         yield c
 

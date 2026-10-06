@@ -35,3 +35,13 @@ export function targetsFor(base: DayTargetsValues, prefs: Partial<Prefs> | undef
 }
 
 export const KIND_LABEL: Record<DayKind, string> = { entreno: 'Día de entreno', descanso: 'Día de descanso' }
+
+const WEEKDAY_NAMES = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
+
+/** Días de entreno habituales en palabras: «lunes, miércoles y viernes». 0 = lunes. */
+export function trainingDaysText(days: number[]): string {
+  const names = [...new Set(days)].sort((a, b) => a - b).map((day) => WEEKDAY_NAMES[day])
+  if (!names.length) return 'ningún día'
+  if (names.length === 7) return 'todos los días'
+  return names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} y ${names[names.length - 1]}`
+}

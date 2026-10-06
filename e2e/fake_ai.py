@@ -18,6 +18,8 @@ from fastapi import FastAPI, Request
 
 app = FastAPI()
 CALLS = {"chat": 0, "stt": 0}
+# Texto que acompañó a la última foto (para comprobar que la descripción llega a la IA).
+LAST_PHOTO = {"prompt": ""}
 
 
 FIBER100 = {"pan integral": 7, "arroz blanco cocido": 0.4, "lentejas": 7.9, "avena": 10, "platano": 2.6, "nueces": 6.7,
@@ -213,6 +215,7 @@ def answer(messages: list[dict]) -> dict:
             content = message["content"]
             break
     if isinstance(content, list):
+        LAST_PHOTO["prompt"] = next((p["text"] for p in content if p.get("type") == "text"), "")
         return {**PHOTO, "clarification": None}
     text = plain(content.removeprefix("Comida:").strip())
     if any(text == u or text.startswith(u + " ") for u in UNKNOWN) or len(text) < 3:
@@ -285,6 +288,11 @@ def off_product(code: str):
 @app.get("/calls")
 def calls():
     return CALLS
+
+
+@app.get("/last-photo")
+def last_photo():
+    return LAST_PHOTO
 
 
 if __name__ == "__main__":
