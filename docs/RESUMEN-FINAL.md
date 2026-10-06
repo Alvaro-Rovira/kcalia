@@ -52,9 +52,32 @@ Typecheck, ruff (también en `scripts/`) y build en verde. Ninguna prueba llama 
 Facts, servicios de push y S3 se simulan. Los vectores oficiales (RFC 8291 para push, ejemplo de AWS para SigV4)
 fijan que la criptografía propia es correcta.
 
-## Despliegue
+## Despliegue (6 de octubre de 2026, 19:05)
 
-Pendiente de completar al desplegar.
+En `https://kcalia.roviradev.duckdns.org`, solo los contenedores de Kcalia en `/opt/kcalia`, con `./deploy/deploy.sh`.
+
+| Paso | Resultado |
+|---|---|
+| Estado previo | commit `6b1b693`, `kcalia-app` y `kcalia-stt` sanos; clave de IA presente (no se ha mostrado) |
+| Copia previa | `/opt/kcalia-predeploy/kcalia-20261006-190016-6b1b693.db` (copia consistente, integridad `ok`); imágenes anteriores guardadas como `kcalia-app:pre-6b1b693` y `kcalia-stt:pre-6b1b693` |
+| Ensayo | la migración se ejecutó antes con la imagen nueva sobre una copia de esa base, sin red: mismos datos, cuenta administradora |
+| Despliegue | commit `809247b`; 20 variables nuevas añadidas a `.env` con su valor por defecto (solo se mostraron los nombres); claves VAPID generadas en el contenedor sin mostrarse; Caddy sin cambios |
+| Migración | 1, 2 y 3 aplicadas sin errores, con su copia `premigracion-kcalia-v0-20261006-190512.db.gz` |
+| Datos | iguales que antes: 1 cuenta (aprobada y administradora), 3 comidas, 2 productos, 1 peso; integridad `ok` |
+| Acceso | 14 comprobaciones con la imagen desplegada sobre una base temporal (pendiente sin acceso, aprobar, `/admin` solo para el administrador, aislamiento entre cuentas, suspender, push configurado) y comprobaciones públicas en producción (todas las rutas de datos dan 401 sin sesión, origen ajeno 403, cabeceras de seguridad, atajos del manifiesto) |
+| Resto del servidor | los otros 10 contenedores, intactos (sin reinicios desde el 22-23 de septiembre); Caddy activo y sin copias nuevas del `Caddyfile` |
+| CI de GitHub | en verde para `809247b` |
+
+No he creado cuentas en producción ni he entrado con la tuya: el flujo con sesión se ha probado con la imagen
+desplegada sobre una base temporal y vacía.
+
+**Volver atrás** (no ha hecho falta), dentro de `/opt/kcalia`: parar la app, restaurar la copia previa en el volumen
+y arrancar las imágenes `pre-6b1b693` con `git checkout 6b1b693`. Cuando estés contento con la versión nueva, esas
+imágenes se pueden borrar para liberar unos 2 GB:
+
+```bash
+ssh root@161.97.67.178 'docker image rm kcalia-app:pre-6b1b693 kcalia-stt:pre-6b1b693'
+```
 
 ## Lo que no he podido verificar yo
 

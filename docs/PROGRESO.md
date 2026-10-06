@@ -57,17 +57,16 @@ Tras la fase 5: 431 pytest, 182 Vitest, 25 e2e en verde.
 
 ## Fase final
 - [x] A Revisión global, README, .env.example, capturas, RESUMEN-FINAL
-- [ ] B Merge en main y push
-- [ ] C Localizar servidor
-- [ ] D Copia previa y comprobaciones en el servidor
-- [ ] E Despliegue
-- [ ] F Verificación en producción
-- [ ] H Cierre
+- [x] B Merge en main y push
+- [x] C Localizar servidor
+- [x] D Copia previa y comprobaciones en el servidor
+- [x] E Despliegue
+- [x] F Verificación en producción
+- [x] H Cierre
 
 ## Notas para retomar
 - Batería: `cd backend && uv run ruff check app tests && uv run pytest -q`; `cd frontend && npx tsc -b --noEmit && npm test
   && npm run build`; e2e: `uv run --project backend --group e2e pytest e2e -q` (19 en verde tras la fase 3).
 - ruff limpio también en `scripts/` (y en CI).
-- Pendiente: 5.2, 5.3 y la fase final (README para GitHub, capturas, merge, push, redespliegue en el
-  Docker dedicado de Kcalia en la VPS y verificación). Pausado a petición del usuario tras 4.2; seguir cuando lo diga.
+- Todo hecho y desplegado el 2026-10-06 (`809247b`). Ver `docs/RESUMEN-FINAL.md`.
 
