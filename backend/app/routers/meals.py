@@ -242,9 +242,10 @@ def create_meal(body: MealIn, db: Session = Depends(get_db)) -> dict:
             origin="photo" if body.source == "photo" else body.source,
         )
 
+    services.learn_manual_items(db, items)
     if body.source in ("ai", "photo"):
-        # Lo que viene de una etiqueta no se aprende como ingrediente genérico.
-        learnable = [item for item in items if not item.get("product_id")]
+        # Lo que viene de una etiqueta (o se añadió a mano) no se aprende como ingrediente de la IA.
+        learnable = [item for item in items if not item.get("product_id") and not item.get("manual")]
         if learnable:
             services.learn_from_meal(
                 db, text if body.source == "ai" and len(learnable) == len(items) else "", learnable
@@ -297,6 +298,7 @@ def update_meal(client_id: str, body: MealPatch, db: Session = Depends(get_db)) 
         meal.name = body.name
     if body.items is not None:
         meal.items = [item.model_dump() for item in body.items]
+        services.learn_manual_items(db, meal.items)
     if body.servings is not None:
         meal.servings = body.servings
     macro = totals(meal.items, meal.servings)
@@ -326,6 +328,12 @@ def restore_meal(client_id: str, db: Session = Depends(get_db)) -> dict:
     db.commit()
     services.refresh_week_if_stored(db, meal.date, today_local())
     return services.meal_dict(meal)
+
+
+@router.get("/foods")
+def list_foods(db: Session = Depends(get_db)) -> dict:
+    """Caché de ingredientes, para autocompletar al añadir uno a mano."""
+    return {"foods": services.all_foods(db)}
 
 
 @router.get("/dishes")

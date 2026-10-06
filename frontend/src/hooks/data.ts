@@ -2,11 +2,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useSyncExternalStore } from 'react'
 import { api, newClientId } from '@/lib/api'
 import { itemsTotal } from '@/lib/macros'
+import { foodKey } from '@/lib/textnorm'
 import type {
   AuthStatus,
   Bootstrap,
   DayTotal,
   Dish,
+  FoodEntry,
+  Item,
   Meal,
   MealInput,
   Stats,
@@ -93,6 +96,32 @@ export function useOnline(): boolean {
   )
 }
 
+/** Los ingredientes añadidos a mano ya salen al autocompletar, también sin red (el servidor los aprende al sincronizar). */
+function rememberManualFoods(client: ReturnType<typeof useQueryClient>, items: Item[]): void {
+  const manual = items.filter((i) => i.manual && !i.product_id && i.grams > 0)
+  if (!manual.length) return
+  client.setQueryData<Bootstrap>(keys.bootstrap, (old) => {
+    if (!old) return old
+    const foods = [...(old.foods ?? [])]
+    for (const item of manual) {
+      const per = (v: number) => Math.round((v / item.grams) * 1000) / 10
+      const entry: FoodEntry = {
+        name: item.name,
+        norm: foodKey(item.name),
+        kcal100: per(item.kcal),
+        protein100: per(item.protein),
+        carbs100: per(item.carbs),
+        fat100: per(item.fat),
+        unit_grams: {},
+      }
+      const index = foods.findIndex((f) => f.norm === entry.norm)
+      if (index >= 0) foods[index] = { ...foods[index], ...entry, unit_grams: foods[index].unit_grams }
+      else foods.unshift(entry)
+    }
+    return { ...old, foods }
+  })
+}
+
 /** Escrituras del diario: se reflejan al instante y viajan al servidor por la cola offline. */
 export function useMealActions() {
   const client = useQueryClient()
@@ -125,10 +154,11 @@ export function useMealActions() {
         ...itemsTotal(body.items, body.servings),
       }
       patchList(body.date, (meals) => [...meals, meal])
+      rememberManualFoods(client, body.items)
       void enqueue({ type: 'meal.create', body })
       return meal
     },
-    [patchList],
+    [patchList, client],
   )
 
   const remove = useCallback(
@@ -161,9 +191,10 @@ export function useMealActions() {
       } else {
         patchList(meal.date, (meals) => meals.map((m) => (m.client_id === meal.client_id ? next : m)))
       }
+      if (patch.items) rememberManualFoods(client, patch.items)
       void enqueue({ type: 'meal.patch', clientId: meal.client_id, body: patch })
     },
-    [patchList],
+    [patchList, client],
   )
 
   return { add, remove, restore, update }

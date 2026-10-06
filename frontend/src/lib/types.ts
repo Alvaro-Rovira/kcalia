@@ -21,6 +21,19 @@ export interface Item extends Macros {
   grams: number
   /** Si sale de la etiqueta de un producto guardado. */
   product_id?: number | null
+  /** Añadido a mano: al guardar la comida se aprende en la caché de ingredientes. */
+  manual?: boolean
+}
+
+/** Ingrediente de la caché: macros por 100 g y gramos por unidad habitual. */
+export interface FoodEntry {
+  name: string
+  norm: string
+  kcal100: number
+  protein100: number
+  carbs100: number
+  fat100: number
+  unit_grams: Record<string, number>
 }
 
 /** Producto envasado con las cifras de su etiqueta (por 100 g o 100 ml). */
@@ -172,6 +185,8 @@ export interface Bootstrap {
   plan: Plan | null
   dishes: Dish[]
   products: Product[]
+  /** Caché de ingredientes (las versiones anteriores no la traían). */
+  foods?: FoodEntry[]
   ai: {
     configured: boolean
     model: string

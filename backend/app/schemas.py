@@ -69,6 +69,8 @@ class Item(BaseModel):
     grams: float = Field(default=0, ge=0, le=5000)
     # Si el ingrediente sale de la etiqueta de un producto guardado.
     product_id: int | None = None
+    # Añadido a mano por el usuario: al guardar la comida se aprende en la caché de ingredientes.
+    manual: bool = False
     kcal: float = Field(ge=0, le=6000)
     protein: float = Field(ge=0, le=600)
     carbs: float = Field(ge=0, le=1200)

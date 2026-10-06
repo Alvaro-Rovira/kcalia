@@ -28,6 +28,7 @@ def bootstrap(user: User = Depends(require_user), db: Session = Depends(get_db))
         "plan": services.plan_for(profile) if profile else None,
         "dishes": services.all_dishes(db),
         "products": [services.product_dict(p) for p in services.all_products(db)],
+        "foods": services.all_foods(db),
         "ai": {
             "configured": get_ai_client().configured,
             "model": settings.ai_model,

@@ -346,6 +346,31 @@ def learn_from_meal(db: Session, text: str, items: list[dict]) -> None:
     store_foods(db, learn_foods(text, items))
 
 
+def learn_manual_items(db: Session, items: list[dict]) -> None:
+    """Los ingredientes añadidos a mano entran en la caché: la próxima vez salen al autocompletar y sin IA."""
+    manual = [item for item in items if item.get("manual") and not item.get("product_id") and item.get("grams", 0) > 0]
+    if manual:
+        store_foods(db, learn_foods("", manual))
+
+
+def food_dict(food: Food) -> dict:
+    return {
+        "name": food.name,
+        "norm": food.norm,
+        "kcal100": food.kcal100,
+        "protein100": food.protein100,
+        "carbs100": food.carbs100,
+        "fat100": food.fat100,
+        "unit_grams": food.unit_grams or {},
+    }
+
+
+def all_foods(db: Session, limit: int = 1500) -> list[dict]:
+    """Caché de ingredientes del usuario, los más usados primero (para autocompletar en el móvil)."""
+    foods = db.scalars(select(Food).order_by(Food.hits.desc(), Food.updated_at.desc()).limit(limit))
+    return [food_dict(f) for f in foods]
+
+
 # ---------------------------------------------------------------- productos
 
 
