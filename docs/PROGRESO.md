@@ -44,7 +44,9 @@ Tras la fase 3: 383 pytest, 156 Vitest, 19 e2e en verde.
 - [x] 4.1 Recordatorios con Web Push
 - [x] 4.2 Planificador semanal y lista de la compra
 - [x] 4.3 Sugerencia para cerrar el día
-- [ ] 4.4 Compartir el resumen semanal como imagen
+- [x] 4.4 Compartir el resumen semanal como imagen
+
+Tras la fase 4: 413 pytest, 176 Vitest, 23 e2e en verde.
 
 ## Fase 5 · Datos
 - [ ] 5.1 Copia de seguridad fuera del servidor
@@ -64,6 +66,6 @@ Tras la fase 3: 383 pytest, 156 Vitest, 19 e2e en verde.
 - Batería: `cd backend && uv run ruff check app tests && uv run pytest -q`; `cd frontend && npx tsc -b --noEmit && npm test
   && npm run build`; e2e: `uv run --project backend --group e2e pytest e2e -q` (19 en verde tras la fase 3).
 - ruff de `scripts/` solo para gen-vapid.py y make-admin.py (los demás scripts ya tenían líneas largas antes).
-- Pendiente: 4.4, 5.1, 5.2, 5.3 y la fase final (README para GitHub, capturas, merge, push, redespliegue en el
+- Pendiente: 5.1, 5.2, 5.3 y la fase final (README para GitHub, capturas, merge, push, redespliegue en el
   Docker dedicado de Kcalia en la VPS y verificación). Pausado a petición del usuario tras 4.2; seguir cuando lo diga.
 

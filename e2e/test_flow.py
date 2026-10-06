@@ -667,3 +667,21 @@ def test_21_sugerencia_para_cerrar_el_dia(page: Page, servers):
     wait_until(lambda: len(api_get(page, servers, "/api/prefs")["suggest_hidden"]) >= 1)
     page.request.post(servers["app"] + "/api/targets/recalculate", headers=headers)
     assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_22_compartir_el_resumen_como_imagen(page: Page, servers, tmp_path):
+    page.goto(servers["app"] + "/resumen")
+    expect(page.get_by_role("heading", name="Resumen")).to_be_visible()
+    # Sin el menú de compartir del sistema (navegador de pruebas) se descarga la imagen.
+    with page.expect_download() as info:
+        page.get_by_role("button", name="Compartir la semana como imagen").click()
+    download = info.value
+    assert download.suggested_filename.startswith("kcalia-semana-") and download.suggested_filename.endswith(".png")
+    path = tmp_path / "semana.png"
+    download.save_as(path)
+    data = path.read_bytes()
+    assert data[:8] == b"\x89PNG\r\n\x1a\n" and len(data) > 20_000
+    width, height = int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
+    assert (width, height) == (1080, 1350)
+    expect(page.get_by_text("Imagen descargada")).to_be_visible()
+    assert not page.errors  # type: ignore[attr-defined]

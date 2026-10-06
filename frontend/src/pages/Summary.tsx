@@ -13,6 +13,7 @@ import {
   NotebookPen,
   PiggyBank,
   Scale,
+  Share2,
   Star,
   Target,
   TrendingDown,
@@ -36,6 +37,7 @@ import { EmptyState } from '@/ui/EmptyState'
 import { IconButton } from '@/ui/Button'
 import { Ring } from '@/ui/Ring'
 import { Skeleton } from '@/ui/Skeleton'
+import { toast } from '@/ui/toast'
 
 const ACHIEVEMENT_ICONS: Record<string, LucideIcon> = {
   utensils: Utensils,
@@ -188,6 +190,22 @@ export default function Summary() {
   const isCurrent = start === currentWeek
   const streak = stats.data?.streak
 
+  const [sharing, setSharing] = useState(false)
+
+  async function share() {
+    if (!summary) return
+    setSharing(true)
+    try {
+      const { shareSummary } = await import('@/lib/shareCard')
+      const result = await shareSummary(summary)
+      if (result === 'downloaded') toast.success('Imagen descargada', 'Ya puedes compartirla donde quieras.')
+    } catch {
+      toast.error('No he podido crear la imagen')
+    } finally {
+      setSharing(false)
+    }
+  }
+
   const shift = (weeks: number) => {
     const next = addDays(start, weeks * 7)
     if (next > currentWeek) return
@@ -206,6 +224,11 @@ export default function Summary() {
           </p>
         </div>
         <div className="flex shrink-0">
+          {summary && summary.logged_days > 0 && (
+            <IconButton label="Compartir la semana como imagen" disabled={sharing} onClick={() => void share()}>
+              <Share2 className="size-5" aria-hidden />
+            </IconButton>
+          )}
           <IconButton label="Semana anterior" onClick={() => shift(-1)}>
             <ChevronLeft className="size-5" aria-hidden />
           </IconButton>
