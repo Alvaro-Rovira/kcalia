@@ -12,14 +12,17 @@ import {
   PlusSquare,
   RefreshCw,
   Share,
+  ShieldCheck,
   Smartphone,
   Sun,
   Trash2,
   Zap,
 } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
+import { useNavigate } from 'react-router'
 import { Logo, Wordmark } from '@/components/Logo'
 import { PlanExplanation } from '@/components/PlanExplanation'
+import { useAdminOverview } from '@/hooks/admin'
 import { useApp, useOnline, useStats } from '@/hooks/data'
 import { useInstall } from '@/hooks/useInstall'
 import { api, errorMessage } from '@/lib/api'
@@ -83,6 +86,9 @@ export default function Settings() {
   const [theme, setTheme] = useState<ThemePref>(getThemePref)
   const [sheet, setSheet] = useState<'profile' | 'targets' | 'plan' | 'delete-data' | 'delete-account' | null>(null)
   const unit = profile.weight_unit
+  const isAdmin = !!app.user.is_admin
+  const admin = useAdminOverview(isAdmin)
+  const navigate = useNavigate()
 
   async function setUnit(next: 'kg' | 'lb') {
     client.setQueryData<Bootstrap>(keys.bootstrap, (old) => (old?.profile ? { ...old, profile: { ...old.profile, weight_unit: next } } : old))
@@ -125,6 +131,17 @@ export default function Settings() {
         <h1 className="text-[30px] leading-tight font-semibold tracking-[-0.035em] text-text">Ajustes</h1>
         <p className="mt-1 text-[14.5px] text-text-2">Sesión iniciada como {app.user.username}</p>
       </header>
+
+      {isAdmin && (
+        <Section title="Administración" id="a-admin">
+          <Row
+            label="Cuentas, solicitudes y gasto de IA"
+            value={admin.data?.pending ? `${admin.data.pending} ${admin.data.pending === 1 ? 'pendiente' : 'pendientes'}` : undefined}
+            onClick={() => navigate('/admin')}
+            icon={<ShieldCheck className="size-[18px]" aria-hidden />}
+          />
+        </Section>
+      )}
 
       <div className="lg:grid lg:grid-cols-2 lg:gap-x-6">
         <div>
@@ -218,7 +235,13 @@ export default function Settings() {
                 <Row label="Favoritos y recientes, a un toque" value={saved.saved.saved_quick} />
               </>
             )}
+            {app.ai.paused && (
+              <div className="border-b border-border px-4 py-3 text-[13.5px] leading-relaxed text-warn-text">
+                La IA está en pausa por decisión del administrador. Tu historial y tus productos siguen funcionando.
+              </div>
+            )}
             <Row label="Consultas de hoy" value={`${saved?.used_today ?? app.ai.used_today} de ${app.ai.limit}`} />
+            {app.ai.stt_limit !== undefined && <Row label="Audios de hoy" value={`${app.ai.stt_used_today ?? 0} de ${app.ai.stt_limit}`} />}
             <Row label="Modelo" value={app.ai.configured ? app.ai.model : 'Sin configurar'} />
           </Section>
 
@@ -270,7 +293,13 @@ export default function Settings() {
           <Section title="Cuenta" id="a-account">
             <Row label="Cerrar sesión" onClick={() => void logout()} icon={<LogOut className="size-[18px]" aria-hidden />} />
             <Row label="Borrar mis datos" onClick={() => setSheet('delete-data')} icon={<Trash2 className="size-[18px]" aria-hidden />} danger />
-            <Row label="Borrar mi cuenta" onClick={() => setSheet('delete-account')} icon={<Trash2 className="size-[18px]" aria-hidden />} danger />
+            {isAdmin ? (
+              <p className="px-4 py-3 text-[13px] leading-relaxed text-text-3">
+                Eres el administrador: para borrar tu cuenta, antes pasa el rol a otra con <code>scripts/make-admin.py</code> en el servidor.
+              </p>
+            ) : (
+              <Row label="Borrar mi cuenta" onClick={() => setSheet('delete-account')} icon={<Trash2 className="size-[18px]" aria-hidden />} danger />
+            )}
           </Section>
         </div>
       </div>

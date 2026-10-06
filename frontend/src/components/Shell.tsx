@@ -1,9 +1,10 @@
 import clsx from 'clsx'
 import { AnimatePresence, motion } from 'motion/react'
-import { CalendarDays, ChartColumn, CloudOff, House, Plus, Scale, Settings, type LucideIcon } from 'lucide-react'
+import { CalendarDays, ChartColumn, CloudOff, House, Plus, Scale, Settings, ShieldCheck, type LucideIcon } from 'lucide-react'
 import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate, useSearchParams, type Location } from 'react-router'
-import { useOnline, usePendingCount } from '@/hooks/data'
+import { useAdminOverview } from '@/hooks/admin'
+import { useBootstrap, useOnline, usePendingCount } from '@/hooks/data'
 import { isValidISO, todayISO } from '@/lib/dates'
 import { plural } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
@@ -66,7 +67,28 @@ function OfflineChip() {
   )
 }
 
+/** Solicitudes de cuenta pendientes (solo para el administrador; 0 para el resto). */
+function usePendingRequests(): number {
+  const { data } = useBootstrap()
+  const admin = !!data?.user.is_admin
+  return useAdminOverview(admin).data?.pending ?? 0
+}
+
+function Badge({ count, className }: { count: number; className?: string }) {
+  if (!count) return null
+  return (
+    <span
+      className={clsx('grid h-[18px] min-w-[18px] place-items-center rounded-full bg-danger px-1 text-[11px] leading-none font-bold text-bg', className)}
+      data-num
+    >
+      {count > 9 ? '9+' : count}
+      <span className="sr-only"> {count === 1 ? 'solicitud pendiente' : 'solicitudes pendientes'}</span>
+    </span>
+  )
+}
+
 function BottomNav() {
+  const requests = usePendingRequests()
   return (
     <nav
       aria-label="Principal"
@@ -103,6 +125,7 @@ function BottomNav() {
                         aria-hidden
                       />
                     </motion.span>
+                    {to === '/ajustes' && <Badge count={requests} className="absolute -top-1 right-1.5" />}
                   </span>
                   <span className={clsx('text-[11px] leading-none font-medium transition-colors', isActive ? 'text-text' : 'text-text-3')}>
                     {label}
@@ -118,6 +141,9 @@ function BottomNav() {
 }
 
 function Sidebar({ onAdd }: { onAdd: () => void }) {
+  const { data } = useBootstrap()
+  const requests = usePendingRequests()
+  const items = data?.user.is_admin ? [...NAV, { to: '/admin', label: 'Administración', Icon: ShieldCheck }] : NAV
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col border-r border-border bg-surface/60 px-4 py-7 backdrop-blur-xl lg:flex">
       <div className="flex items-center gap-2.5 px-2">
@@ -134,7 +160,7 @@ function Sidebar({ onAdd }: { onAdd: () => void }) {
       </button>
       <nav aria-label="Principal" className="mt-6">
         <ul className="space-y-1">
-          {NAV.map(({ to, label, Icon }) => (
+          {items.map(({ to, label, Icon }) => (
             <li key={to}>
               <NavLink
                 to={to}
@@ -149,7 +175,8 @@ function Sidebar({ onAdd }: { onAdd: () => void }) {
                 {({ isActive }) => (
                   <>
                     <Icon className={clsx('size-5', isActive && 'text-accent-text')} aria-hidden />
-                    {label}
+                    <span className="flex-1">{label}</span>
+                    {to === '/admin' && <Badge count={requests} />}
                   </>
                 )}
               </NavLink>

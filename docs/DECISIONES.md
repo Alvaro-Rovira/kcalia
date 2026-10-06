@@ -20,3 +20,10 @@ Decisiones tomadas sin poder preguntar, con el motivo. La más reciente, abajo.
 7. **Límite del administrador.** El admin solo está sujeto a su propio límite (`ADMIN_AI_DAILY_LIMIT`, por defecto
    `AI_DAILY_LIMIT`) y al interruptor de pausa, que él mismo controla. El tope global se aplica al resto y cuenta
    el consumo de todos. `STT_USER_DAILY_LIMIT` no tenía valor por defecto en el encargo: 30.
+8. **Acciones de administración sin cola offline.** Aprobar, bloquear o borrar cuentas necesita la respuesta del
+   servidor en el momento (y quedar en la auditoría): se exige conexión y se avisa si no la hay. La regla de la cola
+   se aplica a los datos del diario.
+9. **Bloquear no cierra la sesión**: la siguiente petición ya responde 403 y la persona ve «Tu cuenta está
+   bloqueada» en lugar de un login sin explicación. Para echarla del todo está «Cerrar sesiones».
+10. **Precios del panel en dólares** (los de Moonshot): `AI_PRICE_INPUT`/`AI_PRICE_OUTPUT` por millón de tokens y
+    `STT_PRICE_PER_CALL` (0 con el Whisper propio). Es una estimación, no la factura.

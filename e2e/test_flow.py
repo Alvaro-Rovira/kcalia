@@ -265,3 +265,40 @@ def test_09_producto_desde_la_foto_de_su_etiqueta(page: Page, ai_calls, tmp_path
     stats = page.request.get(page.url.split("/")[0] + "//" + page.url.split("/")[2] + "/api/stats").json()
     assert stats["ai"]["saved"]["saved_product"] == 2
     assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_10_solicitud_de_cuenta_aprobada_desde_el_panel(page: Page, browser_instance, servers):
+    """Otra persona solicita cuenta -> ve que está pendiente -> el admin la aprueba en /admin -> ya puede entrar."""
+    other = browser_instance.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True, locale="es-ES")
+    tab = other.new_page()
+    tab.goto(servers["app"])
+    tab.get_by_role("button", name="Solicítala").click()
+    expect(tab.get_by_role("heading", name="Solicita una cuenta")).to_be_visible()
+    tab.locator("input[name=username]").fill("lucia")
+    tab.locator("input[name=password]").fill("otra-clave-segura-7")
+    tab.get_by_role("button", name="Enviar solicitud").click()
+    expect(tab.get_by_role("heading", name="Solicitud enviada")).to_be_visible()
+    tab.get_by_role("button", name="Ir a iniciar sesión").click()
+    tab.locator("input[name=username]").fill("lucia")
+    tab.locator("input[name=password]").fill("otra-clave-segura-7")
+    tab.get_by_role("button", name="Entrar").click()
+    expect(tab.get_by_role("heading", name="Tu cuenta está pendiente de aprobación")).to_be_visible()
+    # Sin aprobar no puede usar nada, tampoco la IA.
+    assert tab.request.post(servers["app"] + "/api/meals/resolve", data={"text": "una pera"}).status == 403
+
+    # El admin ve la solicitud con su indicador y la aprueba.
+    page.goto(servers["app"] + "/ajustes")
+    expect(page.get_by_text("1 pendiente")).to_be_visible()
+    page.get_by_role("button", name="Cuentas, solicitudes y gasto de IA").click()
+    expect(page.get_by_role("heading", name="Administración")).to_be_visible()
+    expect(page.get_by_text("Solicitada")).to_be_visible()
+    page.get_by_role("button", name="Aprobar").click()
+    expect(page.get_by_text("lucia ya puede entrar")).to_be_visible()
+    expect(page.get_by_text("aprobó a")).to_be_visible()
+
+    tab.get_by_role("button", name="Comprobar de nuevo").click()
+    expect(tab.get_by_role("button", name="Empezar", exact=True)).to_be_visible()  # su propio cuestionario inicial
+    # Una cuenta normal no tiene panel de administración.
+    assert tab.request.get(servers["app"] + "/api/admin/overview").status == 403
+    other.close()
+    assert not page.errors  # type: ignore[attr-defined]

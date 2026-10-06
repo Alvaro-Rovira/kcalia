@@ -166,20 +166,36 @@ export interface Plan extends Macros {
 }
 
 export interface Bootstrap {
-  user: { username: string }
+  user: { username: string; is_admin?: boolean }
   profile: Profile | null
   targets: Targets | null
   plan: Plan | null
   dishes: Dish[]
   products: Product[]
-  ai: { configured: boolean; model: string; used_today: number; limit: number }
+  ai: {
+    configured: boolean
+    model: string
+    used_today: number
+    limit: number
+    paused?: boolean
+    stt_used_today?: number
+    stt_limit?: number
+  }
   server_date: string
 }
+
+export type AccountStatus = 'pending' | 'approved' | 'suspended'
+/** first: instalación sin cuentas · open: se pueden solicitar · closed: cerrado · full: demasiadas pendientes */
+export type SignupState = 'first' | 'open' | 'closed' | 'full'
 
 export interface AuthStatus {
   registered: boolean
   authenticated: boolean
   username: string | null
+  /** Las versiones anteriores no lo traían: sin dato, la cuenta se da por aprobada. */
+  status?: AccountStatus | null
+  is_admin?: boolean
+  signup?: SignupState
 }
 
 export type ResolveResult =

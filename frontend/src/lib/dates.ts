@@ -79,3 +79,19 @@ export function greeting(now = new Date()): string {
   if (hour >= 13 && hour < 21) return 'Buenas tardes'
   return 'Buenas noches'
 }
+
+/** «hace 5 min», «hace 3 h», «ayer», «hace 4 días» o la fecha, para marcas de tiempo del servidor. */
+export function fmtAgo(isoDateTime: string | null | undefined, now = Date.now()): string {
+  if (!isoDateTime) return 'nunca'
+  const then = new Date(isoDateTime).getTime()
+  if (Number.isNaN(then)) return '—'
+  const minutes = Math.round((now - then) / 60_000)
+  if (minutes < 1) return 'ahora mismo'
+  if (minutes < 60) return `hace ${minutes} min`
+  const hours = Math.round(minutes / 60)
+  if (hours < 24) return `hace ${hours} h`
+  const days = Math.round(hours / 24)
+  if (days === 1) return 'ayer'
+  if (days < 30) return `hace ${days} días`
+  return fmtShort(toISO(new Date(then)))
+}

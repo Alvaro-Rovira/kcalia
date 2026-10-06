@@ -10,11 +10,13 @@ Orden: la infraestructura y el multiusuario (5.4, 5.5) van primero; ver DECISION
 
 ## Fase 0 · Base
 - [x] 0.0 Paso 0: rama `mejoras-v2`, árbol limpio
-- [ ] 0.1 Migraciones con `PRAGMA user_version`, copia previa y prueba sobre base de demostración
+- [x] 0.1 Migraciones con `PRAGMA user_version`, copia previa y prueba sobre base de demostración
 
 ## Fase 5 (adelantada) · Acceso y seguridad
-- [ ] 5.4 Multiusuario con aprobación manual, aislamiento por `user_id`, límites de gasto
-- [ ] 5.5 Panel de administración `/admin` con auditoría
+- [x] 5.4 Multiusuario con aprobación manual, aislamiento por `user_id`, límites de gasto
+- [x] 5.5 Panel de administración `/admin` con auditoría
+
+Tras 5.5: 304 pytest, 111 Vitest, 11 e2e en verde.
 
 ## Fase 1 · Registro diario
 - [ ] 1.1 Ingrediente a mano dentro de una comida, con autocompletado de la caché
