@@ -51,6 +51,11 @@ class Settings(BaseSettings):
     # Coste estimado de cada audio (0 con el Whisper propio).
     stt_price_per_call: float = 0.0
 
+    # Web Push (recordatorios y avisos al admin). Se generan con scripts/gen-vapid.py; vacías = sin notificaciones.
+    vapid_public_key: str = ""
+    vapid_private_key: str = ""
+    vapid_subject: str = "mailto:admin@localhost"
+
     # Open Food Facts (códigos de barras). Solo se cambia en pruebas, para apuntar a uno simulado.
     off_base_url: str = "https://world.openfoodfacts.org"
 
@@ -78,6 +83,10 @@ class Settings(BaseSettings):
     @property
     def vision_api_key(self) -> str:
         return self.ai_vision_api_key or self.ai_api_key
+
+    @property
+    def push_configured(self) -> bool:
+        return bool(self.vapid_public_key and self.vapid_private_key)
 
     @property
     def admin_ai_limit(self) -> int:

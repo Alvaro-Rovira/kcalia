@@ -461,3 +461,33 @@ class WorkoutSet(TenantMixin, Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
     __table_args__ = (Index("ux_sets_user_client", "user_id", "client_id", unique=True),)
+
+
+class PushSubscription(TenantMixin, Base):
+    """Suscripción Web Push de un navegador (una por dispositivo)."""
+
+    __tablename__ = "push_subscriptions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    endpoint: Mapped[str] = mapped_column(String(800))
+    p256dh: Mapped[str] = mapped_column(String(200))
+    auth: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    last_ok_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    failures: Mapped[int] = mapped_column(Integer, default=0)
+
+    __table_args__ = (Index("ux_push_endpoint", "endpoint", unique=True),)
+
+
+class ReminderLog(TenantMixin, Base):
+    """Recordatorio ya resuelto (enviado o innecesario) un día: no se repite."""
+
+    __tablename__ = "reminder_log"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    date: Mapped[str] = mapped_column(String(10))
+    kind: Mapped[str] = mapped_column(String(30))
+    sent: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    __table_args__ = (Index("ux_reminder_user_day_kind", "user_id", "date", "kind", unique=True),)

@@ -163,6 +163,23 @@ class ProductPatch(BaseModel):
     barcode: str | None = Field(default=None, max_length=20)
 
 
+HHMM = Annotated[str, Field(pattern=r"^([01]\d|2[0-3]):[0-5]\d$")]
+
+
+class MealReminder(BaseModel):
+    slot: Literal["desayuno", "comida", "merienda", "cena", "snack"]
+    time: HHMM
+    enabled: bool = True
+
+
+def _default_meal_reminders() -> list[MealReminder]:
+    return [
+        MealReminder(slot="desayuno", time="10:30"),
+        MealReminder(slot="comida", time="16:00"),
+        MealReminder(slot="cena", time="22:15"),
+    ]
+
+
 class DayTargetsIn(BaseModel):
     kcal: int = Field(ge=800, le=8000)
     protein: int = Field(ge=20, le=500)
@@ -192,6 +209,11 @@ class Prefs(BaseModel):
     add_exercise_kcal: bool = False
     # Temporizador de descanso entre series, en segundos.
     rest_seconds: int = Field(default=90, ge=15, le=600)
+    # Recordatorios por notificación: apagados hasta que el usuario los activa desde Ajustes.
+    reminders: bool = False
+    meal_reminders: list[MealReminder] = Field(default_factory=_default_meal_reminders, max_length=5)
+    weigh_reminder: HHMM | None = "08:30"
+    weigh_days: list[Weekday] = Field(default_factory=lambda: [0, 1, 2, 3, 4, 5, 6], max_length=7)
 
 
 class PrefsPatch(BaseModel):
@@ -206,6 +228,25 @@ class PrefsPatch(BaseModel):
     rest_targets: DayTargetsIn | None = None
     add_exercise_kcal: bool | None = None
     rest_seconds: int | None = Field(default=None, ge=15, le=600)
+    reminders: bool | None = None
+    meal_reminders: list[MealReminder] | None = Field(default=None, max_length=5)
+    weigh_reminder: HHMM | None = None
+    weigh_days: list[Weekday] | None = Field(default=None, max_length=7)
+
+
+class PushSubscriptionIn(BaseModel):
+    endpoint: str = Field(min_length=10, max_length=800, pattern=r"^https://")
+    keys: dict[str, str]
+
+    @model_validator(mode="after")
+    def _keys(self):
+        if not self.keys.get("p256dh") or not self.keys.get("auth"):
+            raise ValueError("faltan las claves p256dh y auth")
+        return self
+
+
+class EndpointIn(BaseModel):
+    endpoint: str = Field(min_length=10, max_length=800)
 
 
 class DayTypeIn(BaseModel):

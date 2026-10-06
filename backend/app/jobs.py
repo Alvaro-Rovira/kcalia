@@ -5,12 +5,13 @@ import logging
 import shutil
 import sqlite3
 import threading
+import time
 from datetime import datetime
 from pathlib import Path
 
 from sqlalchemy import select
 
-from . import services, tenancy
+from . import reminders, services, tenancy
 from .config import Settings, get_settings
 from .db import SessionLocal
 from .models import User
@@ -22,6 +23,8 @@ BACKUP_HOUR = 3
 SUMMARY_WEEKDAY = 6  # domingo
 SUMMARY_HOUR = 21
 CHECK_EVERY_SECONDS = 600
+# Los recordatorios se revisan cada minuto; copias y resúmenes, cada diez.
+REMINDERS_EVERY_SECONDS = 60
 
 
 def backup_database(settings: Settings, now: datetime | None = None) -> Path | None:
@@ -78,12 +81,19 @@ def start_scheduler(stop: threading.Event) -> threading.Thread:
     settings = get_settings()
 
     def loop() -> None:
+        last_heavy = 0.0
         while not stop.is_set():
+            if time.monotonic() - last_heavy >= CHECK_EVERY_SECONDS:
+                last_heavy = time.monotonic()
+                try:
+                    _tick(settings)
+                except Exception:
+                    log.exception("Fallo en las tareas periódicas")
             try:
-                _tick(settings)
+                reminders.run()
             except Exception:
-                log.exception("Fallo en las tareas periódicas")
-            stop.wait(CHECK_EVERY_SECONDS)
+                log.exception("Fallo al revisar los recordatorios")
+            stop.wait(REMINDERS_EVERY_SECONDS)
 
     thread = threading.Thread(target=loop, name="kcalia-jobs", daemon=True)
     thread.start()
