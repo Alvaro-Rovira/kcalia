@@ -199,7 +199,9 @@ def test_07_sin_conexion(page: Page, servers):
 
     # Al volver la red se sincroniza sola.
     context.set_offline(False)
-    expect(page.get_by_text("cambio pendiente")).to_have_count(0, timeout=20_000)
+    # Con red, el aviso pasa a «Sincronizando 1 cambio…»: hay que esperar a que se vaya del todo, no a que deje de
+    # decir «pendiente» (eso pasa al recuperar la red, antes de que el envío termine).
+    expect(page.get_by_role("status").filter(has_text="cambio")).to_have_count(0, timeout=20_000)
     total = page.evaluate(
         "fetch('/api/days?start=2000-01-01&end=2100-01-01').then(r => r.json()).then(d => d.days.reduce((n, x) => n + x.meals, 0))"
     )

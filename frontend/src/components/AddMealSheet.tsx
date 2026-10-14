@@ -7,6 +7,7 @@ import {
   Check,
   History,
   Info,
+  Loader2,
   Mic,
   RotateCcw,
   Sparkles,
@@ -147,6 +148,8 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
   const [saved, setSaved] = useState(false)
   // Foto adjunta, ya reducida: se envía junto a la descripción al pulsar «Analizar», no al elegirla.
   const [photo, setPhoto] = useState<{ blob: Blob; url: string } | null>(null)
+  // Mientras se reduce la foto no se puede analizar: se iría solo el texto y la foto se perdería sin avisar.
+  const [readingPhoto, setReadingPhoto] = useState(false)
   const via = useRef<Via>('text')
   const abort = useRef<AbortController | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
@@ -293,6 +296,7 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
   async function attachPhoto(file: File | undefined) {
     if (!file) return
     setNotice('')
+    setReadingPhoto(true)
     try {
       const image = await downscaleImage(file)
       if (previewUrl.current) URL.revokeObjectURL(previewUrl.current)
@@ -301,6 +305,8 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
       haptic('select')
     } catch {
       setNotice('No he podido leer esa imagen. Prueba con otra foto.')
+    } finally {
+      setReadingPhoto(false)
     }
   }
 
@@ -337,6 +343,7 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
 
   /** Con foto, foto + descripción a la IA de visión; sin foto, el camino de siempre (historial, productos, IA). */
   function submit(options: { skipHistory?: boolean } = {}) {
+    if (readingPhoto) return
     if (photo) return void analyzePhoto()
     if (!text.trim()) return
     via.current = via.current === 'voice' ? 'voice' : 'text'
@@ -496,11 +503,16 @@ export default function AddMealSheet({ open, date: initialDate, slot: initialSlo
                     <motion.button
                       type="submit"
                       whileTap={{ scale: 0.9 }}
-                      disabled={!text.trim() && !photo}
-                      aria-label="Analizar comida"
+                      disabled={readingPhoto || (!text.trim() && !photo)}
+                      aria-busy={readingPhoto}
+                      aria-label={readingPhoto ? 'Preparando la foto' : 'Analizar comida'}
                       className="grid size-11 place-items-center rounded-full bg-accent text-on-accent transition-opacity disabled:opacity-30"
                     >
-                      <ArrowUp className="size-5" strokeWidth={2.6} aria-hidden />
+                      {readingPhoto ? (
+                        <Loader2 className="size-5 animate-spin" aria-hidden />
+                      ) : (
+                        <ArrowUp className="size-5" strokeWidth={2.6} aria-hidden />
+                      )}
                     </motion.button>
                   </div>
                 </div>

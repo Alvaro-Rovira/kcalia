@@ -24,6 +24,7 @@ import type {
   WeekSummary,
   WeightData,
 } from '@/lib/types'
+import { fetchBootstrap, markLocalEdit } from '@/offline/localEdits'
 import { enqueue, outbox, type MealPatch } from '@/offline/outbox'
 import { keys } from '@/offline/queryClient'
 
@@ -39,7 +40,8 @@ export function useAuthStatus() {
 }
 
 export function useBootstrap(enabled = true) {
-  return useQuery({ queryKey: keys.bootstrap, queryFn: () => api.get<Bootstrap>('/api/bootstrap'), enabled })
+  const client = useQueryClient()
+  return useQuery({ queryKey: keys.bootstrap, queryFn: () => fetchBootstrap(client), enabled })
 }
 
 /** Datos de arranque ya cargados. Solo se usa dentro de la app, donde están garantizados. */
@@ -306,6 +308,7 @@ export function usePrefsActions() {
   const client = useQueryClient()
   return useCallback(
     (changes: Partial<Prefs>) => {
+      markLocalEdit()
       client.setQueryData<Bootstrap>(keys.bootstrap, (old) => {
         if (!old) return old
         const prefs = { ...(old.prefs ?? { water_goal_ml: null }), ...changes }
@@ -376,6 +379,7 @@ export function useDayTypeActions() {
   const client = useQueryClient()
   return useCallback(
     (date: string, kind: DayKind | null) => {
+      markLocalEdit()
       client.setQueryData<Bootstrap>(keys.bootstrap, (old) => {
         if (!old) return old
         const day_types = { ...(old.day_types ?? {}) }
