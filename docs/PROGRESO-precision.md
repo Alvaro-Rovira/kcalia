@@ -10,8 +10,8 @@ Si la sesión se para (límite del plan de Claude), retomar por la primera tarea
 - [x] Task 5: sin IA, caché con origen, migración v4, búsqueda
 - [x] Task 6: entrenos con kcal netas
 - [x] Task 7: gasto real
-- [~] Task 8: interfaz (código hecho y probado: vitest 198, build, e2e 27; falta revisarla en el navegador)
-- [ ] Task 9: banco, documentación y despliegue
+- [x] Task 8: interfaz (revisada en el navegador, móvil, claro y oscuro)
+- [x] Task 9: banco, documentación y despliegue (09ee50e en producción el 2026-10-14; migración v4 aplicada sin pérdida de datos)
 
 Ficheros de trabajo fuera del repo (se pueden volver a descargar): Excel de CIQUAL 2025 en
 `https://ciqual.anses.fr/cms/sites/default/files/inline-files/Table%20Ciqual%202025_FR_2025_11_03.xlsx`.
