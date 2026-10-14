@@ -187,7 +187,8 @@ def test_07_sin_conexion(page: Page, servers):
 
     # Una comida del historial se añade y queda pendiente de sincronizar.
     page.get_by_role("button", name="Añadir comida").last.click()
-    page.get_by_role("button", name="Añadir Yogur griego con nueces", exact=False).first.click()
+    # Dentro de la hoja: la tarjeta de «cerrar el día» de Hoy puede sugerir el mismo plato con el mismo botón.
+    page.get_by_role("dialog").get_by_role("button", name="Añadir Yogur griego con nueces", exact=False).first.click()
     expect(page.get_by_text("1 cambio pendiente")).to_be_visible()
 
     # Una comida nueva necesita IA: aviso amable, no un error.
