@@ -38,6 +38,13 @@ def page(browser_instance, servers):
         else None,
     )
     tab.errors = errors  # type: ignore[attr-defined]
+    # Peticiones fallidas: si la cola offline se atasca, el error de wait_until dice cuál fue.
+    failed: list[str] = []
+    tab.on("response", lambda r: failed.append(f"{r.status} {r.request.method} {r.url}") if r.status >= 400 else None)
+    tab.on("requestfailed", lambda r: failed.append(f"sin respuesta {r.method} {r.url}: {r.failure}"))
+    tab.failed_requests = failed  # type: ignore[attr-defined]
+    global _PAGE
+    _PAGE = tab
     tab.goto(servers["app"])
     yield tab
     context.close()
@@ -313,13 +320,41 @@ def api_get(page: Page, servers, path: str):
     return page.request.get(servers["app"] + path).json()
 
 
+_PAGE: Page | None = None
+
+
+def _outbox_state() -> str:
+    """Lo que queda en la cola offline del móvil y las últimas peticiones fallidas, para entender un atasco."""
+    if _PAGE is None:
+        return ""
+    try:
+        pending = _PAGE.evaluate(
+            """() => new Promise((resolve) => {
+                const open = indexedDB.open('keyval-store')
+                open.onerror = () => resolve('sin IndexedDB')
+                open.onsuccess = () => {
+                    const db = open.result
+                    if (!db.objectStoreNames.contains('keyval')) return resolve('[]')
+                    const get = db.transaction('keyval').objectStore('keyval').get('kcalia:outbox')
+                    get.onsuccess = () => resolve(JSON.stringify((get.result || []).map((op) => op.type)))
+                    get.onerror = () => resolve('error al leer')
+                }
+            })"""
+        )
+    except Exception as error:  # noqa: BLE001 - solo es diagnóstico
+        pending = f"no se pudo leer ({error})"
+    failed = getattr(_PAGE, "failed_requests", [])[-8:]
+    return f" · cola pendiente: {pending} · online: {_PAGE.evaluate('navigator.onLine')} · últimos fallos: {failed}"
+
+
 def wait_until(check, timeout: float = 15) -> None:
     """Espera a que la cola offline haya llevado los cambios al servidor."""
     import time
 
     deadline = time.time() + timeout
     while not check():
-        assert time.time() < deadline, "no se ha sincronizado a tiempo"
+        if time.time() >= deadline:
+            raise AssertionError("no se ha sincronizado a tiempo" + _outbox_state())
         time.sleep(0.25)
 
 
