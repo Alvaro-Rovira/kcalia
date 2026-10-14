@@ -4,6 +4,8 @@ onboarding -> registrar comidas (IA, historial, aproximada, caché) -> resumen -
 Es un único recorrido en orden porque cada paso parte del estado que dejó el anterior.
 """
 
+import re
+
 import httpx
 import pytest
 from playwright.sync_api import Page, expect
@@ -119,7 +121,8 @@ def test_03_historial_exacto_no_gasta_ia(page: Page, ai_calls):
     # Coincidencia exacta tras normalizar: se añade sola, sin pasar por la IA.
     expect(page.get_by_text("sin gastar IA").first).to_be_visible()
     assert ai_calls() == before
-    expect(page.get_by_role("button", name="Pechuga de pollo con arroz")).to_have_count(2)
+    # Las dos comidas apuntadas (la tarjeta de «cerrar el día» puede sugerir el mismo plato: «Añadir …»).
+    expect(page.get_by_role("button", name=re.compile(r"^Pechuga de pollo con arroz"))).to_have_count(2)
 
 
 def test_04_coincidencia_aproximada_pregunta(page: Page, ai_calls):
