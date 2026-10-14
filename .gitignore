@@ -7,6 +7,8 @@
 *.db-wal
 *.db.gz
 data/
+# La tabla de alimentos sí va al repo: son datos públicos, no del usuario.
+!backend/app/data/
 backups/
 
 # Python
@@ -36,3 +38,4 @@ playwright-report/
 
 # Capturas sueltas de comprobaciones manuales
 /shots/
+.superpowers/

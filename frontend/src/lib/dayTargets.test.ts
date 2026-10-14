@@ -8,7 +8,7 @@ import type { DayKind, DayTargetsValues, Prefs } from './types'
 const fixture = fileURLToPath(new URL('../../../backend/tests/fixtures/day_target_cases.json', import.meta.url))
 const data = JSON.parse(readFileSync(fixture, 'utf8')) as {
   base: DayTargetsValues
-  cases: { name: string; prefs: Partial<Prefs>; date: string; overrides: Record<string, DayKind>; exercise: number; kind: DayKind | null; targets: DayTargetsValues; base?: DayTargetsValues }[]
+  cases: { name: string; prefs: Partial<Prefs>; date: string; overrides: Record<string, DayKind>; exercise: number; measured?: boolean; kind: DayKind | null; targets: DayTargetsValues; base?: DayTargetsValues }[]
 }
 
 describe('objetivos por tipo de día (casos compartidos con el servidor)', () => {
@@ -16,7 +16,7 @@ describe('objetivos por tipo de día (casos compartidos con el servidor)', () =>
     it(c.name, () => {
       const kind = kindFor(c.date, c.prefs, c.overrides)
       expect(kind).toBe(c.kind)
-      expect(targetsFor(c.base ?? data.base, c.prefs, kind, c.exercise)).toEqual(c.targets)
+      expect(targetsFor(c.base ?? data.base, c.prefs, kind, c.exercise, c.measured)).toEqual(c.targets)
     })
   }
 })

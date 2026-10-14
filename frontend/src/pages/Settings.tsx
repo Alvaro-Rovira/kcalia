@@ -29,6 +29,7 @@ import { RemindersSettings } from '@/components/RemindersSettings'
 import { SuggestSettings } from '@/components/SuggestSettings'
 import { VoiceShortcutSheet } from '@/components/VoiceShortcutSheet'
 import { Logo, Wordmark } from '@/components/Logo'
+import { ExpenditureCard } from '@/components/ExpenditureCard'
 import { PlanExplanation } from '@/components/PlanExplanation'
 import { useAdminOverview } from '@/hooks/admin'
 import { useApp, useOnline, usePrefsActions, useStats } from '@/hooks/data'
@@ -379,6 +380,7 @@ export default function Settings() {
               </Notice>
             ))}
             <PlanExplanation plan={app.plan} targetWeight={profile.target_weight_kg} />
+            <ExpenditureCard />
           </div>
         )}
       </Sheet>

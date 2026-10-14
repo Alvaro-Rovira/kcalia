@@ -91,3 +91,44 @@ Decisiones tomadas sin poder preguntar, con el motivo. La más reciente, abajo.
 27. **«¿Entrenas hoy?»**: con entreno/descanso desactivado (lo está de fábrica), Hoy muestra este botón; al pulsarlo
     marca el día como de entreno y activa la opción con sus valores por defecto, con «Deshacer». Antes la función solo
     se descubría en Ajustes.
+
+# Decisiones · precisión de calorías (2026-10-14)
+
+Encargo: que las kcal sean prácticamente exactas en todo lo que no dependa del modelo de IA. El usuario delegó todas
+las decisiones técnicas. Diseño en `docs/superpowers/specs/2026-10-14-precision-kcal-design.md`; plan en
+`docs/superpowers/plans/2026-10-14-precision-kcal.md`.
+
+1. **Fuente de datos.** CIQUAL 2025 (ANSES, Licence Ouverte) como fuente principal y USDA FoodData Central (dominio
+   público) para lo que falta. BEDCA no: sus condiciones solo permiten uso no comercial y prohíben modificar los
+   datos, y el repositorio es público con licencia MIT.
+2. **Cifras literales.** Los extractos (`backend/app/data/*.tsv`) copian las celdas de la fuente; el código solo lee la
+   coma decimal y trata «-», «traces» y «< x» como 0. USDA da los hidratos «por diferencia» con la fibra dentro: se
+   resta la fibra para quedarse con los disponibles, como CIQUAL y las etiquetas europeas.
+3. **Arroz y pasta cocidos con CIQUAL** (155 y 167 kcal/100 g) y no con los 130 y 150 de USDA que usaba el prompt. La
+   diferencia es el agua de la cocción; se prima la fuente principal.
+4. **Recetas tipo** para platos españoles que no están en ninguna fuente (22): ingredientes de la tabla, gramos de una
+   receta habitual y rendimiento por pérdida o ganancia de agua. Son estimaciones y se marcan como «receta».
+5. **Tamaño de la tabla.** 472 alimentos y 22 recetas, no los 600 previstos: se priorizó que cada fila esté verificada
+   frente a la fuente. Lo que no está sigue estimándolo la IA, marcado como tal.
+6. **Emparejado estricto.** Alimento y preparación: «plancha» y «horno» son intercambiables; «frito», «rebozado» o
+   «crudo» deben coincidir. Un alimento que solo está en crudo no se empareja si no se dice la preparación.
+7. **Aceite de cocinar en código.** Plancha 2 g, horno 3 g y salteado 5 g por 100 g de alimento (entre 2 y 10 g por
+   ingrediente); frito y rebozado ya lo traen en su valor. Si el texto menciona cualquier grasa («AOVE», «chorrito»,
+   «sin aceite») manda el usuario. «Atún en aceite» no cuenta como mención. La IA solo puede proponer el aliño de una
+   ensalada, nombrado «aceite de oliva (aliño)»; otro aceite que añada por su cuenta se descarta.
+8. **Gramos.** Con una unidad conocida los calcula la tabla, salvo en fotos (manda la estimación visual) y salvo que la
+   tabla y la IA difieran más del doble (entienden la unidad de forma distinta, como «1 pieza» de nueces).
+9. **Energía de lo no emparejado** con los factores de la UE (4/4/9/2/7) y no con la cifra de la IA: así macros y kcal
+   siempre cuadran. Se eliminó la antigua corrección 4/4/9 que solo actuaba en casos imposibles.
+10. **Prioridad de la caché.** Lo añadido a mano por el usuario manda; después, la tabla; al final, lo aprendido de la
+    IA. La migración v4 corrige con la tabla las entradas de caché que coinciden.
+11. **Historial.** Las comidas guardadas antes de la tabla conservan sus gramos e ingredientes; al repetirlas toman los
+    valores oficiales. No se reescribe la base.
+12. **Entreno.** Calorías netas, (MET − 1) × kg × h, con los MET del Compendium of Physical Activities 2024. La
+    elíptica «suave» usa el valor moderado (5,0) porque el Compendium no tiene entrada de esfuerzo ligero.
+13. **Gasto real.** 28 días hasta ayer; día válido si se apuntó al menos la mitad del objetivo base; al menos 10 días y
+    4 pesajes en 10 días; mezcla con la fórmula hasta 21 días de datos y de pesajes; fuera de 0,6-1,5 veces la fórmula
+    se considera dudoso y no se ofrece. Al aplicarlo se recalcula el plan (quita los objetivos manuales) y el entreno
+    deja de sumarse aparte.
+14. **Revisión final** hecha por el propio autor (sin un revisor independiente, que el usuario no pidió); encontró y
+    corrigió el caso del historial (punto 11).

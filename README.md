@@ -35,6 +35,7 @@ Kcalia es una PWA en español, pensada primero para el móvil, que vive en tu pr
 
 - [Características](#características)
 - [Capturas](#capturas)
+- [Cómo se calculan las calorías](#cómo-se-calculan-las-calorías)
 - [Cómo se ahorra IA](#cómo-se-ahorra-ia)
 - [Cómo se calculan los objetivos](#cómo-se-calculan-los-objetivos)
 - [Arquitectura](#arquitectura)
@@ -56,7 +57,8 @@ Kcalia es una PWA en español, pensada primero para el móvil, que vive en tu pr
 
 **Registrar lo que comes**
 
-- **Texto libre.** «Dos huevos revueltos con una tostada de pan integral y aceite» se convierte en ingredientes con gramos, calorías, proteínas, hidratos, grasas y fibra. Antes de guardar ves el desglose y puedes corregir cualquier cantidad o añadir un ingrediente a mano (con autocompletado de los que ya conoce).
+- **Texto libre.** «Dos huevos revueltos con una tostada de pan integral y aceite» se convierte en ingredientes con gramos, calorías, proteínas, hidratos, grasas y fibra. Antes de guardar ves el desglose y puedes corregir cualquier cantidad o añadir un ingrediente a mano (con autocompletado de los que ya conoce y de la tabla oficial de alimentos).
+- **Valores oficiales, no inventados.** Las calorías y los macros de cada alimento salen de una tabla oficial (CIQUAL 2025 y USDA, 472 alimentos habituales en España y 22 platos por receta); la IA solo dice qué hay en el plato y cuánto. Cada ingrediente indica si su valor es oficial, de una etiqueta, tuyo o estimado, y cada comida muestra qué parte de sus calorías es oficial. Más en [Cómo se calculan las calorías](#cómo-se-calculan-las-calorías).
 - **Foto, sola o con tu descripción.** Adjuntas la foto (se reduce en el móvil) y, antes o después, escribes o dictas lo que no se ve: «debajo había dos cucharadas de aceite», «era media ración». La IA de visión recibe las dos cosas en una sola consulta; la foto marca el tamaño de las raciones y tu descripción manda en lo que no se ve o no cuadra. La comida queda guardada con tu texto, así que la próxima vez que lo escribas igual sale del historial sin IA.
 - **Voz.** Grabas, se transcribe con un Whisper propio que corre en tu servidor (unos 4-5 segundos por frase en CPU) y el texto aparece en el cuadro para que lo revises, le añadas una foto si quieres y lo envíes. En el iPhone, además, un atajo de Siri: «Oye Siri, apuntar en Kcalia».
 - **Código de barras.** Se escanea con la cámara (con el detector nativo del navegador o, en iPhone, un lector WebAssembly que se descarga solo la primera vez) y los valores llegan de Open Food Facts. Los revisas y queda guardado como producto propio, sin IA.
@@ -79,7 +81,8 @@ Kcalia es una PWA en español, pensada primero para el móvil, que vive en tu pr
 
 - **Días de entreno y de descanso** con objetivos propios: por defecto +200 kcal los días que entrenas y −100 los que no, o cifras a mano. Se marca por día de la semana o día a día; en Hoy, «¿Entrenas hoy?» lo activa con un toque (y «Deshacer» lo revierte).
 - **Registro de entrenos** en `/entreno`: rutinas de ejemplo (empuje, tirón, pierna, cuerpo completo) y las tuyas, series con peso y repeticiones, «Repetir» la anterior, temporizador de descanso, última marca de cada ejercicio, 1RM estimado y progresión. Funciona sin conexión.
-- **Calorías del entreno** estimadas con MET × peso × duración según la intensidad. Por defecto son solo una referencia; se pueden sumar al objetivo del día desde Ajustes.
+- **Calorías del entreno** netas: (MET − 1) × peso × duración, sin volver a contar el gasto en reposo, con los MET del Compendium of Physical Activities 2024 (la cinta, la bici, el remo y la elíptica, cada uno con el suyo). Por defecto son solo una referencia; se pueden sumar al objetivo del día desde Ajustes.
+- **Tu gasto real.** Con 4 semanas de lo que apuntas y de tu peso, Kcalia mide lo que gastas de verdad y te deja usarlo en lugar de la fórmula.
 
 **Constancia**
 
@@ -127,6 +130,34 @@ Kcalia es una PWA en español, pensada primero para el móvil, que vive en tu pr
 
 Las capturas y los GIF salen de la app real con `scripts/capture_screenshots.py`, que la levanta con una IA simulada y datos de demostración temporales.
 
+## Cómo se calculan las calorías
+
+La IA es buena reconociendo qué hay en un plato y estimando raciones, y mala recordando cifras exactas o haciendo cuentas. Así que cada parte la hace quien mejor la hace:
+
+| Qué | Quién | Cómo |
+|---|---|---|
+| Qué alimento es y cómo está cocinado | IA | Devuelve el alimento base («pechuga de pollo») y la preparación (crudo, cocido, plancha, horno, salteado, frito, rebozado, guisado o tal cual) |
+| Cuánto hay, si nadie lo dice | IA | En fotos, por el tamaño del plato; en texto, con las raciones típicas españolas |
+| Calorías y macros por 100 g | Tabla oficial | [CIQUAL 2025](https://ciqual.anses.fr/) (ANSES) y [USDA FoodData Central](https://fdc.nal.usda.gov/): 472 alimentos y 22 platos españoles por receta. Cifras copiadas sin alterar |
+| Peso de una unidad | Tabla oficial | Parte comestible: un huevo M son 50 g sin cáscara; una loncha de jamón serrano, 15 g; una cucharada de aceite, 10 g |
+| Mililitros a gramos | Tabla oficial | Con la densidad de cada líquido (aceite 0,915; leche 1,03; miel 1,42) |
+| Aceite de cocinar | Código | Si no mencionas grasa: plancha 2 g, horno 3 g y salteado 5 g por cada 100 g de alimento (entre 2 y 10 g). Lo frito y lo rebozado ya lo llevan en su valor oficial: no se cuenta dos veces |
+| Energía de lo que no está en la tabla | Código | Con los factores del Reglamento (UE) 1169/2011: 4 kcal/g de proteína e hidratos, 9 de grasa, 2 de fibra y 7 de alcohol |
+
+Todo pasa por la misma canalización (`backend/app/refine.py`), venga del texto, la voz, una foto, el plan semanal, las sugerencias o el historial. Por eso la misma comida da siempre las mismas calorías: «pechuga de pollo con arroz» analizada por la IA y «150 g de pollo a la plancha y 200 g de arroz» resuelta sin IA dan exactamente lo mismo.
+
+El emparejado con la tabla es estricto a propósito: «huevo a la plancha» no toma el valor de «huevo frito» ni «pechuga de pavo» el de «pechuga de pollo». Si no hay una coincidencia clara se queda la estimación de la IA, marcada como tal. Si escribes algo tuyo («con un chorrito de AOVE», «sin aceite») manda lo que dices. Los ingredientes que añades a mano tienen prioridad sobre la tabla, y la tabla sobre lo aprendido de la IA. Lo que apuntaste antes de la tabla conserva sus gramos e ingredientes, pero al repetirlo toma los valores oficiales.
+
+**Medido con la clave real.** 30 comidas con cantidades y 10 sin ellas, contra los valores oficiales de esas cantidades (`python -m app.bench`):
+
+| | Antes (solo la IA) | Ahora (IA + tabla) |
+|---|---|---|
+| Error medio de calorías | 15,8 % | DESPUES_ERROR |
+| Dentro de ±12 % | 21 de 30 | DESPUES_DENTRO |
+| Comidas sin cantidades en rango | 8 de 10 | DESPUES_AMBIGUAS |
+
+Algunos ejemplos de antes: un huevo frito salía a 197 kcal (oficial: 88), 150 g de patatas fritas a 468 (387, con el aceite contado dos veces) y un café con leche a 157 (73).
+
 ## Cómo se ahorra IA
 
 Cada consulta a un modelo cuesta dinero y tiempo. La mayoría de lo que comemos se repite, así que antes de llamar a la IA Kcalia intenta resolver la comida con lo que ya sabe:
@@ -142,8 +173,8 @@ flowchart TD
     Q -- "No, es otra" --> P
     C -- No --> P{"¿Alguna parte es un producto<br/>con etiqueta guardada?"}
     P -- "Todo cubierto" --> OK4["Se multiplica la etiqueta<br/>por la cantidad"]
-    P -- "Solo parte, o nada" --> D{"¿Todos los ingredientes<br/>están en la caché?"}
-    D -- Sí --> OK3["Se compone escalando<br/>cada ingrediente"]
+    P -- "Solo parte, o nada" --> D{"¿Todos los ingredientes están<br/>en la tabla oficial o en la caché?"}
+    D -- Sí --> OK3["Se compone con sus<br/>valores y cantidades"]
     D -- No --> L{"¿Queda cupo<br/>de IA hoy?"}
     L -- Sí --> IA["Consulta a la IA<br/>JSON validado, un reintento"]
     L -- No --> STOP["Aviso: límite de hoy alcanzado"]
@@ -152,8 +183,8 @@ flowchart TD
 
 1. **Coincidencia exacta.** El texto se normaliza (minúsculas, sin tildes, sin artículos ni signos, números y unidades en forma canónica) y se busca en tu historial. «Un café con leche» y «café con leche!» son la misma comida.
 2. **Coincidencia aproximada.** Si se parece mucho a algo que ya tienes (similitud ≥ 0,85), te lo pregunta con un toque. Hay dos salvaguardas para no confundir comidas distintas: las cantidades tienen que coincidir («2 huevos» no es «3 huevos») y cada palabra debe tener su pareja («pechuga de pollo» no es «pechuga de pavo»).
-3. **Productos con etiqueta o código de barras.** «Dos yogures ligeros» se calcula con sus cifras exactas por 2. Si solo una parte es de un producto («dos yogures ligeros con una manzana»), a la IA solo va «una manzana».
-4. **Caché de ingredientes.** De cada respuesta de la IA se guardan los macros por 100 g de cada alimento y cuánto pesa su unidad habitual. Si ya se vio «2 huevos y una tostada», «3 huevos» se resuelve escalando.
+3. **Productos con etiqueta o código de barras.** «Dos yogures ligeros» se calcula con sus cifras exactas por 2. Si solo una parte es de un producto («dos yogures ligeros con un cachopo»), a la IA solo va «un cachopo».
+4. **Tabla oficial y caché de ingredientes.** «200 g de arroz y 150 g de pollo a la plancha» o «2 huevos fritos y una tostada» se resuelven con la tabla oficial, sin IA y con el aceite de cocinar calculado. Lo que no está en la tabla se aprende de cada respuesta de la IA (valores por 100 g y peso de la unidad) para la próxima vez.
 5. **IA**, solo si nada de lo anterior encaja, con tres topes: por cuenta (`AI_USER_DAILY_LIMIT`), global para toda la instalación (`AI_DAILY_LIMIT`) y uno aparte para el administrador.
 
 Los pasos 1, 2 y 3 también se hacen en el propio móvil: por eso son instantáneos y funcionan sin conexión. La normalización existe dos veces, en Python y en TypeScript, y ambas se prueban contra el mismo fichero de casos para que no diverjan. Lo mismo pasa con los objetivos de los días de entreno y de descanso.
@@ -178,6 +209,7 @@ Sin IA y sin cajas negras: la app enseña el cálculo paso a paso.
 
 4. **Hidratos**: las calorías que quedan, a 4 kcal por gramo.
 5. **Días de entreno y de descanso** (opcional): el ajuste de cada tipo de día se suma o resta a las calorías y lo absorben los hidratos; proteína y grasa no cambian.
+6. **Gasto real** (opcional): la fórmula del paso 2 puede desviarse un 10-20 %. Con las últimas 4 semanas, Kcalia calcula `media de lo comido − tendencia del peso × 7.700 kcal/kg`. Solo cuenta días con al menos la mitad del objetivo apuntado (hacen falta 10) y la pendiente de al menos 4 pesajes repartidos en 10 días, y lo mezcla con la fórmula hasta tener 3 semanas de datos. Si el resultado no es creíble (por agua o registros incompletos) lo explica y no lo ofrece. Desde Ajustes → Cómo se calculan puedes usarlo como mantenimiento o volver a la fórmula; con él, las calorías del entreno ya van incluidas y no se suman aparte.
 
 **Avisos de seguridad.** El plan nunca baja de 1.200 kcal en mujeres ni de 1.500 en hombres, ni propone un déficit mayor de 1.000 kcal al día. Con un IMC por debajo de 18,5 no aplica déficit y lo dice. Con un IMC por encima de 30 calcula proteína y grasa con un peso de referencia. Avisa si el objetivo queda por debajo del metabolismo basal, si eres menor de edad o si el peso objetivo no cuadra con el plan. Son orientaciones generales, no consejo médico.
 
@@ -421,7 +453,7 @@ Cuando hay una versión nueva, la app muestra un aviso con el botón «Actualiza
 
 Cambiar de modelo es cambiar `AI_MODEL` (y `AI_BASE_URL` y la clave si cambias de proveedor). El cliente se adapta: a los modelos Kimi les desactiva el razonamiento y no les envía temperatura, porque la fijan ellos; al resto les pide temperatura baja. Si un proveedor rechaza algún parámetro, reintenta con lo mínimo.
 
-Para decidir con datos y no con impresiones, hay una herramienta que mide cualquier modelo contra comidas de referencia: error de calorías y macros, latencia y coste.
+Para decidir con datos y no con impresiones, hay una herramienta que mide cualquier modelo contra 40 comidas de referencia (30 con cantidades, cuya referencia son los valores de la tabla oficial, y 10 sin ellas, con un rango aceptable): error de calorías y macros, latencia y coste. Con `--raw` mide la IA sola, sin la tabla.
 
 ```bash
 docker compose exec app python -m app.bench --price-in 0.95 --price-out 4.00
@@ -429,7 +461,7 @@ docker compose exec app python -m app.bench --price-in 0.95 --price-out 4.00
 
 Usa la clave que ya está en el contenedor y no la muestra.
 
-**Medido con la clave real** (Kimi K2.6, 30 de septiembre de 2026, 21 comidas de referencia):
+**Medición anterior a la tabla oficial** (Kimi K2.6, 30 de septiembre de 2026, 21 comidas con referencias del propio prompt; la de octubre está en [Cómo se calculan las calorías](#cómo-se-calculan-las-calorías)):
 
 | | Resultado |
 |---|---|
@@ -492,17 +524,20 @@ make e2e
 |---|---|---|
 | Acceso: cada ruta de la API sin sesión, pendiente, suspendida y sin ser administrador | `backend/tests/test_access.py` | 111 |
 | Aislamiento entre cuentas, registro, inicio de sesión, límites y panel de administración | `test_isolation.py`, `test_accounts.py`, `test_daily.py`, `test_admin.py`, `test_make_admin.py` | 32 |
-| Migraciones sobre una base de demostración con datos | `test_migrations.py` | 5 |
-| Metabolismo basal, objetivos, días de entreno y descanso | `test_nutrition.py`, `test_daytargets.py` | 34 |
+| Migraciones sobre una base de demostración con datos | `test_migrations.py` | 6 |
+| Tabla de alimentos: cifras literales de la fuente, alias sin choques, energía coherente, emparejado estricto | `test_foodtable.py`, `test_foodtable_data.py` | 115 |
+| Canalización de las comidas (gramos, aceite, energía UE), resolución sin IA, historial y banco | `test_refine.py`, `test_api_table.py`, `test_bench.py` | 62 |
+| Gasto real con datos simulados y su API | `test_expenditure.py` | 11 |
+| Metabolismo basal, objetivos, días de entreno y descanso | `test_nutrition.py`, `test_daytargets.py` | 35 |
 | Normalización, similitud, coincidencias y productos | `test_textnorm.py`, `test_matching.py`, `test_products.py`, `test_api_products.py` | 117 |
-| IA (comidas, etiquetas, plan, sugerencias), código de barras y API completa | `test_ai.py`, `test_barcode.py`, `test_api.py` | 58 |
+| IA (comidas, etiquetas, plan, sugerencias), código de barras y API completa | `test_ai.py`, `test_barcode.py`, `test_api.py` | 60 |
 | Agua, medidas, fotos, entrenos, plan, sugerencias e importación | `test_tracking.py`, `test_training.py`, `test_planner.py`, `test_suggest.py`, `test_importer.py` | 33 |
 | Web Push (vector de la RFC 8291), recordatorios, VAPID | `test_webpush.py`, `test_push.py`, `test_gen_vapid.py` | 12 |
 | Copias: firma SigV4 (ejemplo oficial de AWS), cifrado, subida verificada, retención | `test_offsite.py`, `test_jobs.py` | 13 |
 | Resumen semanal y HTML servido | `test_summary.py`, `test_spa.py` | 16 |
 | Audio de Chrome, Safari y Firefox decodificado para Whisper | `stt/test_audio.py` | 5 |
-| Formato es-ES, espejos de la normalización y de los objetivos, sugerencias (propiedades sobre 2.000 escenarios), entrenos, compra, atajos… | `frontend/src/lib/*.test.ts` | 182 |
-| Flujos completos en un móvil de 390 px | `e2e/test_flow.py` | 25 |
+| Formato es-ES, espejos de la normalización, de los objetivos y de las calorías del entreno, origen de los valores, sugerencias (propiedades sobre 2.000 escenarios), entrenos, compra, atajos… | `frontend/src/lib/*.test.ts` | 198 |
+| Flujos completos en un móvil de 390 px | `e2e/test_flow.py` | 27 |
 
 Las pruebas de extremo a extremo levantan la app real con una IA simulada (`e2e/fake_ai.py`) y recorren: crear la cuenta de administrador, cuestionario inicial, registrar con IA y sin ella, trabajar sin conexión, productos con etiqueta y código de barras, aprobar una solicitud de cuenta, ingrediente a mano, copiar, agua, bebidas, medidas y fotos, días de entreno, un entreno sin conexión, recordatorios, plan y lista de la compra, cerrar el día, compartir la semana, importar un CSV y los atajos. Comprueban además que la IA se llama exactamente las veces esperadas.
 
@@ -529,6 +564,12 @@ Hecho en la versión 2:
 - [x] Plan semanal, lista de la compra y sugerencia para cerrar el día
 - [x] Varias cuentas con aprobación y panel de administración
 
+Hecho después:
+
+- [x] Tabla oficial de alimentos (CIQUAL 2025 y USDA) con la IA solo para identificar y pesar
+- [x] Gasto real medido con lo apuntado y el peso
+- [x] Calorías netas del entreno con los MET del Compendium 2024
+
 Ideas para más adelante:
 
 - [ ] Ciclos de objetivos (por ejemplo, ocho semanas de definición y dos de mantenimiento)
@@ -538,3 +579,5 @@ Ideas para más adelante:
 ## Licencia
 
 [MIT](LICENSE) © 2026 Álvaro Rovira
+
+Datos de composición de alimentos: «Anses. 2025. Table de composition nutritionnelle des aliments Ciqual» (Licence Ouverte) y U.S. Department of Agriculture, FoodData Central (dominio público). Detalle y forma de regenerar los extractos en [`backend/app/data/FUENTES.md`](backend/app/data/FUENTES.md).

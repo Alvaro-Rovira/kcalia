@@ -142,7 +142,8 @@ def test_rellenar_huecos_con_la_ia(ctx):
     assert r.status_code == 200, r.text
     suggestions = r.json()["suggestions"]
     assert [s["name"] for s in suggestions] == ["Tortilla francesa con ensalada"]  # lo no pedido se descarta
-    assert suggestions[0]["kcal"] == pytest.approx(172.3)
+    # Valores de la tabla: 2 huevos M = 100 g de huevo cocido (134 kcal) y 100 g de lechuga (14,7 kcal).
+    assert suggestions[0]["kcal"] == pytest.approx(148.7)
     assert fake.calls == 1
     assert client.get("/api/stats").json()["ai"]["used_today"] == 1  # gasta cupo como cualquier consulta
     bad = client.post("/api/plan/fill", json={"start": "2026-10-05", "slots": [{"date": "2026-11-01", "slot": "cena"}]})

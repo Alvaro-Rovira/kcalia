@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 
 from . import daytargets, tenancy
 from . import summary as summary_lib
-from .matching import FoodInfo, FoodUpdate, find_similar, learn_foods, resolve_from_foods, totals
+from .foodtable import table
+from .matching import SOURCE_RANK, FoodInfo, FoodUpdate, find_similar, learn_foods, resolve_from_foods, totals
 from .models import (
     Achievement,
     AiUsage,
@@ -40,6 +41,7 @@ from .models import (
 )
 from .nutrition import calculate_targets
 from .products import ProductInfo
+from .refine import LIQUID_ML, official_share, revalue
 from .schemas import Prefs
 from .textnorm import normalize
 
@@ -184,11 +186,14 @@ def targets_dict(targets: Targets) -> dict:
         "tdee": targets.tdee,
         "custom": targets.custom,
         "basis_weight_kg": targets.basis_weight_kg,
+        "tdee_mode": targets.tdee_mode or "formula",
+        "tdee_real": targets.tdee_real,
     }
 
 
-def plan_for(profile: Profile) -> dict:
+def plan_for(profile: Profile, maintenance: float | None = None) -> dict:
     return calculate_targets(
+        maintenance_override=maintenance,
         sex=profile.sex,
         age=profile.age,
         weight_kg=profile.weight_kg,
@@ -200,8 +205,9 @@ def plan_for(profile: Profile) -> dict:
 
 
 def apply_plan(db: Session, profile: Profile) -> tuple[Targets, dict]:
-    plan = plan_for(profile)
     targets = get_targets(db)
+    measured = targets.tdee_real if targets is not None and targets.tdee_mode == "real" else None
+    plan = plan_for(profile, measured)
     values = {
         "kcal": plan["kcal"],
         "protein": plan["protein"],
@@ -247,17 +253,16 @@ def slot_usage(db: Session, today: date | None = None) -> tuple[dict[int, dict[s
 
 
 def dish_dict(dish: Dish, aliases: list[str] | None = None, slot_counts: dict[str, int] | None = None) -> dict:
+    # Lo guardado antes de la tabla oficial sale con sus valores (mismos ingredientes y gramos).
+    items = revalue(dish.items or [])
     return {
         "id": dish.id,
         "name": dish.name,
         "text": dish.text,
         "norm": dish.norm,
         "aliases": aliases or [],
-        "items": dish.items,
-        "kcal": dish.kcal,
-        "protein": dish.protein,
-        "carbs": dish.carbs,
-        "fat": dish.fat,
+        "items": items,
+        **totals(items),
         "confidence": dish.confidence,
         "assumptions": dish.assumptions,
         "origin": dish.origin,
@@ -303,16 +308,18 @@ def meal_dict(meal: Meal) -> dict:
 
 
 def draft_from_dish(dish: Dish, source: str, score: float | None = None) -> dict:
+    items = revalue(dish.items or [])
     draft = {
         "name": dish.name,
         "text": dish.text,
-        "items": dish.items,
-        **totals(dish.items),
+        "items": items,
+        **totals(items),
         "confidence": dish.confidence,
         "assumptions": dish.assumptions,
         "source": source,
         "dish_id": dish.id,
         "favorite": dish.favorite,
+        "official_share": official_share(items),
     }
     if score is not None:
         draft["score"] = score
@@ -341,21 +348,56 @@ def find_similar_dishes(db: Session, norm: str) -> list[tuple[Dish, float]]:
     return [(db.get(Dish, dish_id), score) for dish_id, score in ranked]
 
 
+def _food_info(food: Food) -> FoodInfo:
+    return FoodInfo(
+        food.name,
+        food.kcal100,
+        food.protein100,
+        food.carbs100,
+        food.fat100,
+        food.unit_grams or {},
+        food.fiber100,
+        food.alcohol100,
+        source=food.source or "ia",
+        ref=food.ref,
+    )
+
+
+def _table_info(entry) -> FoodInfo:
+    units = dict(entry.units)
+    units.setdefault("ml", entry.density)
+    if entry.liquid:
+        for unit, ml in LIQUID_ML.items():
+            units.setdefault(unit, ml * entry.density)
+    return FoodInfo(
+        entry.name,
+        entry.kcal100,
+        entry.protein100,
+        entry.carbs100,
+        entry.fat100,
+        units,
+        entry.fiber100,
+        entry.alcohol100,
+        source="tabla",
+        ref=entry.ref,
+        food=entry.food,
+        prep=entry.prep,
+    )
+
+
 def resolve_with_food_cache(db: Session, text: str) -> list[dict] | None:
+    """Compone la comida sin IA: lo que el usuario añadió a mano, después la tabla oficial y, al final, lo aprendido
+    de respuestas anteriores de la IA. Todo o nada."""
+    foods = table()
+
     def lookup(key: str) -> FoodInfo | None:
         food = db.scalar(select(Food).where(Food.norm == key))
-        if food is None:
-            return None
-        return FoodInfo(
-            food.name,
-            food.kcal100,
-            food.protein100,
-            food.carbs100,
-            food.fat100,
-            food.unit_grams or {},
-            food.fiber100,
-            food.alcohol100,
-        )
+        if food is not None and food.source == "usuario":
+            return _food_info(food)
+        entry = foods.match_name(key)
+        if entry is not None:
+            return _table_info(entry)
+        return _food_info(food) if food is not None else None
 
     return resolve_from_foods(text, lookup)
 
@@ -375,17 +417,22 @@ def store_foods(db: Session, updates: list[FoodUpdate]) -> None:
                     fiber100=update.fiber100,
                     alcohol100=update.alcohol100,
                     unit_grams=update.unit_grams,
+                    source=update.source,
+                    ref=update.ref,
                 )
             )
-        else:
-            food.kcal100, food.protein100 = update.kcal100, update.protein100
-            food.carbs100, food.fat100 = update.carbs100, update.fat100
-            if update.fiber100 is not None:
-                food.fiber100 = update.fiber100
-            if update.alcohol100 is not None:
-                food.alcohol100 = update.alcohol100
-            food.unit_grams = {**(food.unit_grams or {}), **update.unit_grams}
-            food.hits += 1
+            continue
+        food.unit_grams = {**(food.unit_grams or {}), **update.unit_grams}
+        food.hits += 1
+        if SOURCE_RANK[update.source] < SOURCE_RANK.get(food.source or "ia", 1):
+            continue  # no se pisa un valor más fiable (lo del usuario o la tabla) con uno de la IA
+        food.kcal100, food.protein100 = update.kcal100, update.protein100
+        food.carbs100, food.fat100 = update.carbs100, update.fat100
+        if update.fiber100 is not None:
+            food.fiber100 = update.fiber100
+        if update.alcohol100 is not None:
+            food.alcohol100 = update.alcohol100
+        food.source, food.ref = update.source, update.ref
 
 
 def upsert_dish(
@@ -450,6 +497,7 @@ def food_dict(food: Food) -> dict:
         "fiber100": food.fiber100,
         "alcohol100": food.alcohol100,
         "unit_grams": food.unit_grams or {},
+        "source": food.source or "ia",
     }
 
 
@@ -587,11 +635,14 @@ def targets_by_day(
     """Objetivos de cada día entre dos fechas según su tipo (y el entreno, si se suma)."""
     prefs = prefs or get_prefs(db)
     base = targets_dict(targets)
-    if not prefs.day_types and not prefs.add_exercise_kcal:
+    measured = targets.tdee_mode == "real"
+    if not prefs.day_types and (not prefs.add_exercise_kcal or measured):
         same = daytargets.targets_for(base, prefs, None)
         return {(start + timedelta(days=i)).isoformat(): same for i in range((end - start).days + 1)}
     overrides = day_type_overrides(db, start.isoformat(), end.isoformat())
-    exercise = exercise_kcal_by_day(db, start.isoformat(), end.isoformat()) if prefs.add_exercise_kcal else {}
+    exercise = (
+        exercise_kcal_by_day(db, start.isoformat(), end.isoformat()) if prefs.add_exercise_kcal and not measured else {}
+    )
     out = {}
     for offset in range((end - start).days + 1):
         day = start + timedelta(days=offset)

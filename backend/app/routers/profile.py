@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .. import services
+from .. import expenditure, services
 from ..config import get_settings
 from ..db import get_db
 from ..deps import get_ai_client, require_approved_user, require_user, today_local
@@ -119,6 +119,66 @@ def recalculate_targets(db: Session = Depends(get_db)) -> dict:
     profile = services.get_profile(db)
     if profile is None:
         raise HTTPException(409, "Completa primero tu perfil.")
+    targets, plan = services.apply_plan(db, profile)
+    db.commit()
+    return {"targets": services.targets_dict(targets), "plan": plan}
+
+
+def _expenditure(db: Session) -> dict:
+    profile, targets = services.get_profile(db), services.get_targets(db)
+    if profile is None or targets is None:
+        raise HTTPException(409, "Completa primero tu perfil.")
+    today = today_local()
+    start = (today - timedelta(days=expenditure.WINDOW_DAYS)).isoformat()
+    end = (today - timedelta(days=1)).isoformat()
+    intake = {iso: day["kcal"] for iso, day in services.day_totals(db, start, end).items() if day.get("meals")}
+    weights = {w.date: w.kg for w in db.scalars(select(Weight).where(Weight.date >= start, Weight.date <= end))}
+    formula = services.plan_for(profile)["tdee"]
+    result = expenditure.estimate(
+        intake=intake,
+        targets_by_day=dict.fromkeys(intake, targets.kcal),
+        weights=weights,
+        formula_tdee=formula,
+        today=today,
+    )
+    mode = targets.tdee_mode or "formula"
+    result["mode"] = mode
+    result["applied"] = targets.tdee_real
+    result["suggest_update"] = bool(
+        mode == "real"
+        and result["status"] == "ok"
+        and targets.tdee_real
+        and abs(result["estimate"] - targets.tdee_real) >= expenditure.UPDATE_STEP
+    )
+    return result
+
+
+@router.get("/expenditure")
+def get_expenditure(db: Session = Depends(get_db)) -> dict:
+    """Gasto real medido con lo apuntado y el peso de las últimas 4 semanas, frente al de la fórmula."""
+    return _expenditure(db)
+
+
+@router.post("/expenditure/apply")
+def apply_expenditure(db: Session = Depends(get_db)) -> dict:
+    """Usa el gasto real como mantenimiento y recalcula los objetivos con él."""
+    result = _expenditure(db)
+    if result["status"] != "ok":
+        raise HTTPException(409, result["reason"] or "Todavía no hay datos suficientes.")
+    targets = services.get_targets(db)
+    targets.tdee_mode, targets.tdee_real = "real", result["estimate"]
+    targets, plan = services.apply_plan(db, services.get_profile(db))
+    db.commit()
+    return {"targets": services.targets_dict(targets), "plan": plan}
+
+
+@router.post("/expenditure/formula")
+def use_formula(db: Session = Depends(get_db)) -> dict:
+    """Vuelve al mantenimiento de la fórmula."""
+    profile, targets = services.get_profile(db), services.get_targets(db)
+    if profile is None or targets is None:
+        raise HTTPException(409, "Completa primero tu perfil.")
+    targets.tdee_mode, targets.tdee_real = "formula", None
     targets, plan = services.apply_plan(db, profile)
     db.commit()
     return {"targets": services.targets_dict(targets), "plan": plan}

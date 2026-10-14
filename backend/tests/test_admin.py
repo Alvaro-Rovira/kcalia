@@ -64,7 +64,7 @@ def test_solicitar_aprobar_y_usar(client):
         == "received"
     )
     login(client, "lucia")
-    assert client.post("/api/meals/resolve", json={"text": "una pera"}).status_code == 403
+    assert client.post("/api/meals/resolve", json={"text": "un cachopo"}).status_code == 403
 
     login(client, "alvaro")
     overview = client.get("/api/admin/overview").json()
@@ -75,7 +75,7 @@ def test_solicitar_aprobar_y_usar(client):
     assert client.get("/api/admin/overview").json()["pending"] == 0
 
     login(client, "lucia")
-    r = client.post("/api/meals/resolve", json={"text": "una pera"})
+    r = client.post("/api/meals/resolve", json={"text": "un cachopo"})
     assert r.status_code == 200 and r.json()["status"] == "ai"
     login(client, "alvaro")
     lucia = user_by_name(client, "lucia")
@@ -151,8 +151,8 @@ def test_limites_por_usuario_desde_el_panel(client):
     r = client.patch(f"/api/admin/users/{lucia_id}/limits", json={"ai_daily_limit": 1, "stt_daily_limit": 0}).json()
     assert r["limits"] == {"ai": 1, "stt": 0}
     login(client, "lucia")
-    assert client.post("/api/meals/resolve", json={"text": "una pera"}).status_code == 200
-    assert client.post("/api/meals/resolve", json={"text": "dos peras"}).status_code == 429
+    assert client.post("/api/meals/resolve", json={"text": "un cachopo"}).status_code == 200
+    assert client.post("/api/meals/resolve", json={"text": "dos cachopos"}).status_code == 429
     audio = client.post("/api/transcribe", files={"audio": ("a.webm", b"0" * 2000, "audio/webm")})
     assert audio.status_code == 429
     login(client, "alvaro")
@@ -166,7 +166,7 @@ def test_pausar_ia_y_cerrar_registro(client):
         "ai_paused": True,
         "signup_open": False,
     }
-    assert client.post("/api/meals/resolve", json={"text": "una pera"}).json()["code"] == "paused"
+    assert client.post("/api/meals/resolve", json={"text": "un cachopo"}).json()["code"] == "paused"
     client.cookies.clear()
     assert client.post("/api/auth/register", json={"username": "lucia", "password": PASSWORD}).status_code == 403
     login(client, "alvaro")

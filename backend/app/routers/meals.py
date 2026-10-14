@@ -9,9 +9,11 @@ from ..ai import AiClient, AiMeal, transcribe
 from ..config import get_settings
 from ..db import get_db
 from ..deps import get_ai_client, require_approved_user, require_user, today_local
+from ..foodtable import table
 from ..matching import extras, totals
 from ..models import Dish, DishAlias, Meal, User, utcnow
 from ..products import resolve_text
+from ..refine import official_share, refine
 from ..schemas import DishPatch, MealIn, MealPatch, ResolveIn
 from ..textnorm import normalize
 from ..usage import check_ai_budget, check_stt_budget, run_ai
@@ -41,6 +43,7 @@ def _draft_from_products(text: str, items: list[dict]) -> dict:
         "source": "product",
         "dish_id": None,
         "favorite": False,
+        "official_share": official_share(items),
     }
 
 
@@ -52,21 +55,24 @@ def _with_products(draft: dict, product_items: list[dict]) -> dict:
         "items": items,
         **totals(items),
         "assumptions": [_product_note(product_items), *draft["assumptions"]],
+        "official_share": official_share(items),
     }
 
 
-def _draft_from_ai(meal: AiMeal, text: str, source: str) -> dict:
-    items = [item.model_dump() for item in meal.items]
+def _draft_from_ai(meal: AiMeal, text: str, source: str, *, photo: bool = False) -> dict:
+    """La IA identifica y pesa; los valores, los gramos de las unidades y el aceite los pone refine()."""
+    items, notes = refine([item.model_dump() for item in meal.items], text=text, photo=photo)
     return {
         "name": meal.name or text[:60] or "Comida",
         "text": text,
         "items": items,
         **totals(items),
         "confidence": meal.confidence,
-        "assumptions": meal.assumptions,
+        "assumptions": [*meal.assumptions, *notes],
         "source": source,
         "dish_id": None,
         "favorite": False,
+        "official_share": official_share(items),
     }
 
 
@@ -109,11 +115,13 @@ def resolve(
 
     leftover_text = ", ".join(leftover)
     if not body.force_ai:
-        items = services.resolve_with_food_cache(db, leftover_text)
-        if items and product_items:
-            # Productos de etiqueta + ingredientes ya conocidos: todo se resuelve sin IA.
-            return {"status": "product", "draft": _draft_from_products(text, product_items + items)}
-        if items:
+        found_items = services.resolve_with_food_cache(db, leftover_text)
+        if found_items:
+            items, notes = refine(found_items, text=leftover_text)
+            if product_items:
+                # Productos de etiqueta + ingredientes ya conocidos: todo se resuelve sin IA.
+                return {"status": "product", "draft": _draft_from_products(text, product_items + items)}
+            official = all(i.get("source") in ("tabla", "usuario") for i in items)
             return {
                 "status": "cache",
                 "draft": {
@@ -121,11 +129,17 @@ def resolve(
                     "text": text,
                     "items": items,
                     **totals(items),
-                    "confidence": 0.8,
-                    "assumptions": ["Calculado con ingredientes que ya conocía, sin consultar a la IA"],
+                    "confidence": 0.95 if official else 0.8,
+                    "assumptions": [
+                        "Calculado con la tabla oficial de alimentos y lo que ya conocía, sin consultar a la IA"
+                        if official
+                        else "Calculado con ingredientes que ya conocía, sin consultar a la IA",
+                        *notes,
+                    ],
                     "source": "cache",
                     "dish_id": None,
                     "favorite": False,
+                    "official_share": official_share(items),
                 },
             }
 
@@ -160,7 +174,7 @@ def analyze_photo(
     if not meal.items:
         return {"status": "clarify", "question": meal.clarification}
     # Con el texto de la descripción, la próxima vez que se escriba igual sale del historial sin IA.
-    return {"status": "ai", "draft": _draft_from_ai(meal, note.strip(), "photo")}
+    return {"status": "ai", "draft": _draft_from_ai(meal, note.strip(), "photo", photo=True)}
 
 
 @router.post("/transcribe")
@@ -338,6 +352,26 @@ def restore_meal(client_id: str, db: Session = Depends(get_db)) -> dict:
 def list_foods(db: Session = Depends(get_db)) -> dict:
     """Caché de ingredientes, para autocompletar al añadir uno a mano."""
     return {"foods": services.all_foods(db)}
+
+
+@router.get("/foods/table")
+def search_table(q: str = "", limit: int = 8) -> dict:
+    """Alimentos de la tabla oficial, para añadir un ingrediente a mano con valores exactos."""
+    found = table().search(q, limit=max(1, min(limit, 20)))
+    return {
+        "foods": [
+            {
+                "key": entry.id,
+                "name": entry.name,
+                "ref": entry.ref,
+                "source": entry.source,
+                **entry.per100(),
+                "unit_grams": entry.units,
+                "density": entry.density,
+            }
+            for entry in found
+        ]
+    }
 
 
 @router.get("/dishes")

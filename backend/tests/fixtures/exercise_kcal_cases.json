@@ -1,0 +1,10 @@
+[
+  {"minutes": 60, "intensity": "moderada", "weight": 80, "cardio": {}, "kcal": 320},
+  {"minutes": 45, "intensity": "intensa", "weight": 70, "cardio": {}, "kcal": 263},
+  {"minutes": 0, "intensity": "suave", "weight": 80, "cardio": {}, "kcal": 0},
+  {"minutes": 60, "intensity": "moderada", "weight": 80, "cardio": {"ex-cinta": 30}, "kcal": 460},
+  {"minutes": 60, "intensity": "moderada", "weight": 80, "cardio": {"ex-cinta": 90}, "kcal": 600},
+  {"minutes": 60, "intensity": "moderada", "weight": 80, "cardio": {"mi-cardio": 60}, "kcal": 400},
+  {"minutes": 50, "intensity": "intensa", "weight": 72.5, "cardio": {"ex-remo-ergometro": 10, "ex-bici": 15}, "kcal": 399},
+  {"minutes": 40, "intensity": "suave", "weight": 61, "cardio": {"ex-eliptica": 40}, "kcal": 163}
+]

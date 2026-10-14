@@ -83,11 +83,13 @@ def calculate_targets(
     activity: str,
     goal: str,
     target_weight_kg: float | None = None,
+    maintenance_override: float | None = None,
 ) -> dict:
+    """`maintenance_override`: gasto real medido (expenditure.py); si se da, sustituye a la fórmula × actividad."""
     spec = GOALS[goal]
     factor = ACTIVITY_FACTORS[activity]
     bmr = bmr_mifflin(sex, weight_kg, height_cm, age)
-    maintenance = bmr * factor
+    maintenance = maintenance_override if maintenance_override else bmr * factor
     current_bmi = bmi(weight_kg, height_cm)
     warnings: list[dict] = []
 

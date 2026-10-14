@@ -153,3 +153,16 @@ def test_datos_sin_cuenta_no_se_pierden(tmp_path):
 def test_base_nueva_no_se_migra(tmp_path):
     assert migrations.run(tmp_path / "no-existe.db", tmp_path / "copias") == []
     assert not (tmp_path / "copias").exists()
+
+
+def test_v4_corrige_la_cache_de_ingredientes_con_la_tabla(tmp_path):
+    from app.foodtable import table
+
+    db = tmp_path / "kcalia.db"
+    make_v0(db)
+    migrate(db, tmp_path / "backups")
+    conn = sqlite3.connect(db)
+    kcal, source, ref = conn.execute("SELECT kcal100, source, ref FROM foods WHERE norm = 'huevo'").fetchone()
+    egg = table().entries["huevo-cocido"]
+    assert (kcal, source, ref) == (egg.kcal100, "tabla", egg.ref)
+    assert conn.execute("SELECT tdee_mode, tdee_real FROM targets").fetchone() == ("formula", None)

@@ -2,10 +2,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Flame } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useApp } from '@/hooks/data'
-import { useTrainingActions } from '@/hooks/training'
+import { useTraining, useTrainingActions } from '@/hooks/training'
 import { fmt } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
-import { estimatedKcal, type Intensity, type WorkoutSession } from '@/lib/training'
+import { cardioMinutes, estimatedKcal, type Intensity, type WorkoutSession } from '@/lib/training'
 import type { Bootstrap } from '@/lib/types'
 import { keys } from '@/offline/queryClient'
 import { Button } from '@/ui/Button'
@@ -29,7 +29,9 @@ export function FinishSheet({ open, session, onClose }: { open: boolean; session
     if (open) setMinutes(Math.min(600, Math.max(1, Math.round((Date.now() - Date.parse(session.started_at)) / 60_000))))
   }, [open, session.started_at])
 
-  const kcal = estimatedKcal(minutes, intensity, app.profile.weight_kg)
+  const training = useTraining()
+  const minuteExercises = new Set((training.data?.exercises ?? []).filter((e) => e.unit === 'min').map((e) => e.client_id))
+  const kcal = estimatedKcal(minutes, intensity, app.profile.weight_kg, cardioMinutes(session.sets, minuteExercises))
 
   function save() {
     actions.finish(session.client_id, { intensity, duration_min: minutes, notes, kcal })

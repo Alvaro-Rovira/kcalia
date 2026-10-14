@@ -209,14 +209,17 @@ def test_dos_yogures_ligeros_multiplican_la_etiqueta_sin_ia(client, fake):
 def test_si_solo_parte_del_texto_es_un_producto_la_ia_recibe_solo_el_resto(client, fake):
     fake.replies.append(MEAL)
     calls = len(fake.requests)
-    result = client.post("/api/meals/resolve", json={"text": "dos yogures ligeros con una manzana"}).json()
+    result = client.post(
+        "/api/meals/resolve", json={"text": "dos yogures ligeros con una manzana asada al microondas"}
+    ).json()
     assert result["status"] == "ai" and len(fake.requests) == calls + 1
     prompt = fake.requests[-1]["messages"][1]["content"]
     assert "manzana" in prompt and "yogur" not in prompt
     draft = result["draft"]
     assert [i["name"] for i in draft["items"]] == ["Yogur desnatado ligero sabor limón", "manzana"]
     assert draft["items"][0]["product_id"] is not None and draft["items"][1].get("product_id") is None
-    assert draft["kcal"] == pytest.approx(110 + 78, abs=0.2)
+    # El yogur, de la etiqueta; la manzana (150 g), de la tabla oficial: 54 kcal/100 g.
+    assert draft["kcal"] == pytest.approx(110 + 81, abs=0.2)
 
 
 def test_guardar_comida_de_producto_cuenta_uso_y_ahorro_sin_ensuciar_el_historial(client):

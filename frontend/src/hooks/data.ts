@@ -365,7 +365,8 @@ export function useDayTargets(): (iso: string) => { kind: DayKind | null; target
       const kind = kindFor(iso, data?.prefs, overrides)
       // Si se suman las calorías del entreno al objetivo, cuenta lo entrenado ese día.
       const exercise = data?.exercise_kcal?.[iso] ?? 0
-      return { kind, targets: targetsFor(base, data?.prefs, kind, exercise), manual: iso in overrides, exercise }
+      const measured = data?.targets?.tdee_mode === 'real'
+      return { kind, targets: targetsFor(base, data?.prefs, kind, exercise, measured), manual: iso in overrides, exercise }
     },
     [data?.targets, data?.day_types, data?.prefs, data?.exercise_kcal],
   )

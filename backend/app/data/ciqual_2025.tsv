@@ -1,0 +1,462 @@
+code	name	kcal	protein	carbs	fat	fiber	alcohol
+1002	Gin	265	0	0	0	0	37,9
+1003	Liqueur	225	0,1	25,4	0,23	0	17,3
+1004	Rhum	234	0	0	0	0	33,4
+1005	Whisky	252	0	0,096	0	0	36
+1007	Apéritif à base de vin ou vermouth	137	0,054	11,3	0	0	13,1
+1008	Vodka	250	0	0	0	0	35,7
+1017	Sangria, faite maison	88,7	0	11	0,05	0	6,32
+2013	Jus d'orange, frais	44,8	0,7	9,19	0,2	0,2	0
+2070	Jus d'orange, pur jus	45,4	0,61	9,61	0,11	0,28	0
+2074	Jus de pomme, pur jus	48,9	0,17	11,4	0,14	0,23	0
+4002	Pomme de terre, sans peau, rôtie/cuite au four	91,9	1,96	20,1	0,1	1,5	0
+4003	Pomme de terre, bouillie/cuite à l'eau	81	1,8	16,8	0,34	1,8	0
+4004	Chips de pommes de terre nature ou aromatisées	532	6	51	32,7	4,7	0
+4008	Pomme de terre, sans peau, crue	80	2,02	16,2	0,09	2,2	0
+4030	Frites de pommes de terre, surgelées, rôties/cuites au four	213	3,75	32,6	6,6	4,2	0
+4032	Frites de pommes de terre, surgelées, cuites en friteuse	258	3,28	32,7	11,9	3,9	0
+4040	Purée de pomme de terre, avec lait et beurre, salée	117	1,96	11,3	6,7	1,79	0
+4101	Patate douce, crue	81,2	1,57	17,1	0,05	3	0
+4102	Patate douce, cuite	79,1	1,69	16,3	0,15	2,9	0
+5001	"Bière ""coeur de marché"" (4-5° alcool)"	39	0,39	3,12	0	0	3,57
+5003	Cidre (aliment moyen)	36,5	0,075	3,67	< 0,18	0	3,18
+5201	Vin blanc mousseux	72,3	0,1	1,78	0	0	9,26
+5214	Vin rouge	75,7	0,16	0	< 0,5	< 1	10,8
+5215	Vin blanc sec	55,3	0,25	0,17	0	0	7,75
+5216	Vin rosé	69,2	0,15	1,4	0	0	9
+6100	Boeuf, entrecôte, partie maigre grillée/poêlée	198	25,5	0	10,7	0	0
+6160	Boeuf, tende de tranche crue	116	23,1	0,57	2,34	0	0
+6161	Boeuf, tende de tranche grillée/poêlée	141	28,7	0	2,92	0	0
+6162	Boeuf, tende de tranche rôtie/cuite au four	146	29,8	0	3,03	0	0
+6230	Boeuf, à bourguignon ou pot-au-feu, cuit	172	34	0	4,05	0	0
+6254	Boeuf, steak haché 15% MG cru	215	20,2	0,47	14,8	0	0
+6255	Boeuf, steak haché 15% MG cuit	239	23,6	0	16,1	0	0
+6259	Boeuf, steak haché, cuit (aliment moyen)	229	23,8	0	14,9	0	0
+7001	Pain blanc (par ex. : baguette, boule…)	287	9,06	58,3	1,4	2,7	0
+7002	Pain au levain	261	8,13	53,1	1,3	2,1	0
+7004	Pain blanc, passé au grille-pain	317	10,4	64	1,3	3,7	0
+7110	Pain complet ou intégral (à la farine T150)	234	9,5	41,2	1,7	7,3	0
+7111	Pain de mie complet, préemballé	257	8	41,8	4,1	7,3	0,82
+7125	Pain de seigle et froment	260	9,06	51,5	1	4,5	0
+7180	Pain pita	249	8,2	48,8	1,5	3,7	0
+7200	Pain de mie blanc, préemballé	279	7,74	50,4	4,37	2,83	0,2
+7255	Pain aux céréales et/ou graines	269	10,5	46,9	3,2	5,2	0
+7259	Pain pour burger ou hot dog (bun), préemballé	283	9	47,2	4,9	3,5	0,89
+7300	Biscotte classique	394	11	73,2	5,43	4,32	0
+7352	Galette de riz complet soufflé	381	8,81	77,9	3	3,4	0
+7354	Galette de maïs soufflé	387	7,38	83,5	1,9	3	0
+7500	Chapelure	365	10,3	74,3	1,6	5,4	0
+7525	Gressin, nature (sans sésame)	428	12,5	68,8	10,5	4,25	0
+7603	Croissant, sans précision (aliment moyen)	417	7,19	46,2	22,1	2,41	0
+7733	Pain au chocolat, préemballé	421	6,89	48,6	21,4	2,72	0
+7740	Brioche nature, préemballée	356	7,99	52,7	12,1	2,09	0
+7815	Tortilla souple (à garnir), à base de blé	320	8,79	53	7,48	2,89	0
+8704	Boudin noir, grillé/poêlé	246	11,9	3,78	20,3	0	0
+9100	Riz blanc, cru	350	7,38	77,5	0,79	1,53	0
+9102	Riz complet, cru	350	7,38	71,4	2,8	5	0
+9103	Riz complet, cuit, sans sel ajouté	187	4,06	37,6	1,8	2,1	0
+9104	Riz blanc, cuit, sans sel ajouté	155	3,31	33,2	0,7	1,4	0
+9119	Riz thaï ou basmati, cru	351	7,44	78,4	0,63	1,06	0
+9125	Riz basmati, cuit, sans sel ajouté	148	3,19	32,9	0,4	< 0,5	0
+9230	Pop-corn ou maïs éclaté, à l'huile, salé	477	8,3	50,2	24,6	10,6	0
+9232	Pop-corn ou maïs éclaté, au caramel	421	6,53	73,2	9,83	6,8	0
+9340	Quinoa, cru	358	14,1	58,1	6,07	7	0
+9341	Quinoa, bouilli/cuit à l'eau, sans sel ajouté	149	5	27,9	1,1	3,8	0
+9415	Farine de blé tendre ou froment T150	342	12,2	64,9	1,52	10,2	0
+9436	Farine de blé tendre ou froment T55 (pour pains)	350	9,9	73,7	1	3,2	0
+9510	Amidon de maïs ou fécule de maïs	365	0,26	90,4	0,05	0,9	0
+9610	Semoule de blé dur, crue	350	13	69,8	1,28	3,7	0
+9615	Polenta ou semoule de maïs, cuite, sans sel ajouté	76,1	1,38	16,9	< 0,3	1,6	0
+9683	Semoule ou graine de couscous, cuite, sans sel ajouté	164	6,38	31	0,9	2,8	0
+9691	Boulgour de blé, cuit, sans sel ajouté	131	4,63	24,1	1	3,7	0
+9810	Pâtes sèches, standard, crues	364	13,1	72,7	1,6	2,91	0
+9811	Pâtes sèches, standard, cuites, sans sel ajouté	167	6,69	31,4	1,1	2,2	0
+9870	Pâtes sèches, au blé complet, crues	353	12,6	67,6	2,2	6,1	0
+9871	Pâtes sèches, au blé complet, cuites, sans sel ajouté	179	7,88	31,3	1,4	5,1	0
+9901	Vermicelle de riz, cuite, sans sel ajouté	86,6	1,5	20,1	< 0,5	< 0,5	0
+10001	Calmar ou calamar ou encornet, cru	77	14,4	2,17	1,19	0	0
+10002	Calmar ou calamar ou encornet, à la romaine (beignet), préemballé	229	8,69	26,7	9,5	1	0
+10004	Coquille Saint-Jacques, noix et corail, cuite	110	20,2	3,22	1,77	0	0
+10013	Moule, bouillie/cuite à l'eau	108	17,2	5,12	2,09	0	0
+10025	Crabe ou tourteau, bouilli/cuit à l'eau	124	19,5	1,79	4,29	0	0
+10027	Clam, praire ou palourde, bouilli/cuit à l'eau	99,2	16,2	5,33	1,48	0	0
+10034	Coque, cuite	86,9	13,6	5,64	1,1	0	0
+10035	Huître creuse, crue	67,2	8,64	3,86	1,91	0	0
+10037	Calmar ou calamar ou encornet, bouilli/cuit à l'eau	149	32,5	1,64	1,4	0	0
+10044	Langoustine, bouillie/cuite à l'eau	92,6	20,9	0	0,98	0	0
+10079	Poulpe, cuit	156	29,8	4,4	2,08	0	0
+10081	Moules à la sauce catalane ou escabèche (tomate), appertisée, égouttée	75,4	9,6	4,9	1,65	1,25	0
+10084	Calmar ou calamar ou encornet, frit ou poêlé avec matière grasse	173	17,9	8,45	7,48	0	0
+10101	Crevette, élevage, cuite (aliment moyen)	100	22,5	0,64	0,85	0	0
+11000	Ail, cru	109	5,31	18,6	< 0,5	5,8	0
+11004	Cornichon, au vinaigre	16	1,06	0,78	< 0,6	1,5	0
+11008	Ketchup, préemballé	108	1,23	23,7	0,16	1,77	0
+11013	Moutarde	151	6,92	4,33	11,2	< 1	0
+11018	Vinaigre	22,5	0,04	0,95	0,1	0	0
+11054	Mayonnaise (70% MG min.), préemballée	692	1,33	3,41	74,5	0,26	0
+11079	Mayonnaise à teneur réduite en matière grasse ou mayonnaise allégée, préemballée	297	1,09	8,82	28,5	0,31	0
+11091	Vinaigre balsamique	91,7	0,69	18	< 0,6	0,75	0
+11100	Sauce barbecue, préemballée	136	0,56	30,3	0,6	1,2	0
+11104	Sauce soja, préemballée	39,9	7,25	1,72	< 0,5	0,9	0
+11107	Sauce tomate aux oignons, préemballée	78,8	1,52	7,69	4,18	2,17	0
+11108	Sauce vinaigrette à l'huile d'olive (50 à 75% d'huile), préemballée	471	0,7	3,03	50,5	0,53	0
+11114	Sauce tomate à la viande ou sauce bolognaise, préemballée	93,8	4,22	7,27	4,81	2,29	0
+11128	Sauce carbonara, préemballée	160	5,17	4,7	12,8	2,65	0
+11132	Sauce au curry, chaude, préemballée	77,4	1,02	10,6	3,16	1,28	0
+11143	Sauce béchamel au beurre, faite maison	147	3,84	8,97	10,6	0,2	0
+11168	Sauce aïoli, préemballée	480	1,13	5,44	50,2	0,25	0
+11179	Sauce pesto, préemballée	370	3,94	6,6	35,4	2,5	0
+11196	Sauce burger, préemballée	427	1,28	13,2	40,4	0,58	0
+11203	Sauce kebab, préemballée	433	1,22	6,93	44,1	0,3	0
+12020	Brie, sans précision	345	17,3	0,68	30,4	0,056	0
+12066	Feta, au lait de brebis 70% minimum et lait de chèvre 30% maximum	284	14,8	0,45	24,3	0,2	0
+12068	Fromage frais ou spécialité fromagère non affinée, nature, à tartiner, en barquette, non allégée en matière grasse	225	6,13	3,31	20,7	0	0
+12069	Fromage frais ou spécialité fromagère non affinée, nature, à tartiner, en barquette, allégée en matière grasse	133	10,6	5,12	7,48	0,25	0
+12072	Burrata	259	10,6	0,93	23,4	0	0
+12115	Emmental ou emmenthal	373	27,3	traces	28,8	0	0
+12120	Parmesan	411	30,5	1,14	31	0	0
+12300	Fromage fondu en tranchettes	246	13,8	5,34	18,5	0	0
+12303	Fromage fondu en portion (triangle), non enrichi	238	11	8,52	17,6	0,13	0
+12521	Fromage bleu d'Auvergne	342	20,2	traces	29	0,0001	0
+12726	Cheddar	399	24,2	1,2	32,6	0	0
+12729	Edam	320	25,2	traces	24,4	0	0
+12736	Gouda	369	24,2	traces	30,2	0	0
+12747	Fromage de brebis à pâte pressée non cuite des Pyrénées, type tomme ou tome	393	21,8	0,72	33,6	0	0
+12773	Tomme ou tome des Pyrénées	340	21,7	0,7	27,9	0	0
+12775	Mélange de fromages râpés (ex : spécial gratins, spécial pâtes, spécial pizzas…)	386	31,4	0,15	28,9	0	0
+12812	Fromage de chèvre bûche	285	18,4	traces	23,3	0	0
+13000	Abricot, dénoyauté, cru	44,1	0,81	9,01	< 0,5	1,7	0
+13001	Abricot, dénoyauté, sec	239	2,88	59,1	0,5	8,3	0
+13002	Ananas, chair sans peau, cru	51,6	0,25	11,7	< 0,5	1,2	0
+13004	Avocat, chair sans peau, sans noyau, cru	203	1,56	traces	20,6	3,6	0
+13005	Banane, chair sans peau, crue	87,6	1,06	19,7	< 0,5	2,7	0
+13008	Ceriser, chair et peau, sans noyau, crue	53,7	0,81	13	< 0,3	1,6	0
+13009	Citron, chair sans peau, sans pépins, cru	24,3	0,25	1,56	< 0,5	< 0,5	0
+13011	Datte, chair et peau, sans noyau, sèche	287	1,81	64,7	0,25	7,3	0
+13012	Figue, crue	67,6	1,19	13,5	< 0,5	4,1	0
+13014	Fraise, crue	35,1	0,63	6,03	< 0,5	3,8	0
+13015	Framboise, crue	47,9	1,19	5,83	0,8	4,3	0
+13016	Fruit de la passion ou maracudja, chair sans peau, avec pépins, cru	102	2,13	10,9	3	6,8	0
+13018	Grenade, chair sans peau, avec pépins, crue	81	1,44	14,3	1,2	2,3	0
+13021	Kiwi, chair sans peau, avec pépins, cru	60,9	0,88	11	0,6	2,4	0
+13023	Litchi, chair sans peau, sans noyau, cru	77,5	1,13	16,1	< 0,5	2	0
+13024	Clémentine ou mandarine, chair sans peau, sans pépins, crue	45,5	0,81	9,17	< 0,5	1,7	0
+13025	Mangue, chair sans peau, sans noyau, crue	71,1	0,63	14,3	< 0,5	1,6	0
+13026	Melon cantaloup (par ex.: Charentais), chair sans peau, sans pépins, cru	59,8	1,13	14,8	< 0,5	1,3	0
+13028	Myrtille, crue	57,7	0,87	10,6	0,33	2,4	0
+13029	Mûre (de ronce), crue	46	1,13	6,53	0,7	5,2	0
+13032	Olive noire, en saumure, égouttée	173	1,38	< 0,1	17,2	6,2	0
+13033	Olive verte, en saumure, égouttée	164	1,13	0,61	16,6	3,6	0
+13034	Orange, chair sans peau, sans pépins, crue	42	0,75	8,03	< 0,5	2,7	0
+13035	Papaye, chair sans peau, crue	39,6	0,75	8,53	< 0,3	1,8	0
+13036	Pastèque, chair sans peau, sans pépins, crue	35,4	0,69	8,33	< 0,5	0,5	0
+13037	Poire, chair et peau, crue	56,6	0,36	12,3	0,27	2,9	0
+13039	Pomme, chair et peau, crue	54	0,25	11,6	0,25	1,4	0
+13040	Pomelo (dit Pamplemousse), chair sans peau, sans pépins, cru	33,5	0,84	5,92	< 0,5	1,1	0
+13042	Pruneau, sans noyau, sec	229	1,63	55,4	0,4	5,1	0
+13043	Pêche, chair et peau, sans noyau, crue	37,9	0,91	7,55	0,25	1,5	0
+13044	Raisin blanc, à gros grain (type Italia ou Dattier), cru	71,6	0,75	16,6	< 0,5	1	0
+13046	Raisin sec	322	3	73,2	0,9	4,2	0
+13066	Kaki, chair et peau, cru	66	0,88	14,3	< 0,3	3,4	0
+13067	Citron vert ou lime, chair sans peau, sans pépins, cru	39,3	1,13	3,14	< 0,3	4,3	0
+13100	Prune, sans noyau, crue	51,6	0,7	9,92	0,28	1,4	0
+13134	Salade de fruits, crue	79,3	0,61	18	0,24	1,36	0
+13151	Compote de pomme, allégée en sucres, rayon ambiant	64,3	0,25	15,1	0,13	1,3	0
+13212	Compote de pomme, sans précision sur la teneur en sucres ni sur le rayon (aliment moyen)	93,5	0,25	22,4	0,2	1,46	0
+13718	Ananas au sirop léger, appertisé, égoutté	65,8	0,25	15,3	< 0,5	1,6	0
+13730	Pêche, sans noyau, au sirop léger, appertisée, égouttée	59	0,5	13,5	< 0,5	1,5	0
+13742	Melon miel ou melon honeydew, chair sans peau, sans pépins, cru	22,2	0,54	4,3	0,14	0,8	0
+15000	Amande, avec peau, sans sel ajouté	615	22,6	9,51	51,3	12,5	0
+15002	Cacahuète, grillée, salée	635	26,2	14,2	50,8	8,08	0
+15004	Noisette, sans sel ajouté	632	17	7,16	56,9	11,6	0
+15005	Noix, cerneau, séchée	709	15,7	6,88	67,3	6,7	0
+15006	Noix de coco, chair, fraîche	369	4,09	4,69	34,7	10,6	0
+15007	Noix de coco, chair, sèche	692	8,06	7,81	66,8	13,7	0
+15008	Noix du Brésil ou noix d'Amazonie, sans sel ajouté	701	16,4	4,23	67,1	7,5	0
+15009	Pistache, grillée, salée	617	22,3	15,9	49,5	9,32	0
+15010	Sésame, graine	606	20,9	12,8	49,7	11,8	0
+15019	Noix de cajou, grillée, salée	632	18	26,7	49,5	3,85	0
+15021	Châtaigne, grillée	211	3,94	41,1	1,7	7,1	0
+15025	Pignon de pin	712	16,2	2,93	68,4	10	0
+15026	Noix de pécan, sans sel ajouté	727	10,8	4,25	72	9,6	0
+15027	Noix de macadamia, sans sel ajouté	757	9,33	5,22	75,8	8,6	0
+15033	Noisette grillée, sans sel ajouté	684	17	8,81	62,4	9,4	0
+15034	Lin, graine	528	22,4	6,49	40,3	24,4	0
+15042	Amande, grillée, salée	647	24,1	12,2	53,9	8,46	0
+15044	Pistache, grillée, sans sel ajouté	631	21,7	14,9	51,6	10,2	0
+15045	Tournesol, graine, grillé, salé	626	25	12,7	51	8,3	0
+15047	Chia, graine, séchée	454	19,5	7,72	30,7	34,4	0
+15053	Cacahuète, grillée, sans sel ajouté	644	26,9	14,4	51,9	5,7	0
+15054	Noix de cajou, grillée, sans sel ajouté	618	20,5	21,3	48,1	8,4	0
+15064	Courge, graine, séchée	618	35,6	5,39	49,1	6	0
+15065	Fruits à coques et cacahuète, salé (aliment moyen)	630	23,6	17,6	50,1	7,13	0
+15066	Fruits à coques et cacahuète, sans sel ajouté (aliment moyen)	632	18,2	10,5	55	10,7	0
+15201	Pâte d'amande, préemballée	432	7	70,3	13,5	2,8	0
+15202	Beurre de cacahuète ou pâte d'arachide	643	25,4	17,3	51,4	5	0
+15203	Tahin ou purée de sésame	631	20,3	13,8	53,4	7	0
+16040	Huile ou graisse de coco, sans précision	897	0	0,41	99,5	0	0
+16400	Beurre à 80% MG minimum, doux	753	0,63	0,71	83	0	0
+16401	Huile de beurre ou beurre concentré	900	0,27	0	99,9	0	0
+16403	Beurre à 80% MG, salé	732	0,5	0,68	80,8	0	0
+16591	Matière grasse tartinable à teneur en MG > 41% et <= 62%, doux, standard	540	0,25	0,14	60	0	traces
+17001	Huile végétale (aliment moyen)	899	0,18	0,032	99,9	0	0
+17270	Huile d'olive vierge extra	899	0,25	traces	99,9	0	0
+17440	Huile de tournesol	900	0,25	traces	100	0	0
+18004	Café, non instantané, sans sucres ajoutés, prêt à boire	5,78	0,25	1,35	0,018	< 0,5	0
+18010	Limonade, sucrée	33	0,000022	8,24	0,000021	0,14	0
+18011	Eau de coco	11,8	0,25	3,33	< 0,3	< 0,5	0
+18016	Limonade, sucrée, avec édulcorants	8	0,00005	2	0,0001	0	0
+18018	Cola, sucré	40,1	0,000026	10	0,000023	0,000057	0
+18020	Thé infusé, sans sucres ajoutés	0,4	0,1	0	0	0	0
+18049	Boisson gazeuse aux fruits (teneur en fruits < 10%), sucrée	33,6	0,011	8,36	0,015	0,00005	0
+18060	Cola, sans sucres ajoutés, avec édulcorants	1,04	0,000019	0,25	0,00002	0,000038	0
+18066	Eau du robinet	0	0	0	0	0	0
+18071	Café expresso, non instantané, sans sucres ajoutés, prêt à boire	6,54	0,25	1,16	0,2	< 0,5	0
+18075	Boisson au thé, aromatisée, sucrée	23,2	0,02	5,78	0,0027	0,13	0
+18100	Cacao, sans sucres ajoutés, poudre soluble	387	22,4	11,6	20,6	29,5	0
+18101	Poudre cacaotée ou au chocolat pour boisson, sucrée	379	6,65	75,6	3,29	10,5	0
+18107	Boisson à l'amande, nature, sans sucres ajoutés, non enrichie, préemballée	35,8	1,06	0,68	3,2	< 0,5	0
+18296	Boisson aux fruits avec de la purée de fruits type smoothie (teneur en fruits >=50%), enrichie en vitamine(s)	51,3	0,52	11,5	0,45	0,54	0
+18348	Boisson pour le sport, sucrée	21,7	0,000013	5,41	0,000013	0	0
+18352	Boisson énergisante, sucrée	40,9	0,095	10,2	traces	0,11	0
+18899	Boisson à l'avoine, nature, sans sucres ajoutés, non enrichie, préemballée	41	0,25	7,78	1,1	< 0,5	0
+18900	Boisson au soja, nature, non enrichie, préemballée	42,4	3,5	1,87	2,1	0,71	0
+18904	Boisson au riz, nature, préemballée	52,2	0,25	10,8	1	< 0,5	0
+19023	Lait entier, UHT	64,6	3,39	4,77	3,55	0	0
+19026	Lait concentré sans sucres ajoutés, entier	119	6,31	9,91	5,9	< 3	0
+19027	Lait concentré sucré, entier	327	7,54	56,5	7,87	0	0
+19041	Lait demi-écrémé, UHT	47,7	3,41	5	1,56	0	0
+19050	Lait écrémé, UHT	34,4	3,53	5,01	0,021	0	0
+19118	Boisson lactée aromatisée au chocolat, sucrée, au lait partiellement écrémé, non enrichie	72,8	3,42	11	1,58	0,5	0
+19127	Boisson lactée aromatisée à la fraise, sucrée, au lait partiellement écrémé, enrichie en vitamine D	58,8	2,48	10,7	0,72	0,033	0
+19417	Crème 30% MG, fluide, UHT	293	2,16	3,69	30	0	0
+19420	Crème chantilly, sous pression, UHT	305	2,06	10,6	28,2	< 3	0
+19436	Crème 12 à 20% MG, légère, fluide, rayon frais	173	2,9	4,3	16	0	0
+19538	Lait fermenté à boire, nature, sucré, au L Casei	69,6	3	10,8	1,6	< 0,05	0
+19584	Mascarpone	369	5,88	3,1	37	< 0,5	0
+19587	Yaourt ou lait fermenté, aux fruits, sucré	88,9	3,17	12,6	2,41	0,6	0
+19590	Mozzarella au lait de vache	227	16,1	0,7	17,7	0	0
+19591	"Mozzarella au lait de bufflonne ou buflesse (""di bufala"")"	260	14,3	0,18	22,3	0,063	0
+19594	Yaourt ou lait fermenté, nature, 0% MG	39,1	4,08	4,89	< 0,1	0,031	0
+19599	Yaourt ou lait fermenté, nature, sucré	81,7	2,86	10,7	2,81	0,031	0
+19600	Yaourt ou lait fermenté, nature, sans précision sur teneur en matière grasse et sucre (aliment moyen)	62,3	3,85	5,85	2,3	0,029	0
+19644	Fromage blanc, nature, 0% MG	48,4	7,19	4,22	< 0,1	0,042	0
+19646	Fromage blanc, nature, 2-3% MG	75,7	7,13	3,86	3,23	0,019	0
+19664	Fromage frais type petit suisse, nature, 4% MG environ	88	9,52	3,11	3,9	< 0,15	0
+19698	Tiramisu au café, rayon frais	242	4,25	30,2	9,8	1,2	1,8
+19724	Spécialité laitière riche en protéines, nature	74,5	9,1	3,45	2,7	< 0,1	0
+19860	Yaourt à la grecque nature	103	2,96	3,73	8,16	0,071	0
+19865	Kéfir de lait	61,1	3,13	4,5	3,4	0	0
+20000	Artichaut, cuit	33,2	2,53	0,99	0,28	8,3	0
+20002	Aubergine, cuite	27,1	0,83	4,17	0,23	2,5	0
+20003	Betterave rouge, cuite	41,5	1,44	7,13	0,4	2,5	0
+20009	Carotte, crue	30,2	0,78	5,16	< 0,5	2,9	0
+20014	Chou rouge, cru	26,4	1,13	4,33	< 0,5	2,8	0
+20016	Chou-fleur, cru	24,9	1,81	2,13	0,7	2,2	0
+20017	Chou-fleur, bouilli/cuit à l'eau	20,9	1,6	1,6	0,46	2	0
+20019	Concombre, chair et peau, cru	16,8	0,65	2,87	0,11	0,5	0
+20020	Courgette, chair et peau, crue	16,7	1,21	1,75	0,32	1	0
+20021	Courgette, chair et peau, cuite	15,5	0,93	1,4	0,36	1,5	0
+20023	Céleri branche, cru	15,4	0,63	2,41	< 0,5	2,2	0
+20026	Endive, crue	16,6	1,19	2,83	< 0,5	1,1	0
+20031	Laitue, crue	14,7	1,35	1,22	0,2	1,1	0
+20034	Oignon, cru	39	1,1	6,25	0,62	1,7	0
+20035	Oignon, cuit	34,6	1,3	6,2	0,2	1,4	0
+20045	Radis rouge, cru	11	0,94	1,53	< 0,5	1,4	0
+20053	Aubergine, crue	22,9	0,98	2,7	0,18	3	0
+20056	Champignon de Paris ou champignon de couche, cru	21	2,11	1,83	0,36	1	0
+20057	Brocoli, cru	31,9	2,9	2,15	0,36	2,6	0
+20059	Épinard, cru	33,3	2,68	3,06	0,39	2,6	0
+20061	Haricot vert, cru	31,9	1,83	4,14	0,22	2,7	0
+20066	Maïs doux, appertisé, égoutté	105	2,66	18,3	1,68	3,1	0
+20076	Asperge, appertisée, égouttée	20,3	1,57	1,2	0,65	1,55	0
+20085	Poivron vert, cru	22,5	0,81	3,43	< 0,5	3,2	0
+20087	Poivron rouge, cru	33,6	1,06	5,98	< 0,5	3,2	0
+20088	Poivron rouge, cuit	37,9	1,17	6,41	0,35	2,2	0
+20096	Potiron, cuit	26,1	0,81	4,47	0,07	2	0
+20099	Mâche, crue	15	2	0,5	< 0,5	2,3	0
+20125	Champignon de Paris ou champignon de couche, sauté/poêlé, sans matière grasse	38,4	4,44	4,53	0,6	0,9	0
+20168	Poivron jaune, cru	29,4	0,94	4,73	0,3	1,2	0
+20169	Tomate, chair, appertisée	22,6	1,2	3,63	< 0,5	1,8	0
+20172	Tomate cerise, crue	31,8	1,31	5,62	< 0,5	1,2	0
+20183	"Graine germée de haricot mungo ou pousse de ""soja"", crue"	28,3	2,81	3,4	< 0,5	1,7	0
+20217	Roquette, crue	27,9	2,58	2,1	0,66	1,6	0
+20299	Asperge verte, bouillie/cuite à l'eau	25,3	2,69	1,73	0,3	2,2	0
+20308	Chou blanc, bouilli/cuit à l'eau	20,8	1	3,23	< 0,3	2,7	0
+20309	Chou de Bruxelles, bouilli/cuit à l'eau	44,4	3,19	5,4	< 0,3	4,8	0
+20313	Courgette, chair et peau, rôtie/cuite au four	20,3	1,5	3,13	< 0,3	1,7	0
+20320	Haricot vert, bouilli/cuit à l'eau	27	1,75	3,39	< 0,3	3,2	0
+20326	Petits pois, bouillis/cuits à l'eau	80,7	6,38	9,93	0,6	4,8	0
+20327	Poireau, bouilli/cuit à l'eau	24,7	2,56	2,23	< 0,3	3,4	0
+20329	Poivron rouge, sauté/poêlé	33	0,94	6,53	< 0,3	2	0
+20336	Épinard, bouilli/cuit à l'eau	26,8	3,38	traces	0,7	3,5	0
+20350	Brocoli, bouilli/cuit à l'eau (aliment moyen)	21,8	2,19	1,03	0,5	3	0
+20352	Carotte, bouillie/cuite à l'eau (aliment moyen)	29,6	0,25	5,73	< 0,3	3,3	0
+20359	Lentille, sèche (aliment moyen)	327	25,1	44,5	1,8	16,3	0
+20360	Lentille, bouillie/cuite à l'eau (aliment moyen)	125	10,1	16,2	0,57	8,45	0
+20385	Tomate sans précision, crue (aliment moyen)	19,2	0,6	3,69	< 0,5	1,02	0
+20499	Légume cuit (aliment moyen)	28,7	1,68	3,67	0,3	2,6	0
+20500	Fève, bouillie/cuite à l'eau	83,3	8,06	9,35	0,8	3,1	0
+20501	Haricot blanc, sec	307	23,4	43,9	0,85	15,2	0
+20502	Haricot blanc, bouilli/cuit à l'eau	112	6,75	12	1,1	13,8	0
+20503	Haricot rouge, bouilli/cuit à l'eau	116	9,63	12,3	0,6	11,6	0
+20507	Pois chiche, bouilli/cuit à l'eau	148	8,31	17,7	3	8,2	0
+20516	Pois chiche, sec	350	20,5	47,5	6,04	12,2	0
+20532	Pois chiche, appertisé, égoutté	122	6,74	15	2,68	5,45	0
+20591	Protéine de soja texturée, réhydratée	150	20,4	7,03	2,9	5,61	0
+20904	Tofu nature, préemballé	147	14,7	2,87	8,5	< 0,5	0
+21503	Agneau, gigot rôti/cuit au four	169	26,8	0	6,85	0	0
+21524	Agneau, côte ou côtelette, grillée/poêlée (aliment moyen)	157	26,3	0	5,78	0	0
+22000	Oeuf cru	140	12,8	0,06	9,83	0	0
+22001	Oeuf, blanc (blanc d'oeuf), cru	48,1	10,9	0,73	0,17	0	0
+22008	Oeuf, blanc (blanc d'oeuf), cuit	47,3	10,3	1,12	0,17	0	0
+22009	Oeuf, jaune (jaune d'oeuf), cuit	340	16	1,31	30,1	0	0
+22010	Oeuf dur	134	13,5	0,52	8,62	0	0
+22500	Omelette nature, faite maison	196	13,8	0,9	15,3	0	0
+22502	Oeuf brouillé, avec matière grasse	167	11,9	0,44	13	0	0
+22505	Oeuf au plat, sans matière grasse	157	14,6	1,4	10,4	0	0
+22510	Tortilla espagnole aux oignons (omelette aux pommes de terre et oignons), préemballée	165	5,56	11,7	9,9	2,7	0
+23001	Cheesecake, préemballé	337	5,44	34,1	19,7	0,7	0
+23032	Brownie au chocolat, préemballé	458	5,94	50,6	25,4	3,4	0
+23588	Gâteau ou cake au yaourt, préemballé	409	5,88	52	19,1	2,7	0
+23799	Crêpe, nature, préemballée, rayon frais	257	6,31	41,6	6,8	2,2	0
+23851	Gaufre moelleuse (type bruxelloise ou liégeoise), nature ou sucrée, préemballée	455	6,19	52,1	24,1	2,4	0
+23880	Beignet ou donut rond moelleux, sans fourrage, saupoudré de sucre	404	7,25	39,4	23,7	2	0
+23952	Muffin, au chocolat, préemballé	444	5,58	52,5	23	2,42	0
+24001	Biscuit sec nature	438	7,13	74,9	11,5	3,3	0
+24016	Biscuit sec avec tablette de chocolat	485	5,56	68,8	20	3,5	0
+24020	Biscuit sec aux céréales complètes	462	7,75	63	18,4	6,6	0
+24632	Madeleine ordinaire, préemballée	441	5,55	55,3	21,6	1,4	0
+24655	Biscuit sec ou galette à l'avoine	491	5,64	63,9	22,9	3,41	0
+24684	Cookie au chocolat, préemballé	493	6,44	61	23,8	4,3	0
+25081	Lasagnes ou canellonis à la viande (bolognaise), préemballés	134	6,29	13,5	5,72	1,91	0
+25111	Chili con carne, préemballé	118	7,13	13	3,35	3,56	0
+25138	Couscous au poulet	130	7,5	15,6	3,85	1,47	0
+25149	Pâtes fraîches farcies (ex : raviolis, tortellinis, ravioles du Dauphiné), au fromage, préemballées, cuites	226	10	26,8	8,3	1,9	0
+25242	Paëlla (poulet fruit de mer, chorizo, colin), fait maison	135	6,38	22	2,2	0,8	0
+25243	Nouilles asiatiques instantanées, aromatisées, cuites	164	3,75	21,1	6,9	1	0
+25403	Hot-dog, préemballé	278	10,9	26,3	13,8	1,6	0
+25404	Pizza au fromage ou pizza margherita, préemballée	224	8,7	29,6	7,41	2,27	0
+25405	Quiche lorraine, préemballée	269	8,39	21,5	16,4	1,39	0
+25413	Hamburger, de restauration rapide	251	13,3	29,5	8,44	1,8	0
+25414	Cheeseburger, de restauration rapide	290	14	22,3	15,8	1,4	0
+25418	Croissant au jambon fromage, fait maison	264	7,9	24,8	14,6	1	0
+25428	Sandwich grec ou kebab, pita, crudités	232	15,2	17	10,9	2,3	0
+25435	Pizza jambon fromage, préemballée	228	10,7	26,2	8,49	1,95	0
+25456	Sushi ou maki aux produits de la mer	171	6,69	26,9	3,7	0,9	0
+25457	Pizza à la viande, type bolognaise, préemballée	214	9,7	27	7,03	2,1	0
+25459	Burritos au boeuf	170	8	14,3	8,5	1,9	0
+25460	Fajita au poulet, préparé maison avec un kit	158	12,7	16	4,5	1,4	0
+25478	Pizza aux fromages, préemballée	269	11,2	30,5	10,7	2,06	0
+25510	Gnocchi à la pomme de terre, cuit	178	5,01	34,1	2,05	1,75	0
+25516	Pizza (aliment moyen)	234	10	27,4	8,88	2,12	0
+25620	Guacamole, préemballé	191	1,82	4,64	17,2	4,84	0
+25621	Houmous, préemballé	258	8,06	9	19,9	5,18	0
+25674	Nem ou pâté impérial, préemballé, cuit (aliment moyen)	216	7,45	22,4	10	2,8	0
+25903	Soupe aux légumes variés, préemballée à réchauffer	36,8	0,84	4,5	1,45	1,23	0
+25908	Soupe à la volaille et aux vermicelles, préemballée à réchauffer	23,2	1,24	3,28	0,56	0,25	0
+25947	Bouillon de volaille, déshydraté reconstitué	7,19	1,23	0,28	0,13	< 0,0001	0
+25967	Soupe froide type gaspacho ou gazpacho, préemballée	40,2	0,81	3,21	2,33	1,07	0
+25998	Hareng fumé, doux	163	18,1	0,44	9,9	< 1	0
+26000	Anchois, filets, marinés à l'huile, semi-conserve, égouttés	167	20,6	0,47	9,08	< 0,5	0
+26019	Maquereau, rôti/cuit au four	228	21,5	traces	15,8	0	0
+26023	Cabillaud, rôti/cuit au four	94,6	22,3	traces	0,6	0	0
+26024	Morue, salée, bouillie/cuite à l'eau	113	26	traces	1,01	0	0
+26025	Cabillaud, cuit à la vapeur	106	24,5	traces	0,95	0	0
+26035	Sardine, sauce tomate, appertisée, égouttée	194	20,2	1,83	11,6	1	0
+26036	Saumon, élevage, cru	193	20,5	traces	12,4	< 0,25	0
+26037	Saumon fumé	184	22,2	0,13	10,5	0,26	0
+26038	Saumon, cuit à la vapeur	199	23	0,9	11,5	0	0
+26039	Thon, au naturel, appertisé, égoutté	143	26,8	0	3,94	0	0
+26040	Sardine, à l'huile d'olive, appertisée, égouttée	224	23,3	0,11	14,5	0	0
+26041	Thon, rôti/cuit au four	136	29,9	traces	1,83	0	0
+26043	Cabillaud, cru	77,4	18,1	traces	0,57	< 0,2	0
+26044	Merlu, cru	82,6	17,6	0	1,35	0	0
+26046	Surimi, bâtonnets, tranche ou râpé saveur crabe	117	7,54	11,8	4,33	0,73	0
+26053	Thon, cru	155	24	2,72	5,38	0	0
+26065	Sardine, crue	160	19,5	0	9,17	0	0
+26079	Anchois, cru	129	18,6	traces	6,07	0	0
+26081	Lotte ou baudroie, grillée/poêlée	98,2	23	traces	0,68	0	0
+26082	Espadon, cru	134	18,9	1	5,97	0	0
+26088	Dorade royale ou daurade ou vraie daurade, élevage, crue	129	20,9	traces	5,1	0	0
+26120	Merlu, cuit à l'étouffée	112	21,2	traces	3	0	0
+26123	Maquereau, filet (grillé ou non), au naturel, appertisé, égoutté	221	18,8	0,018	16,2	0	0
+26136	Sardine,  grillée/poêlée	194	25,1	traces	10,4	0	0
+26177	Anchois, filets, salés, à l'huile, semi-conserve, égouttés	199	24,9	0	11	0	0
+26179	Thon germon ou thon blanc, à l'huile d'olive, appertisé, égoutté	192	31,3	1,01	6,95	0	0
+26180	Thon à l'huile de tournesol, entier, appertisé, égoutté	206	23,3	0,76	12,2	0	0
+26206	Bar commun ou loup (Méditerranée), élevage, cru	124	21,4	traces	4,25	0	0
+26229	Saumon, grillé/poêlé	223	25,5	0	13,5	0	0
+26230	Saumon, élevage, rôti/cuit au four	214	22,1	0,98	13,5	0	0
+26248	Sole, grillée/poêlée	94,4	23,6	0	< 0,5	0	0
+27014	Truite arc en ciel, élevage, rôtie/cuite au four	143	21,5	traces	6,33	0	0
+27018	Pangas, poisson-chat, machoiron, cuit	79	17,5	0	1	0	0
+27030	Bar commun ou loup, rôti/cuit au four	151	22,2	1,02	6,51	0	0
+27031	Dorade royale ou daurade ou vraie daurade, rôtie/cuite au four	148	23,6	traces	5,9	0	0
+28101	Porc, côte grillée/poêlée	211	29,6	0	10,3	0	0
+28104	Porc, carré cru	146	22,7	0,4	5,94	0	0
+28105	Porc, carré cuit	206	34,1	0,6	7,45	0	0
+28203	Porc, filet mignon cuit	168	26,1	0	7,1	0	0
+28204	Porc, filet mignon cru	123	21,2	0,4	4,09	0	0
+28401	Porc, travers braisé	332	23,1	0	26,6	0	0
+28720	Lardon fumé, cru	272	16,7	0,35	22,6	0,34	0
+28725	Lardon fumé, cuit	277	14,7	4,8	22,1	0	0
+28845	Jambon sec Serrano	235	30,4	0,76	12,3	traces	0
+28900	Jambon cuit, supérieur	113	21	0,76	2,83	< 0,19	0
+28963	Jambon de poulet ou blanc de poulet en tranche	105	20,7	1,39	1,79	0,53	0
+28964	Jambon de dinde ou blanc de dinde en tranche	99,3	20,9	0,023	1,67	0,39	0
+30134	Saucisse de Francfort	279	13,7	3,37	23,4	< 0,5	0
+30300	Saucisson sec	418	24,2	5,48	33,1	0,73	0
+30315	Chorizo	425	23,5	1,24	36,1	0,93	0
+30350	Salami	457	17,7	2,59	41,8	traces	0
+30789	Mortadelle	310	15,2	0,69	27,4	0,000017	0
+30887	Confiture, autres fruits ou mélange de fruits, allégée en sucres (extra ou classique)	162	0,75	38	0,21	1,8	0
+31000	Barre chocolatée biscuitée	492	5,56	61,4	24,1	3,7	0
+31001	Barre chocolatée non biscuitée enrobée	496	3,7	66,4	24,1	0,6	0
+31004	Chocolat au lait, tablette	550	7,5	58,9	30,8	2,9	0
+31005	Chocolat noir 50 % de cacao environ, tablette	521	5,98	53	29,6	8,31	0
+31006	Confiture ou marmelade ou gelée, tout type de fruits, non allégée en sucres (aliment moyen)	244	0,33	59,3	0,28	1,29	0
+31008	Miel	331	0,65	82,1	0	0	0
+31010	Chocolat blanc, tablette	563	6,16	57,1	34,2	1	0
+31016	Sucre blanc	399	0	99,7	0	0	0
+31017	Sucre roux	393	0,12	98,1	0	0	0
+31032	Pâte à tartiner chocolat et noisette	549	5,02	57,9	32,4	3,23	0
+31034	Sirop d'érable	269	0,04	67,2	0,06	0	0
+31059	Bonbon dur et sucette	384	0,16	95,3	0,18	0,91	0
+31060	Bonbon gélifié	339	4,88	76,9	0,53	1,5	0
+31074	Chocolat noir 70 % de cacao environ, de dégustation, tablette	591	10,4	26,9	46,3	12,8	0
+31106	Barre céréalière au chocolat	451	6,55	73	14,9	4,5	0
+31113	Barre céréalière aux fruits	379	5,49	74,1	7,07	3,8	0
+32001	Céréales pour petit déjeuner chocolatées, non fourrées, enrichies en vitamines et minéraux	393	8,19	74,7	5,1	7,1	0
+32003	Céréales pour petit déjeuner (aliment moyen)	402	8,02	73,2	7,21	5,99	0
+32004	Muesli (aliment moyen)	433	8,87	63,4	14,3	6,9	0
+32005	Pétales de maïs nature, enrichis en vitamines et minéraux	368	6,88	80	1	5,5	0
+32140	Flocons d'avoine	369	11,4	57,7	7,82	11,2	0
+32145	Muesli croustillant aux fruits à coque et/ou graines uniquement, non enrichi en vitamines et minéraux	450	10	61,2	16,5	6,7	0
+34000	Lapin, viande braisée	197	30,4	0	8,41	0	0
+34002	Lapin, viande cuite	167	20,5	0,5	9,2	0	0
+36002	Poulet, cuisse, viande et peau crue	192	17,3	0	13,5	0	0
+36003	Poulet, viande crue	109	20,9	0	2,89	0	0
+36004	Poulet, cuisse, viande et peau rôtie/cuite au four	205	25,9	traces	11,3	0	0
+36005	Poulet, viande et peau rôties/cuites au four	204	28,9	0	9,88	0	0
+36006	Poulet, cuisse, viande rôtie/cuite au four	171	24,8	0	8,03	0	0
+36017	Poulet, filet sans peau cru	110	23,4	0	1,5	0	0
+36018	Poulet, filet sans peau grillé/poêlé	141	30,1	0	2	0	0
+36027	Nuggets ou croquette panée de poulet, préemballé	250	15,6	19,4	11,6	2,4	0
+36030	Poulet, cuisse, viande bouillie/cuite à l'eau	188	24,8	0,7	9,52	0	0
+36033	Poulet, aile, viande et peau rôties/cuites au four	247	23,8	0	16,9	0	0
+36102	Caille, viande et peau cuites	206	26,8	0	10,9	0	0
+36205	Canard, magret grillé/poêlé	188	26,7	0	9,05	0	0
+36304	Dinde, escalope crue	108	23,7	0	1,48	0	0
+36306	Dinde, escalope grillée/poêlée	124	28,5	0	1,09	0	0
+38417	Chips de maïs ou tortilla chips, nature	488	6,68	62,6	22,5	4,33	0
+39206	Mousse au chocolat (base laitière), rayon frais	155	4,95	20,3	5,45	1,82	0
+39209	Crème caramel, rayon frais	155	4,65	21	5,74	0,32	0
+39212	Riz au lait vanille, cannelle ou nature, rayon frais	121	2,94	18,9	3,4	1,2	0
+39213	Crème brûlée, rayon frais	269	4,35	17,5	20,1	0,32	0
+39229	Crème dessert à la vanille, rayon frais	103	2,92	16,2	2,88	0,11	0
+39503	Glace ou crème glacée, bâtonnet enrobage chocolat	329	3,23	33,3	20	1,21	0
+39509	Glace ou crème glacée, cône (taille standard)	290	3,44	36,8	13,5	< 3	1
+39515	Glace ou crème glacée, en bac	191	2,5	26,1	8,4	< 3	0
+40105	Foie, génisse, cuit	165	26,3	2,2	5,71	0	0
+40116	Foie, poulet, cuit	160	24,5	0,86	6,51	0	0

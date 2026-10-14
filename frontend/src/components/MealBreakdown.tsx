@@ -1,11 +1,12 @@
 import clsx from 'clsx'
 import { AnimatePresence, motion } from 'motion/react'
-import { Minus, PencilLine, Plus, Tag, X } from 'lucide-react'
+import { BadgeCheck, Minus, PencilLine, Plus, Sparkles, Tag, X } from 'lucide-react'
 import { useState } from 'react'
 import { capitalize, fmt, fmtSmart } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
 import { GRAM_MACROS, itemsTotal } from '@/lib/macros'
 import { SLOTS } from '@/lib/slots'
+import { officialShare, SOURCE_LABEL, sourceOf } from '@/lib/source'
 import type { Item, Slot } from '@/lib/types'
 import { AnimatedNumber } from '@/ui/AnimatedNumber'
 import { NumberInput } from '@/ui/Field'
@@ -126,11 +127,42 @@ export function ServingsPicker({ value, onChange }: { value: number; onChange: (
   )
 }
 
+/** De dónde salen los valores del ingrediente: tabla oficial, etiqueta, puestos a mano o estimados por la IA. */
+function SourceIcon({ item }: { item: Item }) {
+  const source = sourceOf(item)
+  const label = SOURCE_LABEL[source] + (source === 'tabla' && item.ref ? ` (${item.ref.replace(':', ' ').toUpperCase()})` : '')
+  const Icon = { tabla: BadgeCheck, etiqueta: Tag, manual: PencilLine, ia: Sparkles }[source]
+  const tone = { tabla: 'text-accent-text', etiqueta: 'text-accent-text', manual: 'text-text-3', ia: 'text-text-3' }[source]
+  return (
+    <span title={label} className="shrink-0">
+      <Icon className={clsx('size-3.5', tone)} aria-label={label} role="img" />
+    </span>
+  )
+}
+
+/** Qué parte de las calorías sale de valores oficiales (o tuyos) y qué parte ha estimado la IA. */
+function OfficialShare({ items }: { items: Item[] }) {
+  const share = officialShare(items)
+  if (!items.length) return null
+  const pct = Math.round(share * 100)
+  return (
+    <div className="mt-1.5 flex items-center gap-2.5" data-num>
+      <div className="h-1 flex-1 overflow-hidden rounded-full bg-track" aria-hidden>
+        <div className="h-full rounded-full bg-accent transition-[width] duration-300" style={{ width: `${pct}%` }} />
+      </div>
+      <p className="shrink-0 text-[12px] text-text-3">
+        {pct === 100 ? 'Todo con valores oficiales o tuyos' : pct === 0 ? 'Valores estimados por la IA' : `${pct} % de las kcal con valores oficiales`}
+      </p>
+    </div>
+  )
+}
+
 export function ItemList({ items, onChange }: { items: Item[]; onChange?: (items: Item[]) => void }) {
   const [adding, setAdding] = useState(false)
   return (
     <div>
       <span className="eyebrow">Ingredientes</span>
+      <OfficialShare items={items} />
       <ul className="mt-2 overflow-hidden rounded-md border border-border bg-surface">
         <AnimatePresence initial={false}>
           {items.map((item, index) => (
@@ -147,8 +179,7 @@ export function ItemList({ items, onChange }: { items: Item[]; onChange?: (items
                 <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-1.5 text-[14.5px] font-medium text-text">
                     <span className="truncate">{capitalize(item.name)}</span>
-                    {item.product_id ? <Tag className="size-3.5 shrink-0 text-accent-text" aria-label="De la etiqueta de tu producto" /> : null}
-                    {item.manual ? <PencilLine className="size-3.5 shrink-0 text-text-3" aria-label="Añadido a mano" /> : null}
+                    <SourceIcon item={item} />
                   </p>
                   <p className="mt-0.5 text-[12px] text-text-3" data-num>
                     {fmt(item.kcal)} kcal ·{' '}

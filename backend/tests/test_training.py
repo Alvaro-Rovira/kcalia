@@ -1,5 +1,8 @@
 """Registro de entrenamientos: catálogo, plantillas, sesiones y series (idempotentes), referencias y progresión."""
 
+import json
+from pathlib import Path
+
 import pytest
 from conftest import create_user, login, reset_database
 from fastapi.testclient import TestClient
@@ -39,9 +42,19 @@ def test_formulas():
     assert estimated_1rm(80, 8) == pytest.approx(101.3)
     assert estimated_1rm(50, 20) == estimated_1rm(50, 12)  # a partir de 12 repeticiones no sube más
     assert estimated_1rm(0, 10) == 0
-    assert estimated_kcal(60, "moderada", 80) == 400
-    assert estimated_kcal(45, "intensa", 70) == 315
+    # Netas: (MET − 1) × kg × h, sin el gasto en reposo que el objetivo diario ya cuenta.
+    assert estimated_kcal(60, "moderada", 80) == 320
+    assert estimated_kcal(45, "intensa", 70) == 263  # 262,5: mitades hacia arriba, como en el móvil
     assert estimated_kcal(None, "suave", 80) == 0
+
+
+def test_el_cardio_usa_el_met_de_su_actividad():
+    # 30 min de cinta moderada (8,5 MET) y 30 de fuerza moderada (5 MET) a 80 kg.
+    assert estimated_kcal(60, "moderada", 80, cardio={"ex-cinta": 30}) == round(7.5 * 80 * 0.5 + 4 * 80 * 0.5)
+    # Más minutos de cardio que de entreno: se reparten en la duración real.
+    assert estimated_kcal(60, "moderada", 80, cardio={"ex-cinta": 90}) == round(7.5 * 80)
+    # Un ejercicio de cardio propio usa un MET genérico de cardio (bici moderada, 6).
+    assert estimated_kcal(60, "moderada", 80, cardio={"mi-cardio": 60}) == round(5 * 80)
 
 
 def test_catalogo_y_plantillas_iniciales_una_sola_vez(client):
@@ -168,3 +181,9 @@ def test_calorias_del_entreno_informativas_o_sumadas(client):
     added = week["days"][0]["targets"]
     assert added["kcal"] == targets["kcal"] + round(kcal / 4) * 4 and added["protein"] == targets["protein"]
     client.patch("/api/prefs", json={"add_exercise_kcal": False})
+
+
+@pytest.mark.parametrize("case", json.loads((Path(__file__).parent / "fixtures/exercise_kcal_cases.json").read_text()))
+def test_casos_compartidos_con_el_movil(case):
+    got = estimated_kcal(case["minutes"], case["intensity"], case["weight"], cardio=case["cardio"])
+    assert got == case["kcal"]

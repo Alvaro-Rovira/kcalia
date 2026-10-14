@@ -1,0 +1,6840 @@
+[
+ {
+  "id": "arroz-blanco-cocido",
+  "name": "arroz blanco cocido",
+  "food": "arroz blanco",
+  "prep": "cocido",
+  "ref": "ciqual:9104",
+  "aliases": [
+   "arroz",
+   "arroz cocido",
+   "arroz hervido"
+  ],
+  "units": {
+   "plato": 280,
+   "racion": 200,
+   "taza": 180,
+   "bol": 200
+  },
+  "default": true
+ },
+ {
+  "id": "arroz-blanco-crudo",
+  "name": "arroz blanco crudo",
+  "food": "arroz blanco",
+  "prep": "crudo",
+  "ref": "ciqual:9100",
+  "aliases": [
+   "arroz crudo",
+   "arroz en seco",
+   "arroz en crudo"
+  ],
+  "units": {
+   "taza": 190
+  }
+ },
+ {
+  "id": "arroz-integral-cocido",
+  "name": "arroz integral cocido",
+  "food": "arroz integral",
+  "prep": "cocido",
+  "ref": "ciqual:9103",
+  "aliases": [
+   "arroz integral cocido"
+  ],
+  "units": {
+   "plato": 280,
+   "racion": 200
+  },
+  "default": true
+ },
+ {
+  "id": "arroz-integral-crudo",
+  "name": "arroz integral crudo",
+  "food": "arroz integral",
+  "prep": "crudo",
+  "ref": "ciqual:9102",
+  "aliases": [
+   "arroz integral en seco"
+  ]
+ },
+ {
+  "id": "arroz-basmati-cocido",
+  "name": "arroz basmati cocido",
+  "food": "arroz basmati",
+  "prep": "cocido",
+  "ref": "ciqual:9125",
+  "aliases": [
+   "arroz basmati cocido"
+  ],
+  "units": {
+   "plato": 280,
+   "racion": 200
+  },
+  "default": true
+ },
+ {
+  "id": "arroz-basmati-crudo",
+  "name": "arroz basmati crudo",
+  "food": "arroz basmati",
+  "prep": "crudo",
+  "ref": "ciqual:9119",
+  "aliases": [
+   "arroz basmati en seco"
+  ]
+ },
+ {
+  "id": "pasta-cocida",
+  "name": "pasta cocida",
+  "food": "pasta",
+  "prep": "cocido",
+  "ref": "ciqual:9811",
+  "aliases": [
+   "macarrones",
+   "espaguetis",
+   "espagueti",
+   "tallarines",
+   "penne",
+   "lacitos",
+   "espirales",
+   "plumas",
+   "fideos",
+   "pasta cocida"
+  ],
+  "units": {
+   "plato": 280,
+   "racion": 200,
+   "taza": 150
+  },
+  "default": true
+ },
+ {
+  "id": "pasta-cruda",
+  "name": "pasta cruda",
+  "food": "pasta",
+  "prep": "crudo",
+  "ref": "ciqual:9810",
+  "aliases": [
+   "pasta en seco",
+   "pasta en crudo",
+   "macarrones crudos",
+   "espaguetis crudos"
+  ]
+ },
+ {
+  "id": "pasta-integral-cocida",
+  "name": "pasta integral cocida",
+  "food": "pasta integral",
+  "prep": "cocido",
+  "ref": "ciqual:9871",
+  "aliases": [
+   "macarrones integrales",
+   "espaguetis integrales"
+  ],
+  "units": {
+   "plato": 280,
+   "racion": 200
+  },
+  "default": true
+ },
+ {
+  "id": "pasta-integral-cruda",
+  "name": "pasta integral cruda",
+  "food": "pasta integral",
+  "prep": "crudo",
+  "ref": "ciqual:9870",
+  "aliases": [
+   "pasta integral en seco"
+  ]
+ },
+ {
+  "id": "tortellini-queso",
+  "name": "tortellini de queso",
+  "food": "tortellini",
+  "prep": "cocido",
+  "ref": "ciqual:25149",
+  "aliases": [
+   "tortellini",
+   "raviolis",
+   "ravioli"
+  ],
+  "units": {
+   "plato": 250
+  },
+  "default": true
+ },
+ {
+  "id": "cuscus-cocido",
+  "name": "cuscús cocido",
+  "food": "cuscús",
+  "prep": "cocido",
+  "ref": "ciqual:9683",
+  "aliases": [
+   "cuscus"
+  ],
+  "units": {
+   "plato": 250,
+   "racion": 180
+  },
+  "default": true
+ },
+ {
+  "id": "cuscus-crudo",
+  "name": "cuscús crudo",
+  "food": "cuscús",
+  "prep": "crudo",
+  "ref": "ciqual:9610",
+  "aliases": [
+   "cuscus en seco"
+  ]
+ },
+ {
+  "id": "quinoa-cocida",
+  "name": "quinoa cocida",
+  "food": "quinoa",
+  "prep": "cocido",
+  "ref": "ciqual:9341",
+  "aliases": [
+   "quinoa"
+  ],
+  "units": {
+   "plato": 250,
+   "racion": 180
+  },
+  "default": true
+ },
+ {
+  "id": "quinoa-cruda",
+  "name": "quinoa cruda",
+  "food": "quinoa",
+  "prep": "crudo",
+  "ref": "ciqual:9340",
+  "aliases": [
+   "quinoa en seco"
+  ]
+ },
+ {
+  "id": "avena-copos",
+  "name": "copos de avena",
+  "food": "copos de avena",
+  "prep": "ninguna",
+  "ref": "ciqual:32140",
+  "aliases": [
+   "avena",
+   "copos de avena",
+   "porridge en seco"
+  ],
+  "units": {
+   "cda": 10,
+   "puñado": 30,
+   "taza": 80,
+   "racion": 40
+  },
+  "default": true
+ },
+ {
+  "id": "harina-trigo",
+  "name": "harina de trigo",
+  "food": "harina de trigo",
+  "prep": "ninguna",
+  "ref": "ciqual:9436",
+  "aliases": [
+   "harina",
+   "harina blanca"
+  ],
+  "units": {
+   "cda": 10,
+   "taza": 120
+  },
+  "default": true
+ },
+ {
+  "id": "harina-integral",
+  "name": "harina integral de trigo",
+  "food": "harina integral",
+  "prep": "ninguna",
+  "ref": "ciqual:9415",
+  "aliases": [
+   "harina integral"
+  ],
+  "units": {
+   "cda": 10
+  },
+  "default": true
+ },
+ {
+  "id": "maicena",
+  "name": "maicena",
+  "food": "maicena",
+  "prep": "ninguna",
+  "ref": "ciqual:9510",
+  "aliases": [
+   "almidon de maiz",
+   "harina de maiz refinada"
+  ],
+  "units": {
+   "cda": 10
+  },
+  "default": true
+ },
+ {
+  "id": "pan-blanco",
+  "name": "pan blanco",
+  "food": "pan",
+  "prep": "ninguna",
+  "ref": "ciqual:7001",
+  "aliases": [
+   "pan de barra",
+   "barra de pan",
+   "pan blanco",
+   "baguette",
+   "pan de pueblo",
+   "chapata",
+   "pan candeal"
+  ],
+  "units": {
+   "rebanada": 40,
+   "pieza": 250,
+   "racion": 60
+  },
+  "default": true
+ },
+ {
+  "id": "tostada-pan",
+  "name": "pan tostado",
+  "food": "pan tostado",
+  "prep": "ninguna",
+  "ref": "ciqual:7004",
+  "aliases": [
+   "tostada",
+   "tostadas",
+   "tostada de pan"
+  ],
+  "units": {
+   "pieza": 40,
+   "rebanada": 40
+  },
+  "default": true
+ },
+ {
+  "id": "pan-integral",
+  "name": "pan integral",
+  "food": "pan integral",
+  "prep": "ninguna",
+  "ref": "ciqual:7110",
+  "aliases": [
+   "pan de barra integral"
+  ],
+  "units": {
+   "rebanada": 40,
+   "pieza": 250
+  },
+  "default": true
+ },
+ {
+  "id": "pan-molde-integral",
+  "name": "pan de molde integral",
+  "food": "pan de molde integral",
+  "prep": "ninguna",
+  "ref": "ciqual:7111",
+  "aliases": [
+   "pan bimbo integral"
+  ],
+  "units": {
+   "rebanada": 28,
+   "pieza": 28
+  },
+  "default": true
+ },
+ {
+  "id": "pan-centeno",
+  "name": "pan de centeno",
+  "food": "pan de centeno",
+  "prep": "ninguna",
+  "ref": "ciqual:7125",
+  "aliases": [
+   "pan centeno"
+  ],
+  "units": {
+   "rebanada": 40
+  },
+  "default": true
+ },
+ {
+  "id": "pan-hamburguesa",
+  "name": "pan de hamburguesa",
+  "food": "pan de hamburguesa",
+  "prep": "ninguna",
+  "ref": "ciqual:7259",
+  "aliases": [
+   "pan de burger",
+   "pan de perrito",
+   "pan de perrito caliente"
+  ],
+  "units": {
+   "pieza": 60
+  },
+  "default": true
+ },
+ {
+  "id": "pan-pita",
+  "name": "pan de pita",
+  "food": "pan de pita",
+  "prep": "ninguna",
+  "ref": "ciqual:7180",
+  "aliases": [
+   "pita"
+  ],
+  "units": {
+   "pieza": 60
+  },
+  "default": true
+ },
+ {
+  "id": "tortilla-trigo",
+  "name": "tortilla de trigo",
+  "food": "tortilla de trigo",
+  "prep": "ninguna",
+  "ref": "ciqual:7815",
+  "aliases": [
+   "wrap",
+   "tortilla mexicana",
+   "tortilla de wrap",
+   "tortita mexicana"
+  ],
+  "units": {
+   "pieza": 40
+  },
+  "default": true
+ },
+ {
+  "id": "picos-pan",
+  "name": "picos de pan",
+  "food": "picos",
+  "prep": "ninguna",
+  "ref": "ciqual:7525",
+  "aliases": [
+   "picos de pan",
+   "colines",
+   "palitos de pan"
+  ],
+  "units": {
+   "pieza": 5,
+   "puñado": 20
+  },
+  "default": true
+ },
+ {
+  "id": "biscote",
+  "name": "biscote",
+  "food": "biscote",
+  "prep": "ninguna",
+  "ref": "ciqual:7300",
+  "aliases": [
+   "biscotes",
+   "pan tostado de paquete",
+   "tostadas de paquete"
+  ],
+  "units": {
+   "pieza": 8
+  },
+  "default": true
+ },
+ {
+  "id": "tortita-arroz",
+  "name": "tortita de arroz",
+  "food": "tortita de arroz",
+  "prep": "ninguna",
+  "ref": "ciqual:7352",
+  "aliases": [
+   "tortitas de arroz",
+   "galleta de arroz",
+   "galletas de arroz"
+  ],
+  "units": {
+   "pieza": 8
+  },
+  "default": true
+ },
+ {
+  "id": "tortita-maiz",
+  "name": "tortita de maíz",
+  "food": "tortita de maiz",
+  "prep": "ninguna",
+  "ref": "ciqual:7354",
+  "aliases": [
+   "tortitas de maiz"
+  ],
+  "units": {
+   "pieza": 8
+  },
+  "default": true
+ },
+ {
+  "id": "cereales-desayuno",
+  "name": "cereales de desayuno",
+  "food": "cereales",
+  "prep": "ninguna",
+  "ref": "ciqual:32003",
+  "aliases": [
+   "cereales de desayuno"
+  ],
+  "units": {
+   "bol": 40,
+   "taza": 30,
+   "racion": 40
+  },
+  "default": true
+ },
+ {
+  "id": "corn-flakes",
+  "name": "copos de maíz",
+  "food": "copos de maiz",
+  "prep": "ninguna",
+  "ref": "ciqual:32005",
+  "aliases": [
+   "corn flakes",
+   "cornflakes"
+  ],
+  "units": {
+   "bol": 30,
+   "taza": 30
+  },
+  "default": true
+ },
+ {
+  "id": "cereales-chocolate",
+  "name": "cereales de chocolate",
+  "food": "cereales de chocolate",
+  "prep": "ninguna",
+  "ref": "ciqual:32001",
+  "aliases": [
+   "choco krispies",
+   "cereales chocolateados"
+  ],
+  "units": {
+   "bol": 40,
+   "taza": 30
+  },
+  "default": true
+ },
+ {
+  "id": "muesli",
+  "name": "muesli",
+  "food": "muesli",
+  "prep": "ninguna",
+  "ref": "ciqual:32004",
+  "aliases": [
+   "muesli"
+  ],
+  "units": {
+   "bol": 50,
+   "taza": 45
+  },
+  "default": true
+ },
+ {
+  "id": "granola",
+  "name": "granola",
+  "food": "granola",
+  "prep": "ninguna",
+  "ref": "ciqual:32145",
+  "aliases": [
+   "muesli crujiente"
+  ],
+  "units": {
+   "bol": 50,
+   "taza": 45,
+   "cda": 10
+  },
+  "default": true
+ },
+ {
+  "id": "pan-rallado",
+  "name": "pan rallado",
+  "food": "pan rallado",
+  "prep": "ninguna",
+  "ref": "ciqual:7500",
+  "aliases": [
+   "pan rallado"
+  ],
+  "units": {
+   "cda": 8
+  },
+  "default": true
+ },
+ {
+  "id": "lentejas-cocidas",
+  "name": "lentejas cocidas",
+  "food": "lenteja",
+  "prep": "cocido",
+  "ref": "ciqual:20360",
+  "aliases": [
+   "lentejas",
+   "lentejas cocidas",
+   "lentejas de bote"
+  ],
+  "units": {
+   "racion": 200,
+   "plato": 250
+  },
+  "default": true
+ },
+ {
+  "id": "lentejas-crudas",
+  "name": "lentejas crudas",
+  "food": "lenteja",
+  "prep": "crudo",
+  "ref": "ciqual:20359",
+  "aliases": [
+   "lentejas en crudo",
+   "lentejas secas"
+  ],
+  "units": {
+   "racion": 70
+  }
+ },
+ {
+  "id": "garbanzos-cocidos",
+  "name": "garbanzos cocidos",
+  "food": "garbanzo",
+  "prep": "cocido",
+  "ref": "ciqual:20507",
+  "aliases": [
+   "garbanzos"
+  ],
+  "units": {
+   "racion": 200,
+   "plato": 250
+  },
+  "default": true
+ },
+ {
+  "id": "garbanzos-bote",
+  "name": "garbanzos de bote",
+  "food": "garbanzos de bote",
+  "prep": "ninguna",
+  "ref": "ciqual:20532",
+  "aliases": [
+   "garbanzos en conserva"
+  ],
+  "units": {
+   "racion": 200
+  },
+  "default": true
+ },
+ {
+  "id": "garbanzos-crudos",
+  "name": "garbanzos crudos",
+  "food": "garbanzo",
+  "prep": "crudo",
+  "ref": "ciqual:20516",
+  "aliases": [
+   "garbanzos secos"
+  ],
+  "units": {
+   "racion": 70
+  }
+ },
+ {
+  "id": "alubias-blancas-cocidas",
+  "name": "alubias blancas cocidas",
+  "food": "alubia blanca",
+  "prep": "cocido",
+  "ref": "ciqual:20502",
+  "aliases": [
+   "alubias",
+   "judias blancas",
+   "alubias blancas"
+  ],
+  "units": {
+   "racion": 200,
+   "plato": 250
+  },
+  "default": true
+ },
+ {
+  "id": "alubias-blancas-crudas",
+  "name": "alubias blancas crudas",
+  "food": "alubia blanca",
+  "prep": "crudo",
+  "ref": "ciqual:20501",
+  "aliases": [
+   "alubias secas"
+  ],
+  "units": {
+   "racion": 70
+  }
+ },
+ {
+  "id": "alubias-rojas-cocidas",
+  "name": "alubias rojas cocidas",
+  "food": "alubia roja",
+  "prep": "cocido",
+  "ref": "ciqual:20503",
+  "aliases": [
+   "alubias rojas",
+   "judias rojas",
+   "frijoles"
+  ],
+  "units": {
+   "racion": 200,
+   "plato": 250
+  },
+  "default": true
+ },
+ {
+  "id": "habas-cocidas",
+  "name": "habas cocidas",
+  "food": "haba",
+  "prep": "cocido",
+  "ref": "ciqual:20500",
+  "aliases": [
+   "habas"
+  ],
+  "units": {
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "soja-texturizada",
+  "name": "soja texturizada",
+  "food": "soja texturizada",
+  "prep": "cocido",
+  "ref": "ciqual:20591",
+  "aliases": [
+   "soja texturizada hidratada"
+  ],
+  "units": {
+   "racion": 100
+  },
+  "default": true
+ },
+ {
+  "id": "tofu",
+  "name": "tofu",
+  "food": "tofu",
+  "prep": "ninguna",
+  "ref": "ciqual:20904",
+  "aliases": [
+   "tofu natural"
+  ],
+  "units": {
+   "racion": 100
+  },
+  "default": true
+ },
+ {
+  "id": "edamame",
+  "name": "edamame",
+  "food": "edamame",
+  "prep": "cocido",
+  "ref": "usda:168411",
+  "aliases": [
+   "edamames"
+  ],
+  "units": {
+   "racion": 100,
+   "puñado": 40
+  },
+  "default": true
+ },
+ {
+  "id": "hummus",
+  "name": "hummus",
+  "food": "hummus",
+  "prep": "ninguna",
+  "ref": "ciqual:25621",
+  "aliases": [
+   "humus"
+  ],
+  "units": {
+   "cda": 15,
+   "racion": 50
+  },
+  "default": true
+ },
+ {
+  "id": "patata-cocida",
+  "name": "patata cocida",
+  "food": "patata",
+  "prep": "cocido",
+  "ref": "ciqual:4003",
+  "aliases": [
+   "patatas",
+   "patata hervida"
+  ],
+  "units": {
+   "pieza": 170,
+   "racion": 200
+  },
+  "default": true
+ },
+ {
+  "id": "patata-cruda",
+  "name": "patata cruda",
+  "food": "patata",
+  "prep": "crudo",
+  "ref": "ciqual:4008",
+  "aliases": [
+   "patata cruda"
+  ],
+  "units": {
+   "pieza": 200
+  }
+ },
+ {
+  "id": "patata-horno",
+  "name": "patata asada",
+  "food": "patata",
+  "prep": "horno",
+  "ref": "ciqual:4002",
+  "aliases": [
+   "patata al horno"
+  ],
+  "units": {
+   "pieza": 170,
+   "racion": 200
+  }
+ },
+ {
+  "id": "patatas-fritas",
+  "name": "patatas fritas",
+  "food": "patata",
+  "prep": "frito",
+  "ref": "ciqual:4032",
+  "aliases": [
+   "patatas fritas caseras"
+  ],
+  "units": {
+   "racion": 150,
+   "plato": 200
+  },
+  "oil": true
+ },
+ {
+  "id": "patatas-fritas-horno",
+  "name": "patatas fritas al horno",
+  "food": "patatas fritas al horno",
+  "prep": "ninguna",
+  "ref": "ciqual:4030",
+  "aliases": [
+   "patatas de horno congeladas"
+  ],
+  "units": {
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "patatas-chips",
+  "name": "patatas fritas de bolsa",
+  "food": "patatas fritas de bolsa",
+  "prep": "ninguna",
+  "ref": "ciqual:4004",
+  "aliases": [
+   "chips",
+   "patatas de bolsa",
+   "patatillas"
+  ],
+  "units": {
+   "racion": 30,
+   "puñado": 25
+  },
+  "default": true
+ },
+ {
+  "id": "boniato-cocido",
+  "name": "boniato cocido",
+  "food": "boniato",
+  "prep": "cocido",
+  "ref": "ciqual:4102",
+  "aliases": [
+   "boniato",
+   "batata"
+  ],
+  "units": {
+   "pieza": 200,
+   "racion": 200
+  },
+  "default": true
+ },
+ {
+  "id": "pure-patata",
+  "name": "puré de patata",
+  "food": "pure de patata",
+  "prep": "ninguna",
+  "ref": "ciqual:4040",
+  "aliases": [
+   "pure"
+  ],
+  "units": {
+   "plato": 250,
+   "racion": 200
+  },
+  "default": true
+ },
+ {
+  "id": "nyoquis",
+  "name": "ñoquis",
+  "food": "ñoqui",
+  "prep": "cocido",
+  "ref": "ciqual:25510",
+  "aliases": [
+   "gnocchi",
+   "ñoquis"
+  ],
+  "units": {
+   "plato": 250
+  },
+  "default": true
+ },
+ {
+  "id": "boniato-crudo",
+  "name": "boniato crudo",
+  "food": "boniato",
+  "prep": "crudo",
+  "ref": "ciqual:4101",
+  "aliases": [
+   "batata cruda"
+  ],
+  "units": {
+   "pieza": 200
+  }
+ },
+ {
+  "id": "pan-molde",
+  "name": "pan de molde",
+  "food": "pan de molde",
+  "prep": "ninguna",
+  "ref": "ciqual:7200",
+  "aliases": [
+   "pan bimbo",
+   "pan de molde blanco"
+  ],
+  "units": {
+   "rebanada": 28,
+   "pieza": 28
+  },
+  "default": true
+ },
+ {
+  "id": "pollo-plancha",
+  "name": "pollo a la plancha",
+  "food": "pollo",
+  "prep": "plancha",
+  "ref": "ciqual:36018",
+  "aliases": [
+   "carne de pollo"
+  ],
+  "units": {
+   "pieza": 150,
+   "racion": 150,
+   "plato": 150
+  },
+  "default": true
+ },
+ {
+  "id": "pollo-asado",
+  "name": "pollo asado",
+  "food": "pollo",
+  "prep": "horno",
+  "ref": "ciqual:36005",
+  "aliases": [
+   "pollo al horno",
+   "pollo rustido",
+   "pollo asado con piel"
+  ],
+  "units": {
+   "racion": 200
+  }
+ },
+ {
+  "id": "pollo-crudo",
+  "name": "pollo crudo",
+  "food": "pollo",
+  "prep": "crudo",
+  "ref": "ciqual:36003"
+ },
+ {
+  "id": "pechuga-pollo-plancha",
+  "name": "pechuga de pollo a la plancha",
+  "food": "pechuga de pollo",
+  "prep": "plancha",
+  "ref": "ciqual:36018",
+  "aliases": [
+   "pechuga",
+   "filete de pollo",
+   "filete de pechuga"
+  ],
+  "units": {
+   "pieza": 150,
+   "racion": 150,
+   "plato": 150
+  },
+  "default": true
+ },
+ {
+  "id": "pechuga-pollo-cruda",
+  "name": "pechuga de pollo cruda",
+  "food": "pechuga de pollo",
+  "prep": "crudo",
+  "ref": "ciqual:36017",
+  "aliases": [
+   "filete de pollo crudo"
+  ],
+  "units": {
+   "pieza": 180
+  }
+ },
+ {
+  "id": "muslo-pollo-asado",
+  "name": "muslo de pollo asado",
+  "food": "muslo de pollo",
+  "prep": "horno",
+  "ref": "ciqual:36004",
+  "aliases": [
+   "contramuslo",
+   "contramuslo de pollo",
+   "muslo"
+  ],
+  "units": {
+   "pieza": 90
+  },
+  "default": true
+ },
+ {
+  "id": "muslo-pollo-crudo",
+  "name": "muslo de pollo crudo",
+  "food": "muslo de pollo",
+  "prep": "crudo",
+  "ref": "ciqual:36002",
+  "aliases": [
+   "contramuslo crudo"
+  ],
+  "units": {
+   "pieza": 120
+  }
+ },
+ {
+  "id": "muslo-pollo-sin-piel",
+  "name": "muslo de pollo sin piel asado",
+  "food": "muslo de pollo sin piel",
+  "prep": "horno",
+  "ref": "ciqual:36006",
+  "aliases": [
+   "contramuslo sin piel"
+  ],
+  "units": {
+   "pieza": 80
+  },
+  "default": true
+ },
+ {
+  "id": "alitas-pollo",
+  "name": "alitas de pollo asadas",
+  "food": "alita de pollo",
+  "prep": "horno",
+  "ref": "ciqual:36033",
+  "aliases": [
+   "alas de pollo"
+  ],
+  "units": {
+   "pieza": 30
+  },
+  "default": true
+ },
+ {
+  "id": "nuggets-pollo",
+  "name": "nuggets de pollo",
+  "food": "nugget de pollo",
+  "prep": "rebozado",
+  "ref": "ciqual:36027",
+  "aliases": [
+   "nuggets",
+   "pollo empanado de paquete"
+  ],
+  "units": {
+   "pieza": 18
+  },
+  "oil": true,
+  "default": true
+ },
+ {
+  "id": "fiambre-pollo",
+  "name": "fiambre de pollo",
+  "food": "fiambre de pollo",
+  "prep": "ninguna",
+  "ref": "ciqual:28963",
+  "aliases": [
+   "pechuga de pollo en lonchas",
+   "pollo en lonchas"
+  ],
+  "units": {
+   "loncha": 15,
+   "racion": 60
+  },
+  "default": true
+ },
+ {
+  "id": "pavo-plancha",
+  "name": "pechuga de pavo a la plancha",
+  "food": "pechuga de pavo",
+  "prep": "plancha",
+  "ref": "ciqual:36306",
+  "aliases": [
+   "pavo",
+   "filete de pavo",
+   "escalope de pavo"
+  ],
+  "units": {
+   "pieza": 120,
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "pavo-crudo",
+  "name": "pechuga de pavo cruda",
+  "food": "pechuga de pavo",
+  "prep": "crudo",
+  "ref": "ciqual:36304",
+  "aliases": [
+   "pavo crudo"
+  ],
+  "units": {
+   "pieza": 150
+  }
+ },
+ {
+  "id": "fiambre-pavo",
+  "name": "pavo en lonchas",
+  "food": "fiambre de pavo",
+  "prep": "ninguna",
+  "ref": "ciqual:28964",
+  "aliases": [
+   "pechuga de pavo en lonchas",
+   "pavo cocido",
+   "pavo loncha",
+   "lonchas de pavo"
+  ],
+  "units": {
+   "loncha": 15,
+   "racion": 60
+  },
+  "default": true
+ },
+ {
+  "id": "ternera-plancha",
+  "name": "ternera a la plancha",
+  "food": "ternera",
+  "prep": "plancha",
+  "ref": "ciqual:6161",
+  "aliases": [
+   "filete de ternera",
+   "bistec",
+   "filete de vaca",
+   "carne de ternera",
+   "vaca",
+   "filete"
+  ],
+  "units": {
+   "pieza": 120,
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "ternera-horno",
+  "name": "ternera asada",
+  "food": "ternera",
+  "prep": "horno",
+  "ref": "ciqual:6162",
+  "aliases": [
+   "redondo de ternera",
+   "rosbif"
+  ],
+  "units": {
+   "racion": 150
+  }
+ },
+ {
+  "id": "ternera-cruda",
+  "name": "ternera cruda",
+  "food": "ternera",
+  "prep": "crudo",
+  "ref": "ciqual:6160",
+  "aliases": [
+   "filete de ternera crudo"
+  ],
+  "units": {
+   "pieza": 150
+  }
+ },
+ {
+  "id": "ternera-guisada",
+  "name": "ternera guisada",
+  "food": "ternera",
+  "prep": "guisado",
+  "ref": "ciqual:6230",
+  "aliases": [
+   "carne guisada",
+   "ternera estofada",
+   "carne de guiso"
+  ],
+  "units": {
+   "racion": 200
+  }
+ },
+ {
+  "id": "entrecot",
+  "name": "entrecot a la plancha",
+  "food": "entrecot",
+  "prep": "plancha",
+  "ref": "ciqual:6100",
+  "aliases": [
+   "entrecote",
+   "lomo alto"
+  ],
+  "units": {
+   "pieza": 200
+  },
+  "default": true
+ },
+ {
+  "id": "hamburguesa-plancha",
+  "name": "hamburguesa de ternera",
+  "food": "hamburguesa",
+  "prep": "plancha",
+  "ref": "ciqual:6255",
+  "aliases": [
+   "hamburguesa",
+   "burger",
+   "hamburguesa de vacuno",
+   "carne de hamburguesa"
+  ],
+  "units": {
+   "pieza": 100
+  },
+  "oil": true,
+  "default": true
+ },
+ {
+  "id": "hamburguesa-cruda",
+  "name": "hamburguesa cruda",
+  "food": "hamburguesa",
+  "prep": "crudo",
+  "ref": "ciqual:6254",
+  "aliases": [
+   "hamburguesa de ternera cruda"
+  ],
+  "units": {
+   "pieza": 125
+  }
+ },
+ {
+  "id": "carne-picada-plancha",
+  "name": "carne picada de ternera cocinada",
+  "food": "carne picada de ternera",
+  "prep": "plancha",
+  "ref": "ciqual:6259",
+  "aliases": [
+   "carne picada",
+   "picada de ternera"
+  ],
+  "units": {
+   "racion": 120
+  },
+  "oil": true,
+  "default": true
+ },
+ {
+  "id": "carne-picada-salteada",
+  "name": "carne picada de ternera salteada",
+  "food": "carne picada de ternera",
+  "prep": "salteado",
+  "ref": "ciqual:6259",
+  "oil": true
+ },
+ {
+  "id": "carne-picada-cruda",
+  "name": "carne picada de ternera cruda",
+  "food": "carne picada de ternera",
+  "prep": "crudo",
+  "ref": "ciqual:6254",
+  "aliases": [
+   "carne picada cruda"
+  ]
+ },
+ {
+  "id": "lomo-cerdo-plancha",
+  "name": "lomo de cerdo a la plancha",
+  "food": "lomo de cerdo",
+  "prep": "plancha",
+  "ref": "ciqual:28105",
+  "aliases": [
+   "lomo",
+   "cinta de lomo",
+   "cerdo",
+   "carne de cerdo",
+   "filete de lomo"
+  ],
+  "units": {
+   "pieza": 100,
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "lomo-cerdo-crudo",
+  "name": "lomo de cerdo crudo",
+  "food": "lomo de cerdo",
+  "prep": "crudo",
+  "ref": "ciqual:28104",
+  "aliases": [
+   "lomo crudo"
+  ],
+  "units": {
+   "pieza": 120
+  }
+ },
+ {
+  "id": "solomillo-cerdo",
+  "name": "solomillo de cerdo",
+  "food": "solomillo de cerdo",
+  "prep": "plancha",
+  "ref": "ciqual:28203",
+  "aliases": [
+   "solomillo"
+  ],
+  "units": {
+   "pieza": 150,
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "solomillo-cerdo-crudo",
+  "name": "solomillo de cerdo crudo",
+  "food": "solomillo de cerdo",
+  "prep": "crudo",
+  "ref": "ciqual:28204"
+ },
+ {
+  "id": "chuleta-cerdo",
+  "name": "chuleta de cerdo",
+  "food": "chuleta de cerdo",
+  "prep": "plancha",
+  "ref": "ciqual:28101",
+  "aliases": [
+   "chuletas de cerdo",
+   "chuleta"
+  ],
+  "units": {
+   "pieza": 120
+  },
+  "default": true
+ },
+ {
+  "id": "costillas-cerdo",
+  "name": "costillas de cerdo asadas",
+  "food": "costilla de cerdo",
+  "prep": "horno",
+  "ref": "ciqual:28401",
+  "aliases": [
+   "costillas",
+   "costillar",
+   "costillas al horno"
+  ],
+  "units": {
+   "racion": 200
+  },
+  "default": true
+ },
+ {
+  "id": "cordero-chuleta",
+  "name": "chuletillas de cordero",
+  "food": "chuleta de cordero",
+  "prep": "plancha",
+  "ref": "ciqual:21524",
+  "aliases": [
+   "chuletillas",
+   "chuletas de cordero",
+   "cordero"
+  ],
+  "units": {
+   "pieza": 40,
+   "racion": 200
+  },
+  "default": true
+ },
+ {
+  "id": "cordero-pierna",
+  "name": "pierna de cordero asada",
+  "food": "pierna de cordero",
+  "prep": "horno",
+  "ref": "ciqual:21503",
+  "aliases": [
+   "cordero asado",
+   "paletilla de cordero"
+  ],
+  "units": {
+   "racion": 200
+  },
+  "default": true
+ },
+ {
+  "id": "conejo-horno",
+  "name": "conejo asado",
+  "food": "conejo",
+  "prep": "horno",
+  "ref": "ciqual:34002",
+  "aliases": [
+   "conejo",
+   "conejo a la plancha"
+  ],
+  "units": {
+   "racion": 200
+  },
+  "default": true
+ },
+ {
+  "id": "conejo-guisado",
+  "name": "conejo guisado",
+  "food": "conejo",
+  "prep": "guisado",
+  "ref": "ciqual:34000",
+  "aliases": [
+   "conejo estofado"
+  ],
+  "units": {
+   "racion": 200
+  }
+ },
+ {
+  "id": "magret-pato",
+  "name": "magret de pato",
+  "food": "magret de pato",
+  "prep": "plancha",
+  "ref": "ciqual:36205",
+  "aliases": [
+   "pato",
+   "pechuga de pato"
+  ],
+  "units": {
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "higado-ternera",
+  "name": "hígado de ternera",
+  "food": "higado de ternera",
+  "prep": "plancha",
+  "ref": "ciqual:40105",
+  "aliases": [
+   "higado",
+   "higado de vaca",
+   "higado encebollado"
+  ],
+  "units": {
+   "racion": 120
+  },
+  "default": true
+ },
+ {
+  "id": "higado-pollo",
+  "name": "hígado de pollo",
+  "food": "higado de pollo",
+  "prep": "plancha",
+  "ref": "ciqual:40116",
+  "aliases": [
+   "higaditos de pollo"
+  ],
+  "units": {
+   "racion": 100
+  },
+  "default": true
+ },
+ {
+  "id": "jamon-serrano",
+  "name": "jamón serrano",
+  "food": "jamon serrano",
+  "prep": "ninguna",
+  "ref": "ciqual:28845",
+  "aliases": [
+   "jamon",
+   "jamon curado",
+   "jamon reserva"
+  ],
+  "units": {
+   "loncha": 15,
+   "racion": 50
+  },
+  "default": true
+ },
+ {
+  "id": "jamon-cocido",
+  "name": "jamón cocido",
+  "food": "jamon cocido",
+  "prep": "ninguna",
+  "ref": "ciqual:28900",
+  "aliases": [
+   "jamon de york",
+   "jamon york",
+   "york",
+   "jamon cocido extra"
+  ],
+  "units": {
+   "loncha": 20,
+   "racion": 60
+  },
+  "default": true
+ },
+ {
+  "id": "chorizo",
+  "name": "chorizo",
+  "food": "chorizo",
+  "prep": "ninguna",
+  "ref": "ciqual:30315",
+  "aliases": [
+   "chorizo curado",
+   "chorizo en lonchas"
+  ],
+  "units": {
+   "loncha": 6,
+   "rebanada": 6,
+   "racion": 50
+  },
+  "default": true
+ },
+ {
+  "id": "salchichon",
+  "name": "salchichón",
+  "food": "salchichon",
+  "prep": "ninguna",
+  "ref": "ciqual:30300",
+  "aliases": [
+   "fuet",
+   "espetec"
+  ],
+  "units": {
+   "loncha": 5,
+   "racion": 40
+  },
+  "default": true
+ },
+ {
+  "id": "salami",
+  "name": "salami",
+  "food": "salami",
+  "prep": "ninguna",
+  "ref": "ciqual:30350",
+  "units": {
+   "loncha": 5,
+   "racion": 40
+  },
+  "default": true
+ },
+ {
+  "id": "mortadela",
+  "name": "mortadela",
+  "food": "mortadela",
+  "prep": "ninguna",
+  "ref": "ciqual:30789",
+  "units": {
+   "loncha": 15,
+   "racion": 60
+  },
+  "default": true
+ },
+ {
+  "id": "bacon",
+  "name": "bacon a la plancha",
+  "food": "bacon",
+  "prep": "plancha",
+  "ref": "ciqual:28725",
+  "aliases": [
+   "bacon frito",
+   "beicon",
+   "tiras de bacon"
+  ],
+  "units": {
+   "loncha": 10,
+   "racion": 50
+  },
+  "oil": true,
+  "default": true
+ },
+ {
+  "id": "bacon-crudo",
+  "name": "bacon crudo",
+  "food": "bacon",
+  "prep": "crudo",
+  "ref": "ciqual:28720",
+  "aliases": [
+   "taquitos de bacon",
+   "beicon crudo"
+  ],
+  "units": {
+   "loncha": 12,
+   "racion": 50
+  }
+ },
+ {
+  "id": "salchichas",
+  "name": "salchichas frankfurt",
+  "food": "salchicha",
+  "prep": "ninguna",
+  "ref": "ciqual:30134",
+  "aliases": [
+   "salchichas",
+   "frankfurt",
+   "salchicha frankfurt",
+   "salchichas de frankfurt"
+  ],
+  "units": {
+   "pieza": 40
+  },
+  "default": true
+ },
+ {
+  "id": "morcilla",
+  "name": "morcilla",
+  "food": "morcilla",
+  "prep": "plancha",
+  "ref": "ciqual:8704",
+  "aliases": [
+   "morcilla de cebolla"
+  ],
+  "units": {
+   "racion": 80
+  },
+  "oil": true,
+  "default": true
+ },
+ {
+  "id": "huevo-cocido",
+  "name": "huevo cocido",
+  "food": "huevo",
+  "prep": "cocido",
+  "ref": "ciqual:22010",
+  "aliases": [
+   "huevo duro"
+  ],
+  "units": {
+   "pieza": 50
+  },
+  "default": true
+ },
+ {
+  "id": "huevo-crudo",
+  "name": "huevo crudo",
+  "food": "huevo",
+  "prep": "crudo",
+  "ref": "ciqual:22000",
+  "units": {
+   "pieza": 50
+  },
+  "density": 1.03
+ },
+ {
+  "id": "huevo-frito",
+  "name": "huevo frito",
+  "food": "huevo",
+  "prep": "frito",
+  "ref": "usda:2707158",
+  "aliases": [
+   "huevos fritos"
+  ],
+  "units": {
+   "pieza": 46
+  },
+  "oil": true
+ },
+ {
+  "id": "huevo-revuelto",
+  "name": "huevo revuelto",
+  "food": "huevo",
+  "prep": "salteado",
+  "ref": "ciqual:22502",
+  "aliases": [
+   "huevos revueltos",
+   "revuelto de huevo"
+  ],
+  "units": {
+   "pieza": 55
+  },
+  "oil": true
+ },
+ {
+  "id": "huevo-plancha",
+  "name": "huevo a la plancha",
+  "food": "huevo",
+  "prep": "plancha",
+  "ref": "ciqual:22505",
+  "aliases": [
+   "huevo a la plancha"
+  ],
+  "units": {
+   "pieza": 46
+  }
+ },
+ {
+  "id": "clara-cocida",
+  "name": "clara de huevo cocida",
+  "food": "clara de huevo",
+  "prep": "cocido",
+  "ref": "ciqual:22008",
+  "aliases": [
+   "claras",
+   "claras de huevo",
+   "clara"
+  ],
+  "units": {
+   "pieza": 33
+  },
+  "default": true
+ },
+ {
+  "id": "clara-cruda",
+  "name": "clara de huevo cruda",
+  "food": "clara de huevo",
+  "prep": "crudo",
+  "ref": "ciqual:22001",
+  "aliases": [
+   "claras liquidas",
+   "claras pasteurizadas"
+  ],
+  "units": {
+   "pieza": 33
+  },
+  "density": 1.03
+ },
+ {
+  "id": "yema-cocida",
+  "name": "yema de huevo",
+  "food": "yema de huevo",
+  "prep": "cocido",
+  "ref": "ciqual:22009",
+  "aliases": [
+   "yema",
+   "yemas"
+  ],
+  "units": {
+   "pieza": 17
+  },
+  "default": true
+ },
+ {
+  "id": "tortilla-francesa",
+  "name": "tortilla francesa",
+  "food": "tortilla francesa",
+  "prep": "ninguna",
+  "ref": "ciqual:22500",
+  "aliases": [
+   "omelette",
+   "tortilla de huevo"
+  ],
+  "units": {
+   "pieza": 110
+  },
+  "oil": true,
+  "default": true
+ },
+ {
+  "id": "tortilla-patatas-envasada",
+  "name": "tortilla de patatas envasada",
+  "food": "tortilla de patatas envasada",
+  "prep": "ninguna",
+  "ref": "ciqual:22510",
+  "aliases": [
+   "tortilla de patata de supermercado",
+   "tortilla de patatas refrigerada"
+  ],
+  "units": {
+   "racion": 150
+  },
+  "oil": true,
+  "default": true
+ },
+ {
+  "id": "salmon-plancha",
+  "name": "salmón a la plancha",
+  "food": "salmon",
+  "prep": "plancha",
+  "ref": "ciqual:26229",
+  "aliases": [
+   "lomo de salmon",
+   "filete de salmon"
+  ],
+  "units": {
+   "pieza": 150,
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "salmon-horno",
+  "name": "salmón al horno",
+  "food": "salmon",
+  "prep": "horno",
+  "ref": "ciqual:26230",
+  "aliases": [
+   "salmon asado"
+  ],
+  "units": {
+   "pieza": 150,
+   "racion": 150
+  }
+ },
+ {
+  "id": "salmon-vapor",
+  "name": "salmón cocido",
+  "food": "salmon",
+  "prep": "cocido",
+  "ref": "ciqual:26038",
+  "aliases": [
+   "salmon al vapor",
+   "salmon hervido"
+  ],
+  "units": {
+   "pieza": 150
+  }
+ },
+ {
+  "id": "salmon-crudo",
+  "name": "salmón crudo",
+  "food": "salmon",
+  "prep": "crudo",
+  "ref": "ciqual:26036",
+  "aliases": [
+   "sashimi de salmon"
+  ],
+  "units": {
+   "pieza": 150
+  }
+ },
+ {
+  "id": "salmon-ahumado",
+  "name": "salmón ahumado",
+  "food": "salmon ahumado",
+  "prep": "ninguna",
+  "ref": "ciqual:26037",
+  "units": {
+   "loncha": 20,
+   "racion": 50
+  },
+  "default": true
+ },
+ {
+  "id": "atun-natural",
+  "name": "atún al natural",
+  "food": "atun al natural",
+  "prep": "ninguna",
+  "ref": "ciqual:26039",
+  "aliases": [
+   "atun en agua",
+   "atun al natural escurrido"
+  ],
+  "units": {
+   "lata": 56,
+   "racion": 56
+  },
+  "default": true
+ },
+ {
+  "id": "atun-aceite",
+  "name": "atún en aceite",
+  "food": "atun en aceite",
+  "prep": "ninguna",
+  "ref": "ciqual:26180",
+  "aliases": [
+   "atun en aceite de girasol",
+   "atun claro en aceite",
+   "atun en aceite escurrido"
+  ],
+  "units": {
+   "lata": 56,
+   "racion": 56
+  },
+  "default": true
+ },
+ {
+  "id": "atun-aceite-oliva",
+  "name": "atún en aceite de oliva",
+  "food": "atun en aceite de oliva",
+  "prep": "ninguna",
+  "ref": "ciqual:26179",
+  "aliases": [
+   "bonito del norte",
+   "bonito en aceite de oliva",
+   "bonito en aceite"
+  ],
+  "units": {
+   "lata": 56,
+   "racion": 56
+  },
+  "default": true
+ },
+ {
+  "id": "atun-fresco",
+  "name": "atún fresco a la plancha",
+  "food": "atun fresco",
+  "prep": "plancha",
+  "ref": "ciqual:26041",
+  "aliases": [
+   "atun a la plancha",
+   "bonito fresco",
+   "tataki de atun"
+  ],
+  "units": {
+   "pieza": 150,
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "atun-fresco-crudo",
+  "name": "atún fresco crudo",
+  "food": "atun fresco",
+  "prep": "crudo",
+  "ref": "ciqual:26053",
+  "aliases": [
+   "sashimi de atun"
+  ],
+  "units": {
+   "pieza": 150
+  }
+ },
+ {
+  "id": "merluza-cocida",
+  "name": "merluza cocida",
+  "food": "merluza",
+  "prep": "cocido",
+  "ref": "ciqual:26120",
+  "aliases": [
+   "merluza al vapor",
+   "merluza hervida"
+  ],
+  "units": {
+   "pieza": 150,
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "merluza-plancha",
+  "name": "merluza a la plancha",
+  "food": "merluza",
+  "prep": "plancha",
+  "ref": "ciqual:26120",
+  "aliases": [
+   "merluza al horno"
+  ],
+  "units": {
+   "pieza": 150,
+   "racion": 150
+  }
+ },
+ {
+  "id": "merluza-cruda",
+  "name": "merluza cruda",
+  "food": "merluza",
+  "prep": "crudo",
+  "ref": "ciqual:26044",
+  "aliases": [
+   "merluza congelada"
+  ],
+  "units": {
+   "pieza": 170
+  }
+ },
+ {
+  "id": "bacalao-horno",
+  "name": "bacalao al horno",
+  "food": "bacalao",
+  "prep": "horno",
+  "ref": "ciqual:26023",
+  "aliases": [
+   "bacalao fresco",
+   "bacalao a la plancha"
+  ],
+  "units": {
+   "pieza": 150,
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "bacalao-vapor",
+  "name": "bacalao al vapor",
+  "food": "bacalao",
+  "prep": "cocido",
+  "ref": "ciqual:26025",
+  "aliases": [
+   "bacalao cocido"
+  ],
+  "units": {
+   "pieza": 150
+  }
+ },
+ {
+  "id": "bacalao-crudo",
+  "name": "bacalao crudo",
+  "food": "bacalao",
+  "prep": "crudo",
+  "ref": "ciqual:26043",
+  "units": {
+   "pieza": 170
+  }
+ },
+ {
+  "id": "bacalao-desalado",
+  "name": "bacalao desalado cocido",
+  "food": "bacalao desalado",
+  "prep": "cocido",
+  "ref": "ciqual:26024",
+  "aliases": [
+   "bacalao salado"
+  ],
+  "units": {
+   "pieza": 150
+  },
+  "default": true
+ },
+ {
+  "id": "dorada",
+  "name": "dorada al horno",
+  "food": "dorada",
+  "prep": "horno",
+  "ref": "ciqual:27031",
+  "aliases": [
+   "dorada a la plancha"
+  ],
+  "units": {
+   "racion": 200
+  },
+  "default": true
+ },
+ {
+  "id": "dorada-cruda",
+  "name": "dorada cruda",
+  "food": "dorada",
+  "prep": "crudo",
+  "ref": "ciqual:26088"
+ },
+ {
+  "id": "lubina",
+  "name": "lubina al horno",
+  "food": "lubina",
+  "prep": "horno",
+  "ref": "ciqual:27030",
+  "aliases": [
+   "lubina a la plancha",
+   "lubina a la sal"
+  ],
+  "units": {
+   "racion": 200
+  },
+  "default": true
+ },
+ {
+  "id": "lubina-cruda",
+  "name": "lubina cruda",
+  "food": "lubina",
+  "prep": "crudo",
+  "ref": "ciqual:26206"
+ },
+ {
+  "id": "sardinas",
+  "name": "sardinas a la plancha",
+  "food": "sardina",
+  "prep": "plancha",
+  "ref": "ciqual:26136",
+  "aliases": [
+   "sardinas",
+   "sardinas asadas",
+   "espetos"
+  ],
+  "units": {
+   "pieza": 40,
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "sardinas-crudas",
+  "name": "sardinas crudas",
+  "food": "sardina",
+  "prep": "crudo",
+  "ref": "ciqual:26065",
+  "units": {
+   "pieza": 50
+  }
+ },
+ {
+  "id": "sardinas-aceite",
+  "name": "sardinas en aceite",
+  "food": "sardinas en aceite",
+  "prep": "ninguna",
+  "ref": "ciqual:26040",
+  "aliases": [
+   "sardinas en lata",
+   "lata de sardinas",
+   "sardinillas"
+  ],
+  "units": {
+   "lata": 85,
+   "pieza": 20
+  },
+  "default": true
+ },
+ {
+  "id": "sardinas-tomate",
+  "name": "sardinas en tomate",
+  "food": "sardinas en tomate",
+  "prep": "ninguna",
+  "ref": "ciqual:26035",
+  "units": {
+   "lata": 85
+  },
+  "default": true
+ },
+ {
+  "id": "caballa",
+  "name": "caballa al horno",
+  "food": "caballa",
+  "prep": "horno",
+  "ref": "ciqual:26019",
+  "aliases": [
+   "caballa a la plancha"
+  ],
+  "units": {
+   "pieza": 150,
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "caballa-lata",
+  "name": "caballa en lata",
+  "food": "caballa en lata",
+  "prep": "ninguna",
+  "ref": "ciqual:26123",
+  "aliases": [
+   "filetes de caballa",
+   "caballa en conserva"
+  ],
+  "units": {
+   "lata": 85
+  },
+  "default": true
+ },
+ {
+  "id": "boquerones-vinagre",
+  "name": "boquerones en vinagre",
+  "food": "boquerones en vinagre",
+  "prep": "ninguna",
+  "ref": "ciqual:26000",
+  "aliases": [
+   "boquerones"
+  ],
+  "units": {
+   "racion": 60,
+   "pieza": 6
+  },
+  "default": true
+ },
+ {
+  "id": "anchoas",
+  "name": "anchoas en aceite",
+  "food": "anchoa",
+  "prep": "ninguna",
+  "ref": "ciqual:26177",
+  "aliases": [
+   "anchoas"
+  ],
+  "units": {
+   "pieza": 4,
+   "lata": 30
+  },
+  "default": true
+ },
+ {
+  "id": "trucha",
+  "name": "trucha al horno",
+  "food": "trucha",
+  "prep": "horno",
+  "ref": "ciqual:27014",
+  "aliases": [
+   "trucha a la plancha"
+  ],
+  "units": {
+   "pieza": 200,
+   "racion": 200
+  },
+  "default": true
+ },
+ {
+  "id": "lenguado",
+  "name": "lenguado a la plancha",
+  "food": "lenguado",
+  "prep": "plancha",
+  "ref": "ciqual:26248",
+  "aliases": [
+   "lenguado al horno"
+  ],
+  "units": {
+   "pieza": 150
+  },
+  "default": true
+ },
+ {
+  "id": "rape",
+  "name": "rape a la plancha",
+  "food": "rape",
+  "prep": "plancha",
+  "ref": "ciqual:26081",
+  "aliases": [
+   "rape al horno"
+  ],
+  "units": {
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "panga",
+  "name": "panga",
+  "food": "panga",
+  "prep": "horno",
+  "ref": "ciqual:27018",
+  "aliases": [
+   "panga a la plancha"
+  ],
+  "units": {
+   "pieza": 150
+  },
+  "default": true
+ },
+ {
+  "id": "pez-espada-crudo",
+  "name": "pez espada crudo",
+  "food": "pez espada",
+  "prep": "crudo",
+  "ref": "ciqual:26082",
+  "aliases": [
+   "emperador crudo"
+  ],
+  "units": {
+   "pieza": 150
+  }
+ },
+ {
+  "id": "gambas",
+  "name": "gambas cocidas",
+  "food": "gamba",
+  "prep": "cocido",
+  "ref": "ciqual:10101",
+  "aliases": [
+   "gambas",
+   "langostinos",
+   "langostino",
+   "camaron",
+   "camarones",
+   "gambones"
+  ],
+  "units": {
+   "pieza": 12,
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "gambas-plancha",
+  "name": "gambas a la plancha",
+  "food": "gamba",
+  "prep": "plancha",
+  "ref": "ciqual:10101",
+  "aliases": [
+   "langostinos a la plancha"
+  ],
+  "units": {
+   "pieza": 12,
+   "racion": 150
+  }
+ },
+ {
+  "id": "mejillones",
+  "name": "mejillones al vapor",
+  "food": "mejillon",
+  "prep": "cocido",
+  "ref": "ciqual:10013",
+  "aliases": [
+   "mejillones",
+   "mejillones cocidos"
+  ],
+  "units": {
+   "pieza": 8,
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "mejillones-escabeche",
+  "name": "mejillones en escabeche",
+  "food": "mejillones en escabeche",
+  "prep": "ninguna",
+  "ref": "ciqual:10081",
+  "aliases": [
+   "lata de mejillones"
+  ],
+  "units": {
+   "lata": 70
+  },
+  "default": true
+ },
+ {
+  "id": "calamar-cocido",
+  "name": "calamar cocido",
+  "food": "calamar",
+  "prep": "cocido",
+  "ref": "ciqual:10037",
+  "aliases": [
+   "calamares",
+   "chipirones",
+   "sepia",
+   "choco"
+  ],
+  "units": {
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "calamar-plancha",
+  "name": "calamar a la plancha",
+  "food": "calamar",
+  "prep": "plancha",
+  "ref": "ciqual:10084",
+  "aliases": [
+   "calamares a la plancha",
+   "chipirones a la plancha",
+   "sepia a la plancha"
+  ],
+  "units": {
+   "racion": 150
+  },
+  "oil": true
+ },
+ {
+  "id": "calamar-romana",
+  "name": "calamares a la romana",
+  "food": "calamar",
+  "prep": "rebozado",
+  "ref": "ciqual:10002",
+  "aliases": [
+   "rabas",
+   "calamares rebozados",
+   "calamares fritos"
+  ],
+  "units": {
+   "racion": 150,
+   "plato": 200
+  },
+  "oil": true
+ },
+ {
+  "id": "calamar-crudo",
+  "name": "calamar crudo",
+  "food": "calamar",
+  "prep": "crudo",
+  "ref": "ciqual:10001"
+ },
+ {
+  "id": "pulpo",
+  "name": "pulpo cocido",
+  "food": "pulpo",
+  "prep": "cocido",
+  "ref": "ciqual:10079",
+  "aliases": [
+   "pulpo"
+  ],
+  "units": {
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "surimi",
+  "name": "surimi",
+  "food": "surimi",
+  "prep": "ninguna",
+  "ref": "ciqual:26046",
+  "aliases": [
+   "palitos de cangrejo",
+   "barritas de surimi",
+   "gulas"
+  ],
+  "units": {
+   "pieza": 15,
+   "racion": 60
+  },
+  "default": true
+ },
+ {
+  "id": "berberechos",
+  "name": "berberechos",
+  "food": "berberecho",
+  "prep": "cocido",
+  "ref": "ciqual:10034",
+  "aliases": [
+   "berberechos al natural"
+  ],
+  "units": {
+   "lata": 60
+  },
+  "default": true
+ },
+ {
+  "id": "almejas",
+  "name": "almejas",
+  "food": "almeja",
+  "prep": "cocido",
+  "ref": "ciqual:10027",
+  "aliases": [
+   "almejas al vapor"
+  ],
+  "units": {
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "boquerones-crudos",
+  "name": "boquerones crudos",
+  "food": "boqueron",
+  "prep": "crudo",
+  "ref": "ciqual:26079",
+  "aliases": [
+   "anchoa fresca",
+   "boqueron crudo"
+  ]
+ },
+ {
+  "id": "leche-entera",
+  "name": "leche entera",
+  "food": "leche entera",
+  "prep": "ninguna",
+  "ref": "ciqual:19023",
+  "aliases": [
+   "leche entera sin lactosa"
+  ],
+  "density": 1.03,
+  "default": true
+ },
+ {
+  "id": "leche-semi",
+  "name": "leche semidesnatada",
+  "food": "leche semidesnatada",
+  "prep": "ninguna",
+  "ref": "ciqual:19041",
+  "aliases": [
+   "leche",
+   "leche semi",
+   "leche sin lactosa",
+   "leche semidesnatada sin lactosa"
+  ],
+  "density": 1.03,
+  "default": true
+ },
+ {
+  "id": "leche-desnatada",
+  "name": "leche desnatada",
+  "food": "leche desnatada",
+  "prep": "ninguna",
+  "ref": "ciqual:19050",
+  "aliases": [
+   "leche 0",
+   "leche desnatada sin lactosa"
+  ],
+  "density": 1.035,
+  "default": true
+ },
+ {
+  "id": "leche-condensada",
+  "name": "leche condensada",
+  "food": "leche condensada",
+  "prep": "ninguna",
+  "ref": "ciqual:19027",
+  "units": {
+   "cda": 20
+  },
+  "density": 1.3,
+  "default": true
+ },
+ {
+  "id": "leche-evaporada",
+  "name": "leche evaporada",
+  "food": "leche evaporada",
+  "prep": "ninguna",
+  "ref": "ciqual:19026",
+  "density": 1.07,
+  "default": true
+ },
+ {
+  "id": "bebida-avena",
+  "name": "bebida de avena",
+  "food": "bebida de avena",
+  "prep": "ninguna",
+  "ref": "ciqual:18899",
+  "aliases": [
+   "leche de avena"
+  ],
+  "density": 1.03,
+  "default": true
+ },
+ {
+  "id": "bebida-soja",
+  "name": "bebida de soja",
+  "food": "bebida de soja",
+  "prep": "ninguna",
+  "ref": "ciqual:18900",
+  "aliases": [
+   "leche de soja"
+  ],
+  "density": 1.03,
+  "default": true
+ },
+ {
+  "id": "bebida-almendra",
+  "name": "bebida de almendra",
+  "food": "bebida de almendra",
+  "prep": "ninguna",
+  "ref": "ciqual:18107",
+  "aliases": [
+   "leche de almendras"
+  ],
+  "density": 1.03,
+  "default": true
+ },
+ {
+  "id": "kefir",
+  "name": "kéfir",
+  "food": "kefir",
+  "prep": "ninguna",
+  "ref": "ciqual:19865",
+  "aliases": [
+   "kefir de leche"
+  ],
+  "units": {
+   "vaso": 200
+  },
+  "density": 1.03,
+  "default": true
+ },
+ {
+  "id": "yogur-natural",
+  "name": "yogur natural",
+  "food": "yogur",
+  "prep": "ninguna",
+  "ref": "ciqual:19600",
+  "aliases": [
+   "yogur natural",
+   "yogures naturales"
+  ],
+  "units": {
+   "pieza": 125
+  },
+  "default": true
+ },
+ {
+  "id": "yogur-desnatado",
+  "name": "yogur desnatado",
+  "food": "yogur desnatado",
+  "prep": "ninguna",
+  "ref": "ciqual:19594",
+  "aliases": [
+   "yogur 0",
+   "yogur desnatado natural",
+   "yogur natural desnatado"
+  ],
+  "units": {
+   "pieza": 125
+  },
+  "default": true
+ },
+ {
+  "id": "yogur-azucarado",
+  "name": "yogur natural azucarado",
+  "food": "yogur azucarado",
+  "prep": "ninguna",
+  "ref": "ciqual:19599",
+  "aliases": [
+   "yogur natural con azucar",
+   "yogur azucarado"
+  ],
+  "units": {
+   "pieza": 125
+  },
+  "default": true
+ },
+ {
+  "id": "yogur-griego",
+  "name": "yogur griego",
+  "food": "yogur griego",
+  "prep": "ninguna",
+  "ref": "ciqual:19860",
+  "aliases": [
+   "yogur estilo griego",
+   "griego"
+  ],
+  "units": {
+   "pieza": 125
+  },
+  "default": true
+ },
+ {
+  "id": "yogur-proteico",
+  "name": "yogur proteico",
+  "food": "yogur proteico",
+  "prep": "ninguna",
+  "ref": "ciqual:19724",
+  "aliases": [
+   "yogur alto en proteinas",
+   "yogur protein",
+   "skyr",
+   "yogur tipo skyr",
+   "yogur de proteinas"
+  ],
+  "units": {
+   "pieza": 150
+  },
+  "default": true
+ },
+ {
+  "id": "queso-batido-0",
+  "name": "queso fresco batido 0%",
+  "food": "queso fresco batido 0",
+  "prep": "ninguna",
+  "ref": "ciqual:19644",
+  "aliases": [
+   "queso batido",
+   "queso batido 0",
+   "queso fresco batido desnatado",
+   "queso batido desnatado"
+  ],
+  "units": {
+   "racion": 125,
+   "cda": 25
+  },
+  "default": true
+ },
+ {
+  "id": "queso-batido",
+  "name": "queso fresco batido",
+  "food": "queso fresco batido",
+  "prep": "ninguna",
+  "ref": "ciqual:19646",
+  "aliases": [
+   "queso fresco batido natural"
+  ],
+  "units": {
+   "racion": 125,
+   "cda": 25
+  },
+  "default": true
+ },
+ {
+  "id": "petit-suisse",
+  "name": "petit suisse natural",
+  "food": "petit suisse",
+  "prep": "ninguna",
+  "ref": "ciqual:19664",
+  "aliases": [
+   "petisuis"
+  ],
+  "units": {
+   "pieza": 60
+  },
+  "default": true
+ },
+ {
+  "id": "queso-crema",
+  "name": "queso crema",
+  "food": "queso crema",
+  "prep": "ninguna",
+  "ref": "ciqual:12068",
+  "aliases": [
+   "queso de untar",
+   "philadelphia",
+   "queso para untar"
+  ],
+  "units": {
+   "cda": 15,
+   "racion": 30
+  },
+  "default": true
+ },
+ {
+  "id": "queso-crema-light",
+  "name": "queso crema light",
+  "food": "queso crema light",
+  "prep": "ninguna",
+  "ref": "ciqual:12069",
+  "aliases": [
+   "queso de untar light",
+   "philadelphia light"
+  ],
+  "units": {
+   "cda": 15,
+   "racion": 30
+  },
+  "default": true
+ },
+ {
+  "id": "queso-lonchas",
+  "name": "queso en lonchas",
+  "food": "queso en lonchas",
+  "prep": "ninguna",
+  "ref": "ciqual:12729",
+  "aliases": [
+   "queso edam",
+   "queso de sandwich",
+   "lonchas de queso"
+  ],
+  "units": {
+   "loncha": 20,
+   "racion": 40
+  },
+  "default": true
+ },
+ {
+  "id": "queso-gouda",
+  "name": "queso gouda",
+  "food": "queso gouda",
+  "prep": "ninguna",
+  "ref": "ciqual:12736",
+  "aliases": [
+   "gouda"
+  ],
+  "units": {
+   "loncha": 20,
+   "racion": 40
+  },
+  "default": true
+ },
+ {
+  "id": "queso-curado",
+  "name": "queso curado",
+  "food": "queso curado",
+  "prep": "ninguna",
+  "ref": "ciqual:12747",
+  "aliases": [
+   "queso manchego",
+   "manchego",
+   "queso de oveja curado",
+   "queso viejo",
+   "queso añejo",
+   "queso manchego curado"
+  ],
+  "units": {
+   "loncha": 15,
+   "racion": 30
+  },
+  "default": true
+ },
+ {
+  "id": "queso-semicurado",
+  "name": "queso semicurado",
+  "food": "queso semicurado",
+  "prep": "ninguna",
+  "ref": "ciqual:12773",
+  "aliases": [
+   "queso de mezcla semicurado",
+   "queso manchego semicurado"
+  ],
+  "units": {
+   "loncha": 15,
+   "racion": 30
+  },
+  "default": true
+ },
+ {
+  "id": "queso-rallado",
+  "name": "queso rallado",
+  "food": "queso rallado",
+  "prep": "ninguna",
+  "ref": "ciqual:12775",
+  "aliases": [
+   "queso para gratinar",
+   "queso rallado de pizza"
+  ],
+  "units": {
+   "cda": 7,
+   "puñado": 30,
+   "racion": 30
+  },
+  "default": true
+ },
+ {
+  "id": "mozzarella",
+  "name": "mozzarella",
+  "food": "mozzarella",
+  "prep": "ninguna",
+  "ref": "ciqual:19590",
+  "aliases": [
+   "mozarela",
+   "mozzarella fresca",
+   "bola de mozzarella"
+  ],
+  "units": {
+   "pieza": 125,
+   "racion": 60
+  },
+  "default": true
+ },
+ {
+  "id": "mozzarella-bufala",
+  "name": "mozzarella de búfala",
+  "food": "mozzarella de bufala",
+  "prep": "ninguna",
+  "ref": "ciqual:19591",
+  "aliases": [
+   "burrata de bufala"
+  ],
+  "units": {
+   "pieza": 125
+  },
+  "default": true
+ },
+ {
+  "id": "burrata",
+  "name": "burrata",
+  "food": "burrata",
+  "prep": "ninguna",
+  "ref": "ciqual:12072",
+  "units": {
+   "pieza": 125
+  },
+  "default": true
+ },
+ {
+  "id": "parmesano",
+  "name": "queso parmesano",
+  "food": "queso parmesano",
+  "prep": "ninguna",
+  "ref": "ciqual:12120",
+  "aliases": [
+   "parmesano",
+   "parmigiano",
+   "grana padano"
+  ],
+  "units": {
+   "cda": 5,
+   "racion": 20
+  },
+  "default": true
+ },
+ {
+  "id": "emmental",
+  "name": "queso emmental",
+  "food": "queso emmental",
+  "prep": "ninguna",
+  "ref": "ciqual:12115",
+  "aliases": [
+   "emmental",
+   "gruyere"
+  ],
+  "units": {
+   "loncha": 20,
+   "racion": 40
+  },
+  "default": true
+ },
+ {
+  "id": "cheddar",
+  "name": "queso cheddar",
+  "food": "queso cheddar",
+  "prep": "ninguna",
+  "ref": "ciqual:12726",
+  "aliases": [
+   "cheddar"
+  ],
+  "units": {
+   "loncha": 20,
+   "racion": 40
+  },
+  "default": true
+ },
+ {
+  "id": "feta",
+  "name": "queso feta",
+  "food": "queso feta",
+  "prep": "ninguna",
+  "ref": "ciqual:12066",
+  "aliases": [
+   "feta"
+  ],
+  "units": {
+   "racion": 40
+  },
+  "default": true
+ },
+ {
+  "id": "mascarpone",
+  "name": "mascarpone",
+  "food": "mascarpone",
+  "prep": "ninguna",
+  "ref": "ciqual:19584",
+  "units": {
+   "cda": 15
+  },
+  "default": true
+ },
+ {
+  "id": "queso-cabra",
+  "name": "queso de cabra",
+  "food": "queso de cabra",
+  "prep": "ninguna",
+  "ref": "ciqual:12812",
+  "aliases": [
+   "rulo de cabra",
+   "rulo de queso de cabra"
+  ],
+  "units": {
+   "rebanada": 20,
+   "racion": 40
+  },
+  "default": true
+ },
+ {
+  "id": "queso-azul",
+  "name": "queso azul",
+  "food": "queso azul",
+  "prep": "ninguna",
+  "ref": "ciqual:12521",
+  "aliases": [
+   "queso de cabrales",
+   "cabrales",
+   "queso roquefort",
+   "roquefort",
+   "gorgonzola"
+  ],
+  "units": {
+   "racion": 30
+  },
+  "default": true
+ },
+ {
+  "id": "queso-brie",
+  "name": "queso brie",
+  "food": "queso brie",
+  "prep": "ninguna",
+  "ref": "ciqual:12020",
+  "aliases": [
+   "brie",
+   "camembert",
+   "queso camembert"
+  ],
+  "units": {
+   "racion": 30
+  },
+  "default": true
+ },
+ {
+  "id": "quesitos",
+  "name": "quesitos",
+  "food": "quesito",
+  "prep": "ninguna",
+  "ref": "ciqual:12303",
+  "aliases": [
+   "queso en porciones",
+   "la vaca que rie",
+   "quesito en porcion"
+  ],
+  "units": {
+   "pieza": 16
+  },
+  "default": true
+ },
+ {
+  "id": "queso-fundido-lonchas",
+  "name": "queso fundido en lonchas",
+  "food": "queso fundido en lonchas",
+  "prep": "ninguna",
+  "ref": "ciqual:12300",
+  "aliases": [
+   "tranchetes",
+   "lonchas de queso fundido"
+  ],
+  "default": true
+ },
+ {
+  "id": "requeson",
+  "name": "requesón",
+  "food": "requeson",
+  "prep": "ninguna",
+  "ref": "usda:170851",
+  "aliases": [
+   "ricotta"
+  ],
+  "units": {
+   "cda": 20,
+   "racion": 100
+  },
+  "default": true
+ },
+ {
+  "id": "cottage",
+  "name": "queso cottage",
+  "food": "queso cottage",
+  "prep": "ninguna",
+  "ref": "usda:172179",
+  "aliases": [
+   "cottage"
+  ],
+  "units": {
+   "cda": 20,
+   "racion": 100
+  },
+  "default": true
+ },
+ {
+  "id": "nata-cocinar",
+  "name": "nata para cocinar",
+  "food": "nata para cocinar",
+  "prep": "ninguna",
+  "ref": "ciqual:19436",
+  "aliases": [
+   "nata ligera",
+   "crema de leche ligera"
+  ],
+  "units": {
+   "cda": 15
+  },
+  "density": 1.0,
+  "default": true
+ },
+ {
+  "id": "nata-montar",
+  "name": "nata para montar",
+  "food": "nata para montar",
+  "prep": "ninguna",
+  "ref": "ciqual:19417",
+  "aliases": [
+   "nata",
+   "nata liquida",
+   "crema de leche"
+  ],
+  "units": {
+   "cda": 15
+  },
+  "density": 1.0,
+  "default": true
+ },
+ {
+  "id": "nata-montada",
+  "name": "nata montada",
+  "food": "nata montada",
+  "prep": "ninguna",
+  "ref": "ciqual:19420",
+  "aliases": [
+   "nata de spray"
+  ],
+  "units": {
+   "cda": 6
+  },
+  "default": true
+ },
+ {
+  "id": "mantequilla",
+  "name": "mantequilla",
+  "food": "mantequilla",
+  "prep": "ninguna",
+  "ref": "ciqual:16400",
+  "aliases": [
+   "mantequilla sin sal"
+  ],
+  "units": {
+   "cda": 10,
+   "cdta": 5,
+   "pieza": 10
+  },
+  "default": true
+ },
+ {
+  "id": "mantequilla-sal",
+  "name": "mantequilla con sal",
+  "food": "mantequilla con sal",
+  "prep": "ninguna",
+  "ref": "ciqual:16403",
+  "aliases": [
+   "mantequilla salada"
+  ],
+  "units": {
+   "cda": 10,
+   "cdta": 5,
+   "pieza": 10
+  },
+  "default": true
+ },
+ {
+  "id": "margarina",
+  "name": "margarina",
+  "food": "margarina",
+  "prep": "ninguna",
+  "ref": "ciqual:16591",
+  "aliases": [
+   "tulipan",
+   "margarina vegetal"
+  ],
+  "units": {
+   "cda": 10,
+   "cdta": 5,
+   "pieza": 10
+  },
+  "default": true
+ },
+ {
+  "id": "aceite-oliva",
+  "name": "aceite de oliva",
+  "food": "aceite de oliva",
+  "prep": "ninguna",
+  "ref": "ciqual:17270",
+  "aliases": [
+   "aceite",
+   "aove",
+   "aceite de oliva virgen extra",
+   "aceite de oliva virgen",
+   "aceite de oliva suave",
+   "aceite de oliva (para cocinar)"
+  ],
+  "units": {
+   "cda": 10,
+   "cdta": 5
+  },
+  "density": 0.915,
+  "default": true
+ },
+ {
+  "id": "aceite-girasol",
+  "name": "aceite de girasol",
+  "food": "aceite de girasol",
+  "prep": "ninguna",
+  "ref": "ciqual:17440",
+  "aliases": [
+   "aceite de semillas"
+  ],
+  "units": {
+   "cda": 10,
+   "cdta": 5
+  },
+  "density": 0.92,
+  "default": true
+ },
+ {
+  "id": "aceite-coco",
+  "name": "aceite de coco",
+  "food": "aceite de coco",
+  "prep": "ninguna",
+  "ref": "ciqual:16040",
+  "units": {
+   "cda": 10,
+   "cdta": 5
+  },
+  "density": 0.92,
+  "default": true
+ },
+ {
+  "id": "aceite-vegetal",
+  "name": "aceite vegetal",
+  "food": "aceite vegetal",
+  "prep": "ninguna",
+  "ref": "ciqual:17001",
+  "aliases": [
+   "aceite de freir"
+  ],
+  "units": {
+   "cda": 10,
+   "cdta": 5
+  },
+  "density": 0.92,
+  "default": true
+ },
+ {
+  "id": "ghee",
+  "name": "ghee",
+  "food": "ghee",
+  "prep": "ninguna",
+  "ref": "ciqual:16401",
+  "aliases": [
+   "mantequilla clarificada"
+  ],
+  "units": {
+   "cda": 10,
+   "cdta": 5
+  },
+  "default": true
+ },
+ {
+  "id": "almendras",
+  "name": "almendras",
+  "food": "almendra",
+  "prep": "ninguna",
+  "ref": "ciqual:15000",
+  "aliases": [
+   "almendras crudas",
+   "almendra cruda"
+  ],
+  "units": {
+   "puñado": 30,
+   "pieza": 1.2
+  },
+  "default": true
+ },
+ {
+  "id": "almendras-tostadas",
+  "name": "almendras tostadas",
+  "food": "almendra tostada",
+  "prep": "ninguna",
+  "ref": "ciqual:15042",
+  "aliases": [
+   "almendras fritas",
+   "almendras saladas",
+   "almendras tostadas saladas"
+  ],
+  "units": {
+   "puñado": 30,
+   "pieza": 1.2
+  },
+  "default": true
+ },
+ {
+  "id": "nueces",
+  "name": "nueces",
+  "food": "nuez",
+  "prep": "ninguna",
+  "ref": "ciqual:15005",
+  "aliases": [
+   "nueces peladas"
+  ],
+  "units": {
+   "puñado": 30,
+   "pieza": 5
+  },
+  "default": true
+ },
+ {
+  "id": "avellanas",
+  "name": "avellanas",
+  "food": "avellana",
+  "prep": "ninguna",
+  "ref": "ciqual:15004",
+  "aliases": [
+   "avellanas crudas"
+  ],
+  "units": {
+   "puñado": 30,
+   "pieza": 1.5
+  },
+  "default": true
+ },
+ {
+  "id": "avellanas-tostadas",
+  "name": "avellanas tostadas",
+  "food": "avellana tostada",
+  "prep": "ninguna",
+  "ref": "ciqual:15033",
+  "units": {
+   "puñado": 30,
+   "pieza": 1.5
+  },
+  "default": true
+ },
+ {
+  "id": "cacahuetes",
+  "name": "cacahuetes",
+  "food": "cacahuete",
+  "prep": "ninguna",
+  "ref": "ciqual:15053",
+  "aliases": [
+   "cacahuetes tostados",
+   "mani"
+  ],
+  "units": {
+   "puñado": 30,
+   "pieza": 0.8
+  },
+  "default": true
+ },
+ {
+  "id": "cacahuetes-salados",
+  "name": "cacahuetes salados",
+  "food": "cacahuete salado",
+  "prep": "ninguna",
+  "ref": "ciqual:15002",
+  "aliases": [
+   "cacahuetes fritos"
+  ],
+  "units": {
+   "puñado": 30
+  },
+  "default": true
+ },
+ {
+  "id": "pistachos",
+  "name": "pistachos",
+  "food": "pistacho",
+  "prep": "ninguna",
+  "ref": "ciqual:15044",
+  "aliases": [
+   "pistachos tostados"
+  ],
+  "units": {
+   "puñado": 30,
+   "pieza": 0.7
+  },
+  "default": true
+ },
+ {
+  "id": "pistachos-salados",
+  "name": "pistachos salados",
+  "food": "pistacho salado",
+  "prep": "ninguna",
+  "ref": "ciqual:15009",
+  "units": {
+   "puñado": 30
+  },
+  "default": true
+ },
+ {
+  "id": "anacardos",
+  "name": "anacardos",
+  "food": "anacardo",
+  "prep": "ninguna",
+  "ref": "ciqual:15054",
+  "aliases": [
+   "anacardos tostados"
+  ],
+  "units": {
+   "puñado": 30,
+   "pieza": 1.5
+  },
+  "default": true
+ },
+ {
+  "id": "anacardos-salados",
+  "name": "anacardos salados",
+  "food": "anacardo salado",
+  "prep": "ninguna",
+  "ref": "ciqual:15019",
+  "units": {
+   "puñado": 30
+  },
+  "default": true
+ },
+ {
+  "id": "pipas-girasol",
+  "name": "pipas de girasol peladas",
+  "food": "pipa de girasol",
+  "prep": "ninguna",
+  "ref": "ciqual:15045",
+  "aliases": [
+   "pipas",
+   "pipas peladas",
+   "semillas de girasol"
+  ],
+  "units": {
+   "puñado": 30,
+   "cda": 10
+  },
+  "default": true
+ },
+ {
+  "id": "chia",
+  "name": "semillas de chía",
+  "food": "semilla de chia",
+  "prep": "ninguna",
+  "ref": "ciqual:15047",
+  "aliases": [
+   "chia"
+  ],
+  "units": {
+   "cda": 10,
+   "cdta": 4
+  },
+  "default": true
+ },
+ {
+  "id": "lino",
+  "name": "semillas de lino",
+  "food": "semilla de lino",
+  "prep": "ninguna",
+  "ref": "ciqual:15034",
+  "aliases": [
+   "linaza"
+  ],
+  "units": {
+   "cda": 10,
+   "cdta": 4
+  },
+  "default": true
+ },
+ {
+  "id": "sesamo",
+  "name": "sésamo",
+  "food": "sesamo",
+  "prep": "ninguna",
+  "ref": "ciqual:15010",
+  "aliases": [
+   "semillas de sesamo",
+   "ajonjoli"
+  ],
+  "units": {
+   "cda": 9,
+   "cdta": 3
+  },
+  "default": true
+ },
+ {
+  "id": "pipas-calabaza",
+  "name": "pipas de calabaza",
+  "food": "pipa de calabaza",
+  "prep": "ninguna",
+  "ref": "ciqual:15064",
+  "aliases": [
+   "semillas de calabaza"
+  ],
+  "units": {
+   "puñado": 30,
+   "cda": 10
+  },
+  "default": true
+ },
+ {
+  "id": "pinones",
+  "name": "piñones",
+  "food": "piñon",
+  "prep": "ninguna",
+  "ref": "ciqual:15025",
+  "units": {
+   "cda": 10,
+   "puñado": 30
+  },
+  "default": true
+ },
+ {
+  "id": "macadamias",
+  "name": "nueces de macadamia",
+  "food": "nuez de macadamia",
+  "prep": "ninguna",
+  "ref": "ciqual:15027",
+  "aliases": [
+   "macadamias"
+  ],
+  "units": {
+   "puñado": 30
+  },
+  "default": true
+ },
+ {
+  "id": "pecanas",
+  "name": "nueces pecanas",
+  "food": "nuez pecana",
+  "prep": "ninguna",
+  "ref": "ciqual:15026",
+  "aliases": [
+   "pecanas"
+  ],
+  "units": {
+   "puñado": 30
+  },
+  "default": true
+ },
+ {
+  "id": "nueces-brasil",
+  "name": "nueces de Brasil",
+  "food": "nuez de brasil",
+  "prep": "ninguna",
+  "ref": "ciqual:15008",
+  "units": {
+   "pieza": 5,
+   "puñado": 30
+  },
+  "default": true
+ },
+ {
+  "id": "coco-rallado",
+  "name": "coco rallado",
+  "food": "coco rallado",
+  "prep": "ninguna",
+  "ref": "ciqual:15007",
+  "aliases": [
+   "coco seco"
+  ],
+  "units": {
+   "cda": 6
+  },
+  "default": true
+ },
+ {
+  "id": "coco-fresco",
+  "name": "coco fresco",
+  "food": "coco fresco",
+  "prep": "ninguna",
+  "ref": "ciqual:15006",
+  "aliases": [
+   "coco"
+  ],
+  "units": {
+   "racion": 50
+  },
+  "default": true
+ },
+ {
+  "id": "crema-cacahuete",
+  "name": "crema de cacahuete",
+  "food": "crema de cacahuete",
+  "prep": "ninguna",
+  "ref": "ciqual:15202",
+  "aliases": [
+   "mantequilla de cacahuete",
+   "peanut butter"
+  ],
+  "units": {
+   "cda": 15,
+   "cdta": 7
+  },
+  "default": true
+ },
+ {
+  "id": "tahini",
+  "name": "tahini",
+  "food": "tahini",
+  "prep": "ninguna",
+  "ref": "ciqual:15203",
+  "aliases": [
+   "tahin",
+   "pasta de sesamo"
+  ],
+  "units": {
+   "cda": 15
+  },
+  "default": true
+ },
+ {
+  "id": "castanas",
+  "name": "castañas asadas",
+  "food": "castaña asada",
+  "prep": "ninguna",
+  "ref": "ciqual:15021",
+  "aliases": [
+   "castañas"
+  ],
+  "units": {
+   "pieza": 10
+  },
+  "default": true
+ },
+ {
+  "id": "frutos-secos",
+  "name": "frutos secos variados",
+  "food": "frutos secos",
+  "prep": "ninguna",
+  "ref": "ciqual:15066",
+  "aliases": [
+   "mix de frutos secos",
+   "frutos secos naturales",
+   "cocktail de frutos secos"
+  ],
+  "units": {
+   "puñado": 30
+  },
+  "default": true
+ },
+ {
+  "id": "frutos-secos-salados",
+  "name": "frutos secos salados",
+  "food": "frutos secos salados",
+  "prep": "ninguna",
+  "ref": "ciqual:15065",
+  "units": {
+   "puñado": 30
+  },
+  "default": true
+ },
+ {
+  "id": "platano",
+  "name": "plátano",
+  "food": "platano",
+  "prep": "ninguna",
+  "ref": "ciqual:13005",
+  "aliases": [
+   "banana",
+   "platanos de canarias"
+  ],
+  "units": {
+   "pieza": 120,
+   "racion": 120
+  },
+  "default": true
+ },
+ {
+  "id": "manzana",
+  "name": "manzana",
+  "food": "manzana",
+  "prep": "ninguna",
+  "ref": "ciqual:13039",
+  "aliases": [
+   "manzanas"
+  ],
+  "units": {
+   "pieza": 150,
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "pera",
+  "name": "pera",
+  "food": "pera",
+  "prep": "ninguna",
+  "ref": "ciqual:13037",
+  "aliases": [
+   "peras"
+  ],
+  "units": {
+   "pieza": 150
+  },
+  "default": true
+ },
+ {
+  "id": "naranja",
+  "name": "naranja",
+  "food": "naranja",
+  "prep": "ninguna",
+  "ref": "ciqual:13034",
+  "aliases": [
+   "naranjas"
+  ],
+  "units": {
+   "pieza": 150
+  },
+  "default": true
+ },
+ {
+  "id": "mandarina",
+  "name": "mandarina",
+  "food": "mandarina",
+  "prep": "ninguna",
+  "ref": "ciqual:13024",
+  "aliases": [
+   "mandarinas",
+   "clementina",
+   "clementinas"
+  ],
+  "units": {
+   "pieza": 70
+  },
+  "default": true
+ },
+ {
+  "id": "kiwi",
+  "name": "kiwi",
+  "food": "kiwi",
+  "prep": "ninguna",
+  "ref": "ciqual:13021",
+  "aliases": [
+   "kiwis"
+  ],
+  "units": {
+   "pieza": 75
+  },
+  "default": true
+ },
+ {
+  "id": "fresas",
+  "name": "fresas",
+  "food": "fresa",
+  "prep": "ninguna",
+  "ref": "ciqual:13014",
+  "aliases": [
+   "fresones",
+   "freson"
+  ],
+  "units": {
+   "pieza": 12,
+   "racion": 150,
+   "taza": 150
+  },
+  "default": true
+ },
+ {
+  "id": "uvas",
+  "name": "uvas",
+  "food": "uva",
+  "prep": "ninguna",
+  "ref": "ciqual:13044",
+  "aliases": [
+   "uva",
+   "racimo de uvas"
+  ],
+  "units": {
+   "pieza": 5,
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "melon",
+  "name": "melón",
+  "food": "melon",
+  "prep": "ninguna",
+  "ref": "ciqual:13742",
+  "aliases": [
+   "melones"
+  ],
+  "units": {
+   "rebanada": 200,
+   "racion": 200
+  },
+  "default": true
+ },
+ {
+  "id": "sandia",
+  "name": "sandía",
+  "food": "sandia",
+  "prep": "ninguna",
+  "ref": "ciqual:13036",
+  "aliases": [
+   "sandias"
+  ],
+  "units": {
+   "rebanada": 300,
+   "racion": 300
+  },
+  "default": true
+ },
+ {
+  "id": "pina",
+  "name": "piña",
+  "food": "piña",
+  "prep": "ninguna",
+  "ref": "ciqual:13002",
+  "aliases": [
+   "piña natural"
+  ],
+  "units": {
+   "rebanada": 80,
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "pina-almibar",
+  "name": "piña en almíbar",
+  "food": "piña en almibar",
+  "prep": "ninguna",
+  "ref": "ciqual:13718",
+  "aliases": [
+   "piña en lata"
+  ],
+  "units": {
+   "rebanada": 40
+  },
+  "default": true
+ },
+ {
+  "id": "melocoton",
+  "name": "melocotón",
+  "food": "melocoton",
+  "prep": "ninguna",
+  "ref": "ciqual:13043",
+  "aliases": [
+   "melocotones",
+   "nectarina",
+   "nectarinas"
+  ],
+  "units": {
+   "pieza": 150
+  },
+  "default": true
+ },
+ {
+  "id": "melocoton-almibar",
+  "name": "melocotón en almíbar",
+  "food": "melocoton en almibar",
+  "prep": "ninguna",
+  "ref": "ciqual:13730",
+  "default": true
+ },
+ {
+  "id": "albaricoque",
+  "name": "albaricoque",
+  "food": "albaricoque",
+  "prep": "ninguna",
+  "ref": "ciqual:13000",
+  "aliases": [
+   "albaricoques"
+  ],
+  "units": {
+   "pieza": 40
+  },
+  "default": true
+ },
+ {
+  "id": "ciruela",
+  "name": "ciruela",
+  "food": "ciruela",
+  "prep": "ninguna",
+  "ref": "ciqual:13100",
+  "aliases": [
+   "ciruelas"
+  ],
+  "units": {
+   "pieza": 40
+  },
+  "default": true
+ },
+ {
+  "id": "cerezas",
+  "name": "cerezas",
+  "food": "cereza",
+  "prep": "ninguna",
+  "ref": "ciqual:13008",
+  "aliases": [
+   "picotas",
+   "picota"
+  ],
+  "units": {
+   "pieza": 7,
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "mango",
+  "name": "mango",
+  "food": "mango",
+  "prep": "ninguna",
+  "ref": "ciqual:13025",
+  "default": true
+ },
+ {
+  "id": "papaya",
+  "name": "papaya",
+  "food": "papaya",
+  "prep": "ninguna",
+  "ref": "ciqual:13035",
+  "default": true
+ },
+ {
+  "id": "arandanos",
+  "name": "arándanos",
+  "food": "arandano",
+  "prep": "ninguna",
+  "ref": "ciqual:13028",
+  "aliases": [
+   "arandanos frescos"
+  ],
+  "units": {
+   "puñado": 40,
+   "racion": 100,
+   "taza": 145
+  },
+  "default": true
+ },
+ {
+  "id": "frambuesas",
+  "name": "frambuesas",
+  "food": "frambuesa",
+  "prep": "ninguna",
+  "ref": "ciqual:13015",
+  "units": {
+   "puñado": 40,
+   "racion": 100
+  },
+  "default": true
+ },
+ {
+  "id": "moras",
+  "name": "moras",
+  "food": "mora",
+  "prep": "ninguna",
+  "ref": "ciqual:13029",
+  "default": true
+ },
+ {
+  "id": "higos",
+  "name": "higos",
+  "food": "higo",
+  "prep": "ninguna",
+  "ref": "ciqual:13012",
+  "units": {
+   "pieza": 50
+  },
+  "default": true
+ },
+ {
+  "id": "granada",
+  "name": "granada",
+  "food": "granada",
+  "prep": "ninguna",
+  "ref": "ciqual:13018",
+  "default": true
+ },
+ {
+  "id": "caqui",
+  "name": "caqui",
+  "food": "caqui",
+  "prep": "ninguna",
+  "ref": "ciqual:13066",
+  "aliases": [
+   "kaki"
+  ],
+  "units": {
+   "pieza": 170
+  },
+  "default": true
+ },
+ {
+  "id": "limon",
+  "name": "limón",
+  "food": "limon",
+  "prep": "ninguna",
+  "ref": "ciqual:13009",
+  "default": true
+ },
+ {
+  "id": "aguacate",
+  "name": "aguacate",
+  "food": "aguacate",
+  "prep": "ninguna",
+  "ref": "ciqual:13004",
+  "aliases": [
+   "palta"
+  ],
+  "units": {
+   "pieza": 150,
+   "racion": 75
+  },
+  "default": true
+ },
+ {
+  "id": "pomelo",
+  "name": "pomelo",
+  "food": "pomelo",
+  "prep": "ninguna",
+  "ref": "ciqual:13040",
+  "default": true
+ },
+ {
+  "id": "datiles",
+  "name": "dátiles",
+  "food": "datil",
+  "prep": "ninguna",
+  "ref": "ciqual:13011",
+  "aliases": [
+   "datiles medjool"
+  ],
+  "units": {
+   "pieza": 8
+  },
+  "default": true
+ },
+ {
+  "id": "pasas",
+  "name": "pasas",
+  "food": "uva pasa",
+  "prep": "ninguna",
+  "ref": "ciqual:13046",
+  "aliases": [
+   "uvas pasas",
+   "pasas sultanas"
+  ],
+  "units": {
+   "puñado": 30,
+   "cda": 10
+  },
+  "default": true
+ },
+ {
+  "id": "orejones",
+  "name": "orejones",
+  "food": "orejon",
+  "prep": "ninguna",
+  "ref": "ciqual:13001",
+  "aliases": [
+   "orejones de albaricoque"
+  ],
+  "units": {
+   "pieza": 8
+  },
+  "default": true
+ },
+ {
+  "id": "ciruelas-pasas",
+  "name": "ciruelas pasas",
+  "food": "ciruela pasa",
+  "prep": "ninguna",
+  "ref": "ciqual:13042",
+  "aliases": [
+   "ciruelas secas"
+  ],
+  "units": {
+   "pieza": 8
+  },
+  "default": true
+ },
+ {
+  "id": "macedonia",
+  "name": "macedonia de frutas",
+  "food": "macedonia",
+  "prep": "ninguna",
+  "ref": "ciqual:13134",
+  "aliases": [
+   "macedonia de fruta fresca"
+  ],
+  "units": {
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "compota",
+  "name": "compota de manzana",
+  "food": "compota de manzana",
+  "prep": "ninguna",
+  "ref": "ciqual:13212",
+  "aliases": [
+   "pure de manzana"
+  ],
+  "units": {
+   "racion": 100
+  },
+  "default": true
+ },
+ {
+  "id": "tomate",
+  "name": "tomate",
+  "food": "tomate",
+  "prep": "ninguna",
+  "ref": "ciqual:20385",
+  "aliases": [
+   "tomates",
+   "tomate natural",
+   "tomate en ensalada"
+  ],
+  "units": {
+   "pieza": 120,
+   "rebanada": 20,
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "tomate-cherry",
+  "name": "tomates cherry",
+  "food": "tomate cherry",
+  "prep": "ninguna",
+  "ref": "ciqual:20172",
+  "aliases": [
+   "cherrys",
+   "tomatitos"
+  ],
+  "units": {
+   "pieza": 15
+  },
+  "default": true
+ },
+ {
+  "id": "tomate-triturado",
+  "name": "tomate triturado",
+  "food": "tomate triturado",
+  "prep": "ninguna",
+  "ref": "ciqual:20169",
+  "aliases": [
+   "tomate natural triturado",
+   "tomate rallado"
+  ],
+  "units": {
+   "cda": 15,
+   "racion": 100
+  },
+  "default": true
+ },
+ {
+  "id": "tomate-frito",
+  "name": "tomate frito",
+  "food": "tomate frito",
+  "prep": "ninguna",
+  "ref": "ciqual:11107",
+  "aliases": [
+   "tomate frito de bote"
+  ],
+  "units": {
+   "cda": 15,
+   "racion": 60
+  },
+  "default": true
+ },
+ {
+  "id": "lechuga",
+  "name": "lechuga",
+  "food": "lechuga",
+  "prep": "ninguna",
+  "ref": "ciqual:20031",
+  "aliases": [
+   "lechuga iceberg",
+   "lechugas",
+   "cogollo",
+   "cogollos",
+   "lechuga romana"
+  ],
+  "units": {
+   "racion": 80,
+   "plato": 100
+  },
+  "default": true
+ },
+ {
+  "id": "canonigos",
+  "name": "canónigos",
+  "food": "canonigo",
+  "prep": "ninguna",
+  "ref": "ciqual:20099",
+  "units": {
+   "racion": 50
+  },
+  "default": true
+ },
+ {
+  "id": "rucula",
+  "name": "rúcula",
+  "food": "rucula",
+  "prep": "ninguna",
+  "ref": "ciqual:20217",
+  "units": {
+   "racion": 40
+  },
+  "default": true
+ },
+ {
+  "id": "espinacas",
+  "name": "espinacas crudas",
+  "food": "espinaca",
+  "prep": "crudo",
+  "ref": "ciqual:20059",
+  "aliases": [
+   "espinacas frescas",
+   "brotes de espinaca"
+  ],
+  "units": {
+   "racion": 50,
+   "puñado": 30
+  }
+ },
+ {
+  "id": "espinacas-cocidas",
+  "name": "espinacas cocidas",
+  "food": "espinaca",
+  "prep": "cocido",
+  "ref": "ciqual:20336",
+  "aliases": [
+   "espinacas hervidas"
+  ],
+  "units": {
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "pepino",
+  "name": "pepino",
+  "food": "pepino",
+  "prep": "ninguna",
+  "ref": "ciqual:20019",
+  "aliases": [
+   "pepinos"
+  ],
+  "units": {
+   "pieza": 200,
+   "rebanada": 10
+  },
+  "default": true
+ },
+ {
+  "id": "zanahoria",
+  "name": "zanahoria",
+  "food": "zanahoria",
+  "prep": "crudo",
+  "ref": "ciqual:20009",
+  "aliases": [
+   "zanahorias",
+   "zanahoria rallada"
+  ],
+  "units": {
+   "pieza": 80
+  },
+  "default": true
+ },
+ {
+  "id": "zanahoria-cocida",
+  "name": "zanahoria cocida",
+  "food": "zanahoria",
+  "prep": "cocido",
+  "ref": "ciqual:20352",
+  "aliases": [
+   "zanahoria hervida"
+  ],
+  "units": {
+   "pieza": 80
+  }
+ },
+ {
+  "id": "cebolla",
+  "name": "cebolla",
+  "food": "cebolla",
+  "prep": "crudo",
+  "ref": "ciqual:20034",
+  "aliases": [
+   "cebollas",
+   "cebolla morada"
+  ],
+  "units": {
+   "pieza": 110
+  },
+  "default": true
+ },
+ {
+  "id": "cebolla-cocinada",
+  "name": "cebolla pochada",
+  "food": "cebolla",
+  "prep": "salteado",
+  "ref": "ciqual:20035",
+  "aliases": [
+   "cebolla frita",
+   "cebolla caramelizada"
+  ]
+ },
+ {
+  "id": "pimiento-rojo",
+  "name": "pimiento rojo",
+  "food": "pimiento rojo",
+  "prep": "crudo",
+  "ref": "ciqual:20087",
+  "aliases": [
+   "pimientos rojos"
+  ],
+  "units": {
+   "pieza": 150
+  },
+  "default": true
+ },
+ {
+  "id": "pimiento-rojo-asado",
+  "name": "pimiento rojo asado",
+  "food": "pimiento rojo",
+  "prep": "horno",
+  "ref": "ciqual:20088",
+  "aliases": [
+   "pimientos asados",
+   "pimiento asado"
+  ]
+ },
+ {
+  "id": "pimiento-verde",
+  "name": "pimiento verde",
+  "food": "pimiento verde",
+  "prep": "crudo",
+  "ref": "ciqual:20085",
+  "aliases": [
+   "pimientos verdes",
+   "pimientos de padron",
+   "pimiento italiano"
+  ],
+  "units": {
+   "pieza": 120
+  },
+  "default": true
+ },
+ {
+  "id": "calabacin",
+  "name": "calabacín",
+  "food": "calabacin",
+  "prep": "crudo",
+  "ref": "ciqual:20020",
+  "aliases": [
+   "calabacines"
+  ],
+  "units": {
+   "pieza": 200
+  },
+  "default": true
+ },
+ {
+  "id": "calabacin-cocido",
+  "name": "calabacín cocinado",
+  "food": "calabacin",
+  "prep": "cocido",
+  "ref": "ciqual:20021",
+  "aliases": [
+   "calabacin hervido"
+  ]
+ },
+ {
+  "id": "calabacin-plancha",
+  "name": "calabacín a la plancha",
+  "food": "calabacin",
+  "prep": "plancha",
+  "ref": "ciqual:20313",
+  "aliases": [
+   "calabacin asado"
+  ]
+ },
+ {
+  "id": "berenjena",
+  "name": "berenjena",
+  "food": "berenjena",
+  "prep": "crudo",
+  "ref": "ciqual:20053",
+  "aliases": [
+   "berenjenas"
+  ],
+  "units": {
+   "pieza": 250
+  },
+  "default": true
+ },
+ {
+  "id": "berenjena-cocinada",
+  "name": "berenjena cocinada",
+  "food": "berenjena",
+  "prep": "plancha",
+  "ref": "ciqual:20002",
+  "aliases": [
+   "berenjena asada",
+   "berenjena a la plancha"
+  ]
+ },
+ {
+  "id": "brocoli",
+  "name": "brócoli cocido",
+  "food": "brocoli",
+  "prep": "cocido",
+  "ref": "ciqual:20350",
+  "aliases": [
+   "brocoli",
+   "brecol"
+  ],
+  "units": {
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "brocoli-crudo",
+  "name": "brócoli crudo",
+  "food": "brocoli",
+  "prep": "crudo",
+  "ref": "ciqual:20057"
+ },
+ {
+  "id": "coliflor",
+  "name": "coliflor cocida",
+  "food": "coliflor",
+  "prep": "cocido",
+  "ref": "ciqual:20017",
+  "aliases": [
+   "coliflor"
+  ],
+  "units": {
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "coliflor-cruda",
+  "name": "coliflor cruda",
+  "food": "coliflor",
+  "prep": "crudo",
+  "ref": "ciqual:20016"
+ },
+ {
+  "id": "judias-verdes",
+  "name": "judías verdes cocidas",
+  "food": "judia verde",
+  "prep": "cocido",
+  "ref": "ciqual:20320",
+  "aliases": [
+   "judias verdes",
+   "vainas"
+  ],
+  "units": {
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "judias-verdes-crudas",
+  "name": "judías verdes crudas",
+  "food": "judia verde",
+  "prep": "crudo",
+  "ref": "ciqual:20061"
+ },
+ {
+  "id": "guisantes",
+  "name": "guisantes cocidos",
+  "food": "guisante",
+  "prep": "cocido",
+  "ref": "ciqual:20326",
+  "aliases": [
+   "guisantes"
+  ],
+  "units": {
+   "racion": 100
+  },
+  "default": true
+ },
+ {
+  "id": "champinones",
+  "name": "champiñones",
+  "food": "champiñon",
+  "prep": "crudo",
+  "ref": "ciqual:20056",
+  "aliases": [
+   "champiñones crudos",
+   "setas"
+  ],
+  "units": {
+   "racion": 100
+  },
+  "default": true
+ },
+ {
+  "id": "champinones-cocinados",
+  "name": "champiñones salteados",
+  "food": "champiñon",
+  "prep": "salteado",
+  "ref": "ciqual:20125",
+  "aliases": [
+   "champiñones a la plancha",
+   "setas a la plancha"
+  ],
+  "units": {
+   "racion": 100
+  }
+ },
+ {
+  "id": "esparragos-verdes",
+  "name": "espárragos verdes",
+  "food": "esparrago verde",
+  "prep": "cocido",
+  "ref": "ciqual:20299",
+  "aliases": [
+   "esparragos trigueros",
+   "trigueros"
+  ],
+  "units": {
+   "pieza": 15,
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "esparragos-blancos",
+  "name": "espárragos blancos",
+  "food": "esparrago blanco",
+  "prep": "ninguna",
+  "ref": "ciqual:20076",
+  "aliases": [
+   "esparragos de lata",
+   "esparragos de bote"
+  ],
+  "units": {
+   "pieza": 20
+  },
+  "default": true
+ },
+ {
+  "id": "alcachofa",
+  "name": "alcachofa",
+  "food": "alcachofa",
+  "prep": "cocido",
+  "ref": "ciqual:20000",
+  "aliases": [
+   "alcachofas",
+   "corazones de alcachofa"
+  ],
+  "units": {
+   "pieza": 40
+  },
+  "default": true
+ },
+ {
+  "id": "maiz",
+  "name": "maíz dulce",
+  "food": "maiz dulce",
+  "prep": "ninguna",
+  "ref": "ciqual:20066",
+  "aliases": [
+   "maiz",
+   "maiz de lata"
+  ],
+  "units": {
+   "cda": 15,
+   "lata": 140
+  },
+  "default": true
+ },
+ {
+  "id": "remolacha",
+  "name": "remolacha cocida",
+  "food": "remolacha",
+  "prep": "cocido",
+  "ref": "ciqual:20003",
+  "aliases": [
+   "remolacha"
+  ],
+  "units": {
+   "racion": 100
+  },
+  "default": true
+ },
+ {
+  "id": "apio",
+  "name": "apio",
+  "food": "apio",
+  "prep": "crudo",
+  "ref": "ciqual:20023",
+  "default": true
+ },
+ {
+  "id": "puerro",
+  "name": "puerro",
+  "food": "puerro",
+  "prep": "cocido",
+  "ref": "ciqual:20327",
+  "aliases": [
+   "puerros"
+  ],
+  "units": {
+   "pieza": 150
+  },
+  "default": true
+ },
+ {
+  "id": "col",
+  "name": "repollo",
+  "food": "repollo",
+  "prep": "cocido",
+  "ref": "ciqual:20308",
+  "aliases": [
+   "col",
+   "repollo cocido"
+  ],
+  "units": {
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "coles-bruselas",
+  "name": "coles de Bruselas",
+  "food": "col de bruselas",
+  "prep": "cocido",
+  "ref": "ciqual:20309",
+  "aliases": [
+   "coles de bruselas"
+  ],
+  "units": {
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "calabaza",
+  "name": "calabaza",
+  "food": "calabaza",
+  "prep": "cocido",
+  "ref": "ciqual:20096",
+  "aliases": [
+   "calabaza asada"
+  ],
+  "units": {
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "ajo",
+  "name": "ajo",
+  "food": "ajo",
+  "prep": "crudo",
+  "ref": "ciqual:11000",
+  "aliases": [
+   "ajos",
+   "diente de ajo"
+  ],
+  "units": {
+   "pieza": 4
+  },
+  "default": true
+ },
+ {
+  "id": "aceitunas",
+  "name": "aceitunas verdes",
+  "food": "aceituna",
+  "prep": "ninguna",
+  "ref": "ciqual:13033",
+  "aliases": [
+   "aceitunas",
+   "olivas",
+   "aceitunas rellenas"
+  ],
+  "units": {
+   "pieza": 4,
+   "racion": 40
+  },
+  "default": true
+ },
+ {
+  "id": "aceitunas-negras",
+  "name": "aceitunas negras",
+  "food": "aceituna negra",
+  "prep": "ninguna",
+  "ref": "ciqual:13032",
+  "default": true
+ },
+ {
+  "id": "pepinillos",
+  "name": "pepinillos",
+  "food": "pepinillo",
+  "prep": "ninguna",
+  "ref": "ciqual:11004",
+  "units": {
+   "pieza": 10
+  },
+  "default": true
+ },
+ {
+  "id": "verduras-congeladas",
+  "name": "menestra de verduras",
+  "food": "menestra de verduras",
+  "prep": "cocido",
+  "ref": "ciqual:20499",
+  "aliases": [
+   "verduras variadas",
+   "salteado de verduras sin aceite"
+  ],
+  "units": {
+   "racion": 200
+  },
+  "default": true
+ },
+ {
+  "id": "gazpacho",
+  "name": "gazpacho",
+  "food": "gazpacho",
+  "prep": "ninguna",
+  "ref": "ciqual:25967",
+  "aliases": [
+   "gazpacho de brick"
+  ],
+  "units": {
+   "vaso": 250
+  },
+  "density": 1.0,
+  "default": true
+ },
+ {
+  "id": "compota-sin-azucar",
+  "name": "compota de manzana sin azúcar",
+  "food": "compota de manzana sin azucar",
+  "prep": "ninguna",
+  "ref": "ciqual:13151",
+  "aliases": [
+   "compota sin azucar anadido",
+   "compota light"
+  ],
+  "units": {
+   "racion": 100
+  },
+  "default": true
+ },
+ {
+  "id": "melon-cantalupo",
+  "name": "melón cantalupo",
+  "food": "melon cantalupo",
+  "prep": "ninguna",
+  "ref": "ciqual:13026",
+  "aliases": [
+   "cantalupo",
+   "melon galia"
+  ],
+  "units": {
+   "rebanada": 150
+  },
+  "default": true
+ },
+ {
+  "id": "pimiento-rojo-salteado",
+  "name": "pimiento rojo salteado",
+  "food": "pimiento rojo",
+  "prep": "salteado",
+  "ref": "ciqual:20329",
+  "aliases": [
+   "pimientos salteados"
+  ]
+ },
+ {
+  "id": "azucar",
+  "name": "azúcar",
+  "food": "azucar",
+  "prep": "ninguna",
+  "ref": "ciqual:31016",
+  "aliases": [
+   "azucar blanco",
+   "azucar blanquilla",
+   "sobre de azucar"
+  ],
+  "units": {
+   "cda": 15,
+   "cdta": 5,
+   "pieza": 8
+  },
+  "default": true
+ },
+ {
+  "id": "azucar-moreno",
+  "name": "azúcar moreno",
+  "food": "azucar moreno",
+  "prep": "ninguna",
+  "ref": "ciqual:31017",
+  "aliases": [
+   "azucar morena",
+   "panela"
+  ],
+  "units": {
+   "cda": 15,
+   "cdta": 5,
+   "pieza": 8
+  },
+  "default": true
+ },
+ {
+  "id": "miel",
+  "name": "miel",
+  "food": "miel",
+  "prep": "ninguna",
+  "ref": "ciqual:31008",
+  "units": {
+   "cda": 15,
+   "cdta": 7
+  },
+  "density": 1.42,
+  "default": true
+ },
+ {
+  "id": "mermelada",
+  "name": "mermelada",
+  "food": "mermelada",
+  "prep": "ninguna",
+  "ref": "ciqual:31006",
+  "aliases": [
+   "confitura",
+   "mermelada de fresa",
+   "mermelada de melocoton",
+   "mermelada de naranja"
+  ],
+  "units": {
+   "cda": 15,
+   "cdta": 7
+  },
+  "default": true
+ },
+ {
+  "id": "mermelada-light",
+  "name": "mermelada light",
+  "food": "mermelada light",
+  "prep": "ninguna",
+  "ref": "ciqual:30887",
+  "aliases": [
+   "mermelada baja en azucar"
+  ],
+  "units": {
+   "cda": 15,
+   "cdta": 7
+  },
+  "default": true
+ },
+ {
+  "id": "crema-cacao",
+  "name": "crema de cacao y avellanas",
+  "food": "crema de cacao",
+  "prep": "ninguna",
+  "ref": "ciqual:31032",
+  "aliases": [
+   "nutella",
+   "nocilla",
+   "crema de cacao y avellanas"
+  ],
+  "units": {
+   "cda": 15,
+   "cdta": 7
+  },
+  "default": true
+ },
+ {
+  "id": "chocolate-negro",
+  "name": "chocolate negro 70%",
+  "food": "chocolate negro",
+  "prep": "ninguna",
+  "ref": "ciqual:31074",
+  "aliases": [
+   "chocolate negro 70",
+   "chocolate 70",
+   "chocolate puro"
+  ],
+  "units": {
+   "pieza": 10
+  },
+  "default": true
+ },
+ {
+  "id": "chocolate-negro-50",
+  "name": "chocolate negro 50%",
+  "food": "chocolate negro 50",
+  "prep": "ninguna",
+  "ref": "ciqual:31005",
+  "aliases": [
+   "chocolate fondant",
+   "chocolate para postres"
+  ],
+  "units": {
+   "pieza": 10
+  },
+  "default": true
+ },
+ {
+  "id": "chocolate-leche",
+  "name": "chocolate con leche",
+  "food": "chocolate con leche",
+  "prep": "ninguna",
+  "ref": "ciqual:31004",
+  "units": {
+   "pieza": 10
+  },
+  "default": true
+ },
+ {
+  "id": "chocolate-blanco",
+  "name": "chocolate blanco",
+  "food": "chocolate blanco",
+  "prep": "ninguna",
+  "ref": "ciqual:31010",
+  "units": {
+   "pieza": 10
+  },
+  "default": true
+ },
+ {
+  "id": "cacao-soluble",
+  "name": "cacao soluble azucarado",
+  "food": "cacao soluble",
+  "prep": "ninguna",
+  "ref": "ciqual:18101",
+  "aliases": [
+   "colacao",
+   "cola cao",
+   "nesquik",
+   "cacao en polvo azucarado"
+  ],
+  "units": {
+   "cda": 10,
+   "cdta": 5
+  },
+  "default": true
+ },
+ {
+  "id": "cacao-puro",
+  "name": "cacao puro en polvo",
+  "food": "cacao puro",
+  "prep": "ninguna",
+  "ref": "ciqual:18100",
+  "aliases": [
+   "cacao en polvo sin azucar",
+   "cacao desgrasado"
+  ],
+  "units": {
+   "cda": 7,
+   "cdta": 3
+  },
+  "default": true
+ },
+ {
+  "id": "galletas-maria",
+  "name": "galletas María",
+  "food": "galleta maria",
+  "prep": "ninguna",
+  "ref": "ciqual:24001",
+  "aliases": [
+   "galletas maria",
+   "galleta tipo maria",
+   "galletas",
+   "galleta"
+  ],
+  "units": {
+   "pieza": 6.5
+  },
+  "default": true
+ },
+ {
+  "id": "galletas-integrales",
+  "name": "galletas integrales",
+  "food": "galleta integral",
+  "prep": "ninguna",
+  "ref": "ciqual:24020",
+  "aliases": [
+   "galletas digestive",
+   "digestive"
+  ],
+  "units": {
+   "pieza": 15
+  },
+  "default": true
+ },
+ {
+  "id": "galletas-chocolate",
+  "name": "galletas con chocolate",
+  "food": "galleta con chocolate",
+  "prep": "ninguna",
+  "ref": "ciqual:24016",
+  "aliases": [
+   "galletas de chocolate"
+  ],
+  "units": {
+   "pieza": 12
+  },
+  "default": true
+ },
+ {
+  "id": "cookies",
+  "name": "cookies con pepitas de chocolate",
+  "food": "cookie",
+  "prep": "ninguna",
+  "ref": "ciqual:24684",
+  "aliases": [
+   "galletas cookies",
+   "cookies"
+  ],
+  "default": true
+ },
+ {
+  "id": "galletas-avena",
+  "name": "galletas de avena",
+  "food": "galleta de avena",
+  "prep": "ninguna",
+  "ref": "ciqual:24655",
+  "units": {
+   "pieza": 12
+  },
+  "default": true
+ },
+ {
+  "id": "magdalena",
+  "name": "magdalena",
+  "food": "magdalena",
+  "prep": "ninguna",
+  "ref": "ciqual:24632",
+  "aliases": [
+   "magdalenas"
+  ],
+  "units": {
+   "pieza": 30
+  },
+  "default": true
+ },
+ {
+  "id": "croissant",
+  "name": "cruasán",
+  "food": "croissant",
+  "prep": "ninguna",
+  "ref": "ciqual:7603",
+  "aliases": [
+   "cruasan",
+   "croissant de mantequilla"
+  ],
+  "units": {
+   "pieza": 60
+  },
+  "default": true
+ },
+ {
+  "id": "napolitana",
+  "name": "napolitana de chocolate",
+  "food": "napolitana de chocolate",
+  "prep": "ninguna",
+  "ref": "ciqual:7733",
+  "aliases": [
+   "napolitana",
+   "napolitana de crema"
+  ],
+  "units": {
+   "pieza": 80
+  },
+  "default": true
+ },
+ {
+  "id": "bolleria-brioche",
+  "name": "bollo de leche",
+  "food": "bollo de leche",
+  "prep": "ninguna",
+  "ref": "ciqual:7740",
+  "aliases": [
+   "brioche",
+   "suizo",
+   "pan de leche"
+  ],
+  "units": {
+   "pieza": 40
+  },
+  "default": true
+ },
+ {
+  "id": "donut",
+  "name": "dónut",
+  "food": "donut",
+  "prep": "ninguna",
+  "ref": "ciqual:23880",
+  "aliases": [
+   "donuts",
+   "donut glaseado"
+  ],
+  "units": {
+   "pieza": 50
+  },
+  "default": true
+ },
+ {
+  "id": "bizcocho",
+  "name": "bizcocho casero",
+  "food": "bizcocho",
+  "prep": "ninguna",
+  "ref": "ciqual:23588",
+  "aliases": [
+   "bizcocho de yogur",
+   "bizcocho casero",
+   "bizcocho de limon"
+  ],
+  "units": {
+   "rebanada": 50,
+   "racion": 60
+  },
+  "default": true
+ },
+ {
+  "id": "muffin",
+  "name": "muffin de chocolate",
+  "food": "muffin",
+  "prep": "ninguna",
+  "ref": "ciqual:23952",
+  "aliases": [
+   "muffins"
+  ],
+  "units": {
+   "pieza": 90
+  },
+  "default": true
+ },
+ {
+  "id": "churros",
+  "name": "churros",
+  "food": "churro",
+  "prep": "frito",
+  "ref": "usda:2708070",
+  "aliases": [
+   "churros fritos"
+  ],
+  "units": {
+   "pieza": 20,
+   "racion": 100
+  },
+  "oil": true,
+  "default": true
+ },
+ {
+  "id": "flan",
+  "name": "flan de huevo",
+  "food": "flan",
+  "prep": "ninguna",
+  "ref": "ciqual:39209",
+  "aliases": [
+   "flan",
+   "flanes"
+  ],
+  "units": {
+   "pieza": 100
+  },
+  "default": true
+ },
+ {
+  "id": "natillas",
+  "name": "natillas",
+  "food": "natillas",
+  "prep": "ninguna",
+  "ref": "ciqual:39229",
+  "aliases": [
+   "natilla"
+  ],
+  "units": {
+   "pieza": 125
+  },
+  "default": true
+ },
+ {
+  "id": "arroz-con-leche",
+  "name": "arroz con leche",
+  "food": "arroz con leche",
+  "prep": "ninguna",
+  "ref": "ciqual:39212",
+  "units": {
+   "pieza": 125,
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "helado",
+  "name": "helado",
+  "food": "helado",
+  "prep": "ninguna",
+  "ref": "ciqual:39515",
+  "aliases": [
+   "helado de vainilla",
+   "helado de chocolate",
+   "helado de nata"
+  ],
+  "units": {
+   "racion": 100
+  },
+  "default": true
+ },
+ {
+  "id": "tarta-queso",
+  "name": "tarta de queso",
+  "food": "tarta de queso",
+  "prep": "ninguna",
+  "ref": "ciqual:23001",
+  "aliases": [
+   "cheesecake"
+  ],
+  "units": {
+   "racion": 100
+  },
+  "default": true
+ },
+ {
+  "id": "tiramisu",
+  "name": "tiramisú",
+  "food": "tiramisu",
+  "prep": "ninguna",
+  "ref": "ciqual:19698",
+  "units": {
+   "racion": 100
+  },
+  "default": true
+ },
+ {
+  "id": "brownie",
+  "name": "brownie",
+  "food": "brownie",
+  "prep": "ninguna",
+  "ref": "ciqual:23032",
+  "units": {
+   "racion": 60
+  },
+  "default": true
+ },
+ {
+  "id": "gofre",
+  "name": "gofre",
+  "food": "gofre",
+  "prep": "ninguna",
+  "ref": "ciqual:23851",
+  "aliases": [
+   "gofres",
+   "waffle"
+  ],
+  "default": true
+ },
+ {
+  "id": "crepe",
+  "name": "crepe",
+  "food": "crepe",
+  "prep": "ninguna",
+  "ref": "ciqual:23799",
+  "aliases": [
+   "crepes",
+   "tortita americana",
+   "tortitas americanas"
+  ],
+  "default": true
+ },
+ {
+  "id": "barrita-cereales",
+  "name": "barrita de cereales",
+  "food": "barrita de cereales",
+  "prep": "ninguna",
+  "ref": "ciqual:31106",
+  "aliases": [
+   "barrita",
+   "barrita de cereales con chocolate"
+  ],
+  "units": {
+   "pieza": 25
+  },
+  "default": true
+ },
+ {
+  "id": "barrita-cereales-fruta",
+  "name": "barrita de cereales con fruta",
+  "food": "barrita de cereales con fruta",
+  "prep": "ninguna",
+  "ref": "ciqual:31113",
+  "aliases": [
+   "barrita de fruta"
+  ],
+  "units": {
+   "pieza": 25
+  },
+  "default": true
+ },
+ {
+  "id": "gominolas",
+  "name": "gominolas",
+  "food": "gominola",
+  "prep": "ninguna",
+  "ref": "ciqual:31060",
+  "aliases": [
+   "chuches",
+   "golosinas",
+   "ositos de gominola"
+  ],
+  "units": {
+   "pieza": 3,
+   "puñado": 30
+  },
+  "default": true
+ },
+ {
+  "id": "caramelos",
+  "name": "caramelos",
+  "food": "caramelo",
+  "prep": "ninguna",
+  "ref": "ciqual:31059",
+  "aliases": [
+   "caramelo duro",
+   "piruleta"
+  ],
+  "units": {
+   "pieza": 5
+  },
+  "default": true
+ },
+ {
+  "id": "sirope-arce",
+  "name": "sirope de arce",
+  "food": "sirope de arce",
+  "prep": "ninguna",
+  "ref": "ciqual:31034",
+  "aliases": [
+   "sirope"
+  ],
+  "units": {
+   "cda": 20
+  },
+  "default": true
+ },
+ {
+  "id": "mayonesa",
+  "name": "mayonesa",
+  "food": "mayonesa",
+  "prep": "ninguna",
+  "ref": "ciqual:11054",
+  "aliases": [
+   "mahonesa"
+  ],
+  "units": {
+   "cda": 15,
+   "cdta": 5
+  },
+  "default": true
+ },
+ {
+  "id": "mayonesa-light",
+  "name": "mayonesa light",
+  "food": "mayonesa light",
+  "prep": "ninguna",
+  "ref": "ciqual:11079",
+  "aliases": [
+   "mahonesa light"
+  ],
+  "units": {
+   "cda": 15,
+   "cdta": 5
+  },
+  "default": true
+ },
+ {
+  "id": "ketchup",
+  "name": "kétchup",
+  "food": "ketchup",
+  "prep": "ninguna",
+  "ref": "ciqual:11008",
+  "aliases": [
+   "catchup",
+   "tomate ketchup"
+  ],
+  "units": {
+   "cda": 15,
+   "cdta": 5
+  },
+  "default": true
+ },
+ {
+  "id": "mostaza",
+  "name": "mostaza",
+  "food": "mostaza",
+  "prep": "ninguna",
+  "ref": "ciqual:11013",
+  "aliases": [
+   "mostaza de dijon"
+  ],
+  "units": {
+   "cda": 10,
+   "cdta": 5
+  },
+  "default": true
+ },
+ {
+  "id": "salsa-soja",
+  "name": "salsa de soja",
+  "food": "salsa de soja",
+  "prep": "ninguna",
+  "ref": "ciqual:11104",
+  "aliases": [
+   "soja",
+   "salsa soja"
+  ],
+  "units": {
+   "cda": 16,
+   "cdta": 5
+  },
+  "default": true
+ },
+ {
+  "id": "salsa-barbacoa",
+  "name": "salsa barbacoa",
+  "food": "salsa barbacoa",
+  "prep": "ninguna",
+  "ref": "ciqual:11100",
+  "aliases": [
+   "barbacoa"
+  ],
+  "units": {
+   "cda": 15,
+   "cdta": 5
+  },
+  "default": true
+ },
+ {
+  "id": "bechamel",
+  "name": "bechamel",
+  "food": "bechamel",
+  "prep": "ninguna",
+  "ref": "ciqual:11143",
+  "aliases": [
+   "salsa bechamel"
+  ],
+  "units": {
+   "racion": 100,
+   "cda": 15
+  },
+  "default": true
+ },
+ {
+  "id": "salsa-carbonara",
+  "name": "salsa carbonara",
+  "food": "salsa carbonara",
+  "prep": "ninguna",
+  "ref": "ciqual:11128",
+  "units": {
+   "racion": 80
+  },
+  "default": true
+ },
+ {
+  "id": "salsa-curry",
+  "name": "salsa de curry",
+  "food": "salsa de curry",
+  "prep": "ninguna",
+  "ref": "ciqual:11132",
+  "aliases": [
+   "salsa curry"
+  ],
+  "units": {
+   "racion": 80
+  },
+  "default": true
+ },
+ {
+  "id": "salsa-kebab",
+  "name": "salsa de yogur para kebab",
+  "food": "salsa de kebab",
+  "prep": "ninguna",
+  "ref": "ciqual:11203",
+  "aliases": [
+   "salsa blanca",
+   "salsa de yogur del kebab"
+  ],
+  "units": {
+   "cda": 15
+  },
+  "default": true
+ },
+ {
+  "id": "salsa-burger",
+  "name": "salsa burger",
+  "food": "salsa burger",
+  "prep": "ninguna",
+  "ref": "ciqual:11196",
+  "aliases": [
+   "salsa de hamburguesa",
+   "salsa big mac"
+  ],
+  "units": {
+   "cda": 15
+  },
+  "default": true
+ },
+ {
+  "id": "pesto",
+  "name": "pesto",
+  "food": "pesto",
+  "prep": "ninguna",
+  "ref": "ciqual:11179",
+  "aliases": [
+   "salsa pesto"
+  ],
+  "units": {
+   "cda": 15
+  },
+  "default": true
+ },
+ {
+  "id": "vinagreta",
+  "name": "vinagreta",
+  "food": "vinagreta",
+  "prep": "ninguna",
+  "ref": "ciqual:11108",
+  "aliases": [
+   "aliño de vinagreta"
+  ],
+  "units": {
+   "cda": 15
+  },
+  "default": true
+ },
+ {
+  "id": "alioli",
+  "name": "alioli",
+  "food": "alioli",
+  "prep": "ninguna",
+  "ref": "ciqual:11168",
+  "aliases": [
+   "ajoaceite",
+   "all i oli"
+  ],
+  "units": {
+   "cda": 15
+  },
+  "default": true
+ },
+ {
+  "id": "vinagre",
+  "name": "vinagre",
+  "food": "vinagre",
+  "prep": "ninguna",
+  "ref": "ciqual:11018",
+  "aliases": [
+   "vinagre de vino",
+   "vinagre de jerez"
+  ],
+  "units": {
+   "cda": 15
+  },
+  "density": 1.01,
+  "default": true
+ },
+ {
+  "id": "vinagre-balsamico",
+  "name": "vinagre balsámico",
+  "food": "vinagre balsamico",
+  "prep": "ninguna",
+  "ref": "ciqual:11091",
+  "aliases": [
+   "balsamico",
+   "crema de balsamico"
+  ],
+  "units": {
+   "cda": 15
+  },
+  "density": 1.1,
+  "default": true
+ },
+ {
+  "id": "guacamole",
+  "name": "guacamole",
+  "food": "guacamole",
+  "prep": "ninguna",
+  "ref": "ciqual:25620",
+  "units": {
+   "cda": 20,
+   "racion": 60
+  },
+  "default": true
+ },
+ {
+  "id": "cafe-solo",
+  "name": "café solo",
+  "food": "cafe solo",
+  "prep": "ninguna",
+  "ref": "ciqual:18071",
+  "aliases": [
+   "cafe",
+   "espresso",
+   "expreso",
+   "cafe expreso",
+   "cafe corto"
+  ],
+  "units": {
+   "taza": 50,
+   "pieza": 50
+  },
+  "density": 1.0,
+  "default": true
+ },
+ {
+  "id": "cafe-americano",
+  "name": "café americano",
+  "food": "cafe americano",
+  "prep": "ninguna",
+  "ref": "ciqual:18004",
+  "aliases": [
+   "cafe largo",
+   "cafe de filtro"
+  ],
+  "units": {
+   "taza": 200,
+   "pieza": 200
+  },
+  "density": 1.0,
+  "default": true
+ },
+ {
+  "id": "te",
+  "name": "té",
+  "food": "te",
+  "prep": "ninguna",
+  "ref": "ciqual:18020",
+  "aliases": [
+   "infusion",
+   "te verde",
+   "te negro",
+   "manzanilla",
+   "poleo"
+  ],
+  "units": {
+   "taza": 250,
+   "pieza": 250
+  },
+  "density": 1.0,
+  "default": true
+ },
+ {
+  "id": "cola",
+  "name": "refresco de cola",
+  "food": "refresco de cola",
+  "prep": "ninguna",
+  "ref": "ciqual:18018",
+  "aliases": [
+   "coca cola",
+   "cocacola",
+   "cola",
+   "pepsi"
+  ],
+  "units": {
+   "lata": 343
+  },
+  "density": 1.04,
+  "default": true
+ },
+ {
+  "id": "cola-zero",
+  "name": "refresco de cola zero",
+  "food": "refresco de cola zero",
+  "prep": "ninguna",
+  "ref": "ciqual:18060",
+  "aliases": [
+   "coca cola zero",
+   "cola zero",
+   "cola light",
+   "coca cola light",
+   "pepsi max",
+   "refresco zero"
+  ],
+  "units": {
+   "lata": 340
+  },
+  "density": 1.03,
+  "default": true
+ },
+ {
+  "id": "refresco-naranja",
+  "name": "refresco de naranja",
+  "food": "refresco de naranja",
+  "prep": "ninguna",
+  "ref": "ciqual:18049",
+  "aliases": [
+   "fanta",
+   "fanta de naranja",
+   "fanta de limon",
+   "refresco de limon"
+  ],
+  "units": {
+   "lata": 343
+  },
+  "density": 1.04,
+  "default": true
+ },
+ {
+  "id": "gaseosa",
+  "name": "gaseosa",
+  "food": "gaseosa",
+  "prep": "ninguna",
+  "ref": "ciqual:18016",
+  "aliases": [
+   "la casera",
+   "casera",
+   "sprite zero"
+  ],
+  "units": {
+   "lata": 330
+  },
+  "density": 1.0,
+  "default": true
+ },
+ {
+  "id": "isotonica",
+  "name": "bebida isotónica",
+  "food": "bebida isotonica",
+  "prep": "ninguna",
+  "ref": "ciqual:18348",
+  "aliases": [
+   "aquarius",
+   "powerade",
+   "isotonica"
+  ],
+  "units": {
+   "lata": 335
+  },
+  "density": 1.02,
+  "default": true
+ },
+ {
+  "id": "energetica",
+  "name": "bebida energética",
+  "food": "bebida energetica",
+  "prep": "ninguna",
+  "ref": "ciqual:18352",
+  "aliases": [
+   "red bull",
+   "monster",
+   "energetica"
+  ],
+  "units": {
+   "lata": 262
+  },
+  "density": 1.05,
+  "default": true
+ },
+ {
+  "id": "te-frio",
+  "name": "té frío",
+  "food": "te frio",
+  "prep": "ninguna",
+  "ref": "ciqual:18075",
+  "aliases": [
+   "nestea",
+   "te frio al limon"
+  ],
+  "units": {
+   "lata": 335
+  },
+  "density": 1.02,
+  "default": true
+ },
+ {
+  "id": "zumo-naranja-natural",
+  "name": "zumo de naranja natural",
+  "food": "zumo de naranja natural",
+  "prep": "ninguna",
+  "ref": "ciqual:2013",
+  "aliases": [
+   "zumo de naranja exprimido",
+   "zumo natural"
+  ],
+  "density": 1.04,
+  "default": true
+ },
+ {
+  "id": "zumo-naranja",
+  "name": "zumo de naranja",
+  "food": "zumo de naranja",
+  "prep": "ninguna",
+  "ref": "ciqual:2070",
+  "aliases": [
+   "zumo de naranja de brick",
+   "zumo de naranja envasado"
+  ],
+  "density": 1.04,
+  "default": true
+ },
+ {
+  "id": "zumo-manzana",
+  "name": "zumo de manzana",
+  "food": "zumo de manzana",
+  "prep": "ninguna",
+  "ref": "ciqual:2074",
+  "density": 1.04,
+  "default": true
+ },
+ {
+  "id": "cerveza",
+  "name": "cerveza",
+  "food": "cerveza",
+  "prep": "ninguna",
+  "ref": "ciqual:5001",
+  "aliases": [
+   "caña",
+   "caña de cerveza",
+   "tercio",
+   "birra",
+   "cerveza rubia",
+   "botellin"
+  ],
+  "units": {
+   "vaso": 202,
+   "lata": 333,
+   "pieza": 333
+  },
+  "density": 1.01,
+  "default": true
+ },
+ {
+  "id": "vino-tinto",
+  "name": "vino tinto",
+  "food": "vino tinto",
+  "prep": "ninguna",
+  "ref": "ciqual:5214",
+  "aliases": [
+   "vino",
+   "copa de vino tinto"
+  ],
+  "units": {
+   "vaso": 149
+  },
+  "density": 0.995,
+  "default": true
+ },
+ {
+  "id": "vino-blanco",
+  "name": "vino blanco",
+  "food": "vino blanco",
+  "prep": "ninguna",
+  "ref": "ciqual:5215",
+  "aliases": [
+   "copa de vino blanco"
+  ],
+  "units": {
+   "vaso": 149
+  },
+  "density": 0.995,
+  "default": true
+ },
+ {
+  "id": "vino-rosado",
+  "name": "vino rosado",
+  "food": "vino rosado",
+  "prep": "ninguna",
+  "ref": "ciqual:5216",
+  "units": {
+   "vaso": 149
+  },
+  "density": 0.995,
+  "default": true
+ },
+ {
+  "id": "cava",
+  "name": "cava",
+  "food": "cava",
+  "prep": "ninguna",
+  "ref": "ciqual:5201",
+  "aliases": [
+   "champan",
+   "champagne",
+   "vino espumoso"
+  ],
+  "units": {
+   "vaso": 100
+  },
+  "density": 0.995,
+  "default": true
+ },
+ {
+  "id": "sidra",
+  "name": "sidra",
+  "food": "sidra",
+  "prep": "ninguna",
+  "ref": "ciqual:5003",
+  "units": {
+   "vaso": 200
+  },
+  "density": 1.0,
+  "default": true
+ },
+ {
+  "id": "vermut",
+  "name": "vermut",
+  "food": "vermut",
+  "prep": "ninguna",
+  "ref": "ciqual:1007",
+  "aliases": [
+   "vermouth",
+   "martini"
+  ],
+  "units": {
+   "vaso": 100
+  },
+  "density": 1.03,
+  "default": true
+ },
+ {
+  "id": "sangria",
+  "name": "sangría",
+  "food": "sangria",
+  "prep": "ninguna",
+  "ref": "ciqual:1017",
+  "aliases": [
+   "tinto de verano"
+  ],
+  "units": {
+   "vaso": 200
+  },
+  "density": 1.0,
+  "default": true
+ },
+ {
+  "id": "whisky",
+  "name": "whisky",
+  "food": "whisky",
+  "prep": "ninguna",
+  "ref": "ciqual:1005",
+  "aliases": [
+   "whiskey",
+   "bourbon"
+  ],
+  "units": {
+   "vaso": 50
+  },
+  "density": 0.95,
+  "default": true
+ },
+ {
+  "id": "ron",
+  "name": "ron",
+  "food": "ron",
+  "prep": "ninguna",
+  "ref": "ciqual:1004",
+  "units": {
+   "vaso": 50
+  },
+  "density": 0.95,
+  "default": true
+ },
+ {
+  "id": "vodka",
+  "name": "vodka",
+  "food": "vodka",
+  "prep": "ninguna",
+  "ref": "ciqual:1008",
+  "units": {
+   "vaso": 50
+  },
+  "density": 0.95,
+  "default": true
+ },
+ {
+  "id": "ginebra",
+  "name": "ginebra",
+  "food": "ginebra",
+  "prep": "ninguna",
+  "ref": "ciqual:1002",
+  "aliases": [
+   "gin"
+  ],
+  "units": {
+   "vaso": 50
+  },
+  "density": 0.95,
+  "default": true
+ },
+ {
+  "id": "licor",
+  "name": "licor",
+  "food": "licor",
+  "prep": "ninguna",
+  "ref": "ciqual:1003",
+  "aliases": [
+   "pacharan",
+   "licor de hierbas",
+   "orujo de hierbas",
+   "baileys"
+  ],
+  "units": {
+   "vaso": 40
+  },
+  "density": 1.05,
+  "default": true
+ },
+ {
+  "id": "batido-chocolate",
+  "name": "batido de chocolate",
+  "food": "batido de chocolate",
+  "prep": "ninguna",
+  "ref": "ciqual:19118",
+  "aliases": [
+   "cacaolat",
+   "batido de cacao"
+  ],
+  "units": {
+   "vaso": 200,
+   "pieza": 200
+  },
+  "density": 1.06,
+  "default": true
+ },
+ {
+  "id": "batido-fresa",
+  "name": "batido de fresa",
+  "food": "batido de fresa",
+  "prep": "ninguna",
+  "ref": "ciqual:19127",
+  "units": {
+   "vaso": 200,
+   "pieza": 200
+  },
+  "density": 1.06,
+  "default": true
+ },
+ {
+  "id": "pizza",
+  "name": "pizza",
+  "food": "pizza",
+  "prep": "ninguna",
+  "ref": "ciqual:25516",
+  "aliases": [
+   "pizza congelada",
+   "pizza precocinada"
+  ],
+  "default": true
+ },
+ {
+  "id": "pizza-margarita",
+  "name": "pizza margarita",
+  "food": "pizza margarita",
+  "prep": "ninguna",
+  "ref": "ciqual:25404",
+  "aliases": [
+   "pizza de queso"
+  ],
+  "default": true
+ },
+ {
+  "id": "pizza-jamon-queso",
+  "name": "pizza de jamón y queso",
+  "food": "pizza de jamon y queso",
+  "prep": "ninguna",
+  "ref": "ciqual:25435",
+  "aliases": [
+   "pizza york y queso",
+   "pizza prosciutto"
+  ],
+  "default": true
+ },
+ {
+  "id": "pizza-4-quesos",
+  "name": "pizza cuatro quesos",
+  "food": "pizza cuatro quesos",
+  "prep": "ninguna",
+  "ref": "ciqual:25478",
+  "aliases": [
+   "pizza 4 quesos"
+  ],
+  "default": true
+ },
+ {
+  "id": "pizza-carne",
+  "name": "pizza barbacoa",
+  "food": "pizza barbacoa",
+  "prep": "ninguna",
+  "ref": "ciqual:25457",
+  "aliases": [
+   "pizza de carne",
+   "pizza bolonesa"
+  ],
+  "default": true
+ },
+ {
+  "id": "lasana",
+  "name": "lasaña de carne",
+  "food": "lasaña",
+  "prep": "ninguna",
+  "ref": "ciqual:25081",
+  "aliases": [
+   "lasaña",
+   "lasagna",
+   "canelones",
+   "canelones de carne"
+  ],
+  "units": {
+   "racion": 300
+  },
+  "default": true
+ },
+ {
+  "id": "paella",
+  "name": "paella mixta",
+  "food": "paella",
+  "prep": "ninguna",
+  "ref": "ciqual:25242",
+  "aliases": [
+   "paella",
+   "paella de marisco",
+   "paella valenciana",
+   "arroz con marisco"
+  ],
+  "units": {
+   "plato": 350,
+   "racion": 300
+  },
+  "default": true
+ },
+ {
+  "id": "cuscus-pollo",
+  "name": "cuscús con pollo",
+  "food": "cuscus con pollo",
+  "prep": "ninguna",
+  "ref": "ciqual:25138",
+  "aliases": [
+   "cuscus de pollo"
+  ],
+  "units": {
+   "plato": 350
+  },
+  "default": true
+ },
+ {
+  "id": "chili",
+  "name": "chili con carne",
+  "food": "chili con carne",
+  "prep": "ninguna",
+  "ref": "ciqual:25111",
+  "aliases": [
+   "chili"
+  ],
+  "units": {
+   "plato": 300
+  },
+  "default": true
+ },
+ {
+  "id": "sushi",
+  "name": "sushi",
+  "food": "sushi",
+  "prep": "ninguna",
+  "ref": "ciqual:25456",
+  "aliases": [
+   "maki",
+   "makis",
+   "nigiri",
+   "nigiris"
+  ],
+  "units": {
+   "pieza": 25,
+   "racion": 200
+  },
+  "default": true
+ },
+ {
+  "id": "rollito",
+  "name": "rollito de primavera",
+  "food": "rollito de primavera",
+  "prep": "ninguna",
+  "ref": "ciqual:25674",
+  "aliases": [
+   "rollitos de primavera",
+   "nem"
+  ],
+  "default": true
+ },
+ {
+  "id": "hamburguesa-rapida",
+  "name": "hamburguesa de comida rápida",
+  "food": "hamburguesa completa",
+  "prep": "ninguna",
+  "ref": "ciqual:25413",
+  "aliases": [
+   "hamburguesa del mcdonalds",
+   "hamburguesa de burger king",
+   "hamburguesa de restaurante"
+  ],
+  "default": true
+ },
+ {
+  "id": "cheeseburger",
+  "name": "hamburguesa con queso",
+  "food": "hamburguesa con queso",
+  "prep": "ninguna",
+  "ref": "ciqual:25414",
+  "aliases": [
+   "cheeseburger"
+  ],
+  "default": true
+ },
+ {
+  "id": "kebab",
+  "name": "kebab",
+  "food": "kebab",
+  "prep": "ninguna",
+  "ref": "ciqual:25428",
+  "aliases": [
+   "doner kebab",
+   "kebab de pollo",
+   "kebab de ternera",
+   "durum"
+  ],
+  "default": true
+ },
+ {
+  "id": "perrito",
+  "name": "perrito caliente",
+  "food": "perrito caliente",
+  "prep": "ninguna",
+  "ref": "ciqual:25403",
+  "aliases": [
+   "hot dog",
+   "perrito"
+  ],
+  "default": true
+ },
+ {
+  "id": "burrito",
+  "name": "burrito",
+  "food": "burrito",
+  "prep": "ninguna",
+  "ref": "ciqual:25459",
+  "aliases": [
+   "burritos"
+  ],
+  "default": true
+ },
+ {
+  "id": "fajita",
+  "name": "fajita de pollo",
+  "food": "fajita",
+  "prep": "ninguna",
+  "ref": "ciqual:25460",
+  "aliases": [
+   "fajitas",
+   "fajitas de pollo"
+  ],
+  "default": true
+ },
+ {
+  "id": "quiche",
+  "name": "quiche",
+  "food": "quiche",
+  "prep": "ninguna",
+  "ref": "ciqual:25405",
+  "aliases": [
+   "quiche lorraine"
+  ],
+  "units": {
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "sopa-verduras",
+  "name": "sopa de verduras",
+  "food": "sopa de verduras",
+  "prep": "ninguna",
+  "ref": "ciqual:25903",
+  "aliases": [
+   "sopa de verdura"
+  ],
+  "units": {
+   "plato": 250
+  },
+  "default": true
+ },
+ {
+  "id": "sopa-fideos",
+  "name": "sopa de fideos",
+  "food": "sopa de fideos",
+  "prep": "ninguna",
+  "ref": "ciqual:25908",
+  "aliases": [
+   "sopa de pollo con fideos",
+   "sopa de pollo"
+  ],
+  "units": {
+   "plato": 250
+  },
+  "default": true
+ },
+ {
+  "id": "caldo",
+  "name": "caldo de pollo",
+  "food": "caldo",
+  "prep": "ninguna",
+  "ref": "ciqual:25947",
+  "aliases": [
+   "caldo",
+   "consome",
+   "caldo de verduras"
+  ],
+  "units": {
+   "taza": 250,
+   "plato": 250
+  },
+  "default": true
+ },
+ {
+  "id": "whey",
+  "name": "proteína whey",
+  "food": "proteina whey",
+  "prep": "ninguna",
+  "ref": "usda:173180",
+  "aliases": [
+   "proteina en polvo",
+   "whey",
+   "proteina de suero",
+   "whey protein"
+  ],
+  "units": {
+   "cazo": 30,
+   "cda": 10
+  },
+  "default": true
+ },
+ {
+  "id": "pan-masa-madre",
+  "name": "pan de masa madre",
+  "food": "pan de masa madre",
+  "prep": "ninguna",
+  "ref": "ciqual:7002",
+  "aliases": [
+   "pan de payes",
+   "pan de hogaza"
+  ],
+  "units": {
+   "rebanada": 40,
+   "pieza": 400
+  },
+  "default": true
+ },
+ {
+  "id": "pan-semillas",
+  "name": "pan de cereales",
+  "food": "pan de cereales",
+  "prep": "ninguna",
+  "ref": "ciqual:7255",
+  "aliases": [
+   "pan de semillas",
+   "pan multicereales"
+  ],
+  "units": {
+   "rebanada": 40,
+   "pieza": 250
+  },
+  "default": true
+ },
+ {
+  "id": "palomitas",
+  "name": "palomitas",
+  "food": "palomita",
+  "prep": "ninguna",
+  "ref": "ciqual:9230",
+  "aliases": [
+   "palomitas saladas",
+   "palomitas de microondas"
+  ],
+  "units": {
+   "bol": 30,
+   "racion": 30,
+   "puñado": 15
+  },
+  "default": true
+ },
+ {
+  "id": "palomitas-dulces",
+  "name": "palomitas dulces",
+  "food": "palomita dulce",
+  "prep": "ninguna",
+  "ref": "ciqual:9232",
+  "aliases": [
+   "palomitas de caramelo"
+  ],
+  "units": {
+   "bol": 30,
+   "racion": 30
+  },
+  "default": true
+ },
+ {
+  "id": "nachos",
+  "name": "nachos",
+  "food": "nacho",
+  "prep": "ninguna",
+  "ref": "ciqual:38417",
+  "aliases": [
+   "totopos",
+   "tortilla chips"
+  ],
+  "units": {
+   "puñado": 25,
+   "racion": 50,
+   "bol": 50
+  },
+  "default": true
+ },
+ {
+  "id": "polenta",
+  "name": "polenta cocida",
+  "food": "polenta",
+  "prep": "cocido",
+  "ref": "ciqual:9615",
+  "aliases": [
+   "polenta"
+  ],
+  "units": {
+   "racion": 200
+  },
+  "default": true
+ },
+ {
+  "id": "bulgur",
+  "name": "bulgur cocido",
+  "food": "bulgur",
+  "prep": "cocido",
+  "ref": "ciqual:9691",
+  "aliases": [
+   "trigo bulgur"
+  ],
+  "units": {
+   "plato": 250,
+   "racion": 180
+  },
+  "default": true
+ },
+ {
+  "id": "fideos-arroz",
+  "name": "fideos de arroz cocidos",
+  "food": "fideo de arroz",
+  "prep": "cocido",
+  "ref": "ciqual:9901",
+  "aliases": [
+   "tallarines de arroz"
+  ],
+  "units": {
+   "plato": 250
+  },
+  "default": true
+ },
+ {
+  "id": "noodles",
+  "name": "noodles cocidos",
+  "food": "noodle",
+  "prep": "cocido",
+  "ref": "ciqual:25243",
+  "aliases": [
+   "fideos chinos",
+   "ramen",
+   "noodles de trigo"
+  ],
+  "units": {
+   "plato": 250
+  },
+  "default": true
+ },
+ {
+  "id": "mazapan",
+  "name": "mazapán",
+  "food": "mazapan",
+  "prep": "ninguna",
+  "ref": "ciqual:15201",
+  "aliases": [
+   "figuritas de mazapan"
+  ],
+  "units": {
+   "pieza": 15
+  },
+  "default": true
+ },
+ {
+  "id": "yogur-sabores",
+  "name": "yogur de sabores",
+  "food": "yogur de sabores",
+  "prep": "ninguna",
+  "ref": "ciqual:19587",
+  "aliases": [
+   "yogur de fresa",
+   "yogur de frutas",
+   "yogur de macedonia",
+   "yogur de limon"
+  ],
+  "units": {
+   "pieza": 125
+  },
+  "default": true
+ },
+ {
+  "id": "yogur-bebible",
+  "name": "yogur líquido",
+  "food": "yogur liquido",
+  "prep": "ninguna",
+  "ref": "ciqual:19538",
+  "aliases": [
+   "actimel",
+   "yogur para beber",
+   "yogur bebible"
+  ],
+  "units": {
+   "pieza": 100
+  },
+  "density": 1.05,
+  "default": true
+ },
+ {
+  "id": "codorniz",
+  "name": "codorniz asada",
+  "food": "codorniz",
+  "prep": "horno",
+  "ref": "ciqual:36102",
+  "aliases": [
+   "codornices"
+  ],
+  "units": {
+   "pieza": 90
+  },
+  "default": true
+ },
+ {
+  "id": "arenque-ahumado",
+  "name": "arenque ahumado",
+  "food": "arenque ahumado",
+  "prep": "ninguna",
+  "ref": "ciqual:25998",
+  "units": {
+   "racion": 50
+  },
+  "default": true
+ },
+ {
+  "id": "cigalas",
+  "name": "cigalas cocidas",
+  "food": "cigala",
+  "prep": "cocido",
+  "ref": "ciqual:10044",
+  "aliases": [
+   "cigalas"
+  ],
+  "units": {
+   "pieza": 15,
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "buey-de-mar",
+  "name": "buey de mar",
+  "food": "buey de mar",
+  "prep": "cocido",
+  "ref": "ciqual:10025",
+  "aliases": [
+   "cangrejo",
+   "centollo",
+   "necoras"
+  ],
+  "units": {
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "vieiras",
+  "name": "vieiras",
+  "food": "vieira",
+  "prep": "cocido",
+  "ref": "ciqual:10004",
+  "aliases": [
+   "zamburiñas"
+  ],
+  "units": {
+   "pieza": 20
+  },
+  "default": true
+ },
+ {
+  "id": "ostras",
+  "name": "ostras",
+  "food": "ostra",
+  "prep": "crudo",
+  "ref": "ciqual:10035",
+  "aliases": [
+   "ostra"
+  ],
+  "units": {
+   "pieza": 15
+  },
+  "default": true
+ },
+ {
+  "id": "pimiento-amarillo",
+  "name": "pimiento amarillo",
+  "food": "pimiento amarillo",
+  "prep": "crudo",
+  "ref": "ciqual:20168",
+  "units": {
+   "pieza": 150
+  },
+  "default": true
+ },
+ {
+  "id": "rabanos",
+  "name": "rábanos",
+  "food": "rabano",
+  "prep": "crudo",
+  "ref": "ciqual:20045",
+  "aliases": [
+   "rabanitos"
+  ],
+  "units": {
+   "pieza": 8
+  },
+  "default": true
+ },
+ {
+  "id": "endibia",
+  "name": "endibia",
+  "food": "endibia",
+  "prep": "crudo",
+  "ref": "ciqual:20026",
+  "aliases": [
+   "endibias"
+  ],
+  "units": {
+   "pieza": 100
+  },
+  "default": true
+ },
+ {
+  "id": "lombarda",
+  "name": "lombarda",
+  "food": "lombarda",
+  "prep": "crudo",
+  "ref": "ciqual:20014",
+  "aliases": [
+   "col lombarda"
+  ],
+  "units": {
+   "racion": 150
+  },
+  "default": true
+ },
+ {
+  "id": "brotes-soja",
+  "name": "brotes de soja",
+  "food": "brote de soja",
+  "prep": "crudo",
+  "ref": "ciqual:20183",
+  "aliases": [
+   "germinados de soja"
+  ],
+  "units": {
+   "racion": 50
+  },
+  "default": true
+ },
+ {
+  "id": "lima",
+  "name": "lima",
+  "food": "lima",
+  "prep": "ninguna",
+  "ref": "ciqual:13067",
+  "aliases": [
+   "limas"
+  ],
+  "units": {
+   "pieza": 50
+  },
+  "default": true
+ },
+ {
+  "id": "maracuya",
+  "name": "maracuyá",
+  "food": "maracuya",
+  "prep": "ninguna",
+  "ref": "ciqual:13016",
+  "aliases": [
+   "fruta de la pasion"
+  ],
+  "units": {
+   "pieza": 20
+  },
+  "default": true
+ },
+ {
+  "id": "agua",
+  "name": "agua",
+  "food": "agua",
+  "prep": "ninguna",
+  "ref": "ciqual:18066",
+  "aliases": [
+   "agua mineral",
+   "agua del grifo",
+   "vaso de agua"
+  ],
+  "units": {
+   "vaso": 200
+  },
+  "density": 1.0,
+  "default": true
+ },
+ {
+  "id": "bebida-arroz",
+  "name": "bebida de arroz",
+  "food": "bebida de arroz",
+  "prep": "ninguna",
+  "ref": "ciqual:18904",
+  "aliases": [
+   "leche de arroz"
+  ],
+  "density": 1.03,
+  "default": true
+ },
+ {
+  "id": "agua-coco",
+  "name": "agua de coco",
+  "food": "agua de coco",
+  "prep": "ninguna",
+  "ref": "ciqual:18011",
+  "units": {
+   "vaso": 200
+  },
+  "density": 1.02,
+  "default": true
+ },
+ {
+  "id": "smoothie",
+  "name": "smoothie de frutas",
+  "food": "smoothie",
+  "prep": "ninguna",
+  "ref": "ciqual:18296",
+  "aliases": [
+   "batido de frutas",
+   "zumo de frutas con pulpa"
+  ],
+  "units": {
+   "vaso": 200
+  },
+  "density": 1.05,
+  "default": true
+ },
+ {
+  "id": "limonada",
+  "name": "limonada",
+  "food": "limonada",
+  "prep": "ninguna",
+  "ref": "ciqual:18010",
+  "units": {
+   "vaso": 200
+  },
+  "density": 1.04,
+  "default": true
+ },
+ {
+  "id": "salsa-bolonesa",
+  "name": "salsa boloñesa",
+  "food": "salsa bolonesa",
+  "prep": "ninguna",
+  "ref": "ciqual:11114",
+  "aliases": [
+   "salsa bolognesa",
+   "tomate con carne"
+  ],
+  "units": {
+   "racion": 100,
+   "cda": 15
+  },
+  "default": true
+ },
+ {
+  "id": "barrita-chocolate",
+  "name": "barrita de chocolate con galleta",
+  "food": "barrita de chocolate con galleta",
+  "prep": "ninguna",
+  "ref": "ciqual:31000",
+  "aliases": [
+   "kitkat",
+   "twix",
+   "kit kat"
+  ],
+  "units": {
+   "pieza": 40
+  },
+  "default": true
+ },
+ {
+  "id": "barrita-chocolate-caramelo",
+  "name": "barrita de chocolate y caramelo",
+  "food": "barrita de chocolate y caramelo",
+  "prep": "ninguna",
+  "ref": "ciqual:31001",
+  "aliases": [
+   "mars",
+   "snickers"
+  ],
+  "units": {
+   "pieza": 50
+  },
+  "default": true
+ },
+ {
+  "id": "cucurucho",
+  "name": "cucurucho de helado",
+  "food": "cucurucho de helado",
+  "prep": "ninguna",
+  "ref": "ciqual:39509",
+  "aliases": [
+   "cono de helado",
+   "cornetto"
+  ],
+  "units": {
+   "pieza": 70
+  },
+  "default": true
+ },
+ {
+  "id": "bombon-helado",
+  "name": "bombón helado",
+  "food": "bombon helado",
+  "prep": "ninguna",
+  "ref": "ciqual:39503",
+  "aliases": [
+   "magnum",
+   "helado de palo con chocolate"
+  ],
+  "units": {
+   "pieza": 70
+  },
+  "default": true
+ },
+ {
+  "id": "croissant-mixto",
+  "name": "cruasán mixto",
+  "food": "croissant mixto",
+  "prep": "ninguna",
+  "ref": "ciqual:25418",
+  "aliases": [
+   "cruasan de jamon y queso",
+   "croissant de jamon y queso"
+  ],
+  "units": {
+   "pieza": 110
+  },
+  "default": true
+ },
+ {
+  "id": "mousse-chocolate",
+  "name": "mousse de chocolate",
+  "food": "mousse de chocolate",
+  "prep": "ninguna",
+  "ref": "ciqual:39206",
+  "aliases": [
+   "mousse"
+  ],
+  "units": {
+   "pieza": 60
+  },
+  "default": true
+ },
+ {
+  "id": "crema-catalana",
+  "name": "crema catalana",
+  "food": "crema catalana",
+  "prep": "ninguna",
+  "ref": "ciqual:39213",
+  "aliases": [
+   "creme brulee"
+  ],
+  "units": {
+   "pieza": 100
+  },
+  "default": true
+ },
+ {
+  "id": "pollo-cocido",
+  "name": "pollo cocido",
+  "food": "pollo",
+  "prep": "cocido",
+  "ref": "ciqual:36030",
+  "aliases": [
+   "pollo hervido",
+   "pollo del caldo"
+  ],
+  "units": {
+   "racion": 150
+  }
+ },
+ {
+  "id": "lichis",
+  "name": "lichis",
+  "food": "lichi",
+  "prep": "ninguna",
+  "ref": "ciqual:13023",
+  "aliases": [
+   "lichi"
+  ],
+  "units": {
+   "pieza": 10
+  },
+  "default": true
+ }
+]
