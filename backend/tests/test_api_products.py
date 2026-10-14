@@ -209,7 +209,9 @@ def test_dos_yogures_ligeros_multiplican_la_etiqueta_sin_ia(client, fake):
 def test_si_solo_parte_del_texto_es_un_producto_la_ia_recibe_solo_el_resto(client, fake):
     fake.replies.append(MEAL)
     calls = len(fake.requests)
-    result = client.post("/api/meals/resolve", json={"text": "dos yogures ligeros con una manzana"}).json()
+    result = client.post(
+        "/api/meals/resolve", json={"text": "dos yogures ligeros con una manzana asada al microondas"}
+    ).json()
     assert result["status"] == "ai" and len(fake.requests) == calls + 1
     prompt = fake.requests[-1]["messages"][1]["content"]
     assert "manzana" in prompt and "yogur" not in prompt

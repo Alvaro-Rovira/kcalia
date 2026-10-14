@@ -199,7 +199,7 @@ def test_raciones_editar_borrar_y_deshacer(client):
 def test_json_invalido_reintenta_una_vez(client, fake_ai):
     before = fake_ai.calls
     fake_ai.replies = ["esto no es json", "```json\n" + json.dumps({**AI_MEAL, "name": "Paella"}) + "\n```"]
-    r = client.post("/api/meals/resolve", json={"text": "un plato de paella"}).json()
+    r = client.post("/api/meals/resolve", json={"text": "un plato de fideuá"}).json()
     assert r["status"] == "ai" and r["draft"]["name"] == "Paella"
     assert fake_ai.calls == before + 2
     assert "no cumple el esquema" in fake_ai.bodies[-1]["messages"][-1]["content"]

@@ -84,6 +84,9 @@ class Targets(TenantMixin, Base):
     custom: Mapped[bool] = mapped_column(Boolean, default=False)
     # Peso con el que se calcularon, para sugerir recalcular cuando cambie.
     basis_weight_kg: Mapped[float] = mapped_column(Float)
+    # Mantenimiento usado: el de la fórmula o el gasto real medido con lo que come y su peso (expenditure.py).
+    tdee_mode: Mapped[str] = mapped_column(String(10), default="formula")
+    tdee_real: Mapped[int | None] = mapped_column(Integer, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
 
 
@@ -173,6 +176,9 @@ class Food(TenantMixin, Base):
     alcohol100: Mapped[float | None] = mapped_column(Float, nullable=True)
     unit_grams: Mapped[dict] = mapped_column(JSON, default=dict)
     hits: Mapped[int] = mapped_column(Integer, default=0)
+    # De dónde salen los valores: «usuario» (añadido a mano), «tabla» (CIQUAL/USDA) o «ia». Manda en ese orden.
+    source: Mapped[str] = mapped_column(String(12), default="ia")
+    ref: Mapped[str | None] = mapped_column(String(40), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
 
     __table_args__ = (Index("ux_foods_user_norm", "user_id", "norm", unique=True),)

@@ -79,6 +79,10 @@ class FoodInfo:
     unit_grams: dict[str, float] = field(default_factory=dict)
     fiber100: float | None = None
     alcohol100: float | None = None
+    source: str = "ia"  # «usuario», «tabla» o «ia»
+    ref: str | None = None
+    food: str | None = None
+    prep: str | None = None
 
 
 def canonical_unit(unit: str | None) -> str | None:
@@ -128,6 +132,10 @@ def resolve_from_foods(text: str, lookup: Callable[[str], FoodInfo | None]) -> l
             item["fiber"] = round(food.fiber100 * factor, 1)
         if food.alcohol100:
             item["alcohol"] = round(food.alcohol100 * factor, 1)
+        item["source"] = food.source
+        for extra in ("ref", "food", "prep"):
+            if getattr(food, extra):
+                item[extra] = getattr(food, extra)
         items.append(item)
     return items
 
@@ -143,6 +151,19 @@ class FoodUpdate:
     unit_grams: dict[str, float]
     fiber100: float | None = None
     alcohol100: float | None = None
+    source: str = "ia"
+    ref: str | None = None
+
+
+# Los ingredientes que el usuario añade a mano mandan; después, la tabla oficial; lo aprendido de la IA, al final.
+SOURCE_RANK = {"usuario": 3, "tabla": 2, "ia": 1}
+
+
+def learned_source(item: dict) -> str:
+    source = item.get("source")
+    if source in ("manual", "usuario") or (item.get("manual") and source != "tabla"):
+        return "usuario"
+    return "tabla" if source == "tabla" and item.get("ref") else "ia"
 
 
 def _per100(item: dict) -> dict[str, float]:
@@ -182,7 +203,9 @@ def learn_foods(text: str, items: list[dict]) -> list[FoodUpdate]:
         if key in updates:
             updates[key].unit_grams.update(units)
             return
-        updates[key] = FoodUpdate(key=key, name=name, unit_grams=dict(units), **_per100(item))
+        source = learned_source(item)
+        ref = item.get("ref") if source == "tabla" else None
+        updates[key] = FoodUpdate(key=key, name=name, unit_grams=dict(units), source=source, ref=ref, **_per100(item))
 
     for item in usable:
         unit = canonical_unit(item.get("unit"))

@@ -185,7 +185,37 @@ def _v3_fiber_alcohol(conn: sqlite3.Connection) -> None:
     rebuild_table(conn, Base.metadata.tables["foods"])
 
 
-MIGRATIONS: list[Callable[[sqlite3.Connection], None]] = [_v1_multiuser, _v2_barcodes, _v3_fiber_alcohol]
+def _v4_precision(conn: sqlite3.Connection) -> None:
+    """Origen de los valores de la caché de ingredientes y gasto real en los objetivos.
+
+    La caché aprendía de la IA; los ingredientes que están en la tabla oficial pasan a tener sus valores.
+    """
+    from .foodtable import table
+
+    rebuild_table(conn, Base.metadata.tables["foods"])
+    rebuild_table(conn, Base.metadata.tables["targets"])
+    foods = table()
+    for row_id, name in conn.execute("SELECT id, name FROM foods").fetchall():
+        entry = foods.match_name(name)
+        if entry is None:
+            continue
+        conn.execute(
+            "UPDATE foods SET kcal100 = ?, protein100 = ?, carbs100 = ?, fat100 = ?, fiber100 = ?, alcohol100 = ?,"
+            " source = 'tabla', ref = ? WHERE id = ?",
+            (
+                *(getattr(entry, f"{n}100") for n in ("kcal", "protein", "carbs", "fat", "fiber", "alcohol")),
+                entry.ref,
+                row_id,
+            ),
+        )
+
+
+MIGRATIONS: list[Callable[[sqlite3.Connection], None]] = [
+    _v1_multiuser,
+    _v2_barcodes,
+    _v3_fiber_alcohol,
+    _v4_precision,
+]
 CURRENT_VERSION = len(MIGRATIONS)
 
 
