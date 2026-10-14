@@ -217,3 +217,24 @@ def refine(items: list[dict], *, text: str = "", photo: bool = False) -> tuple[l
     elif dropped_oil:
         notes.append("Sin aceite de cocinar: lo frito ya lo lleva incluido")
     return [_rounded(i) for i in _merge(out)], notes
+
+
+def revalue(items: list[dict]) -> list[dict]:
+    """Pone valores oficiales a ingredientes ya guardados (historial), sin tocar sus gramos ni añadir o quitar nada.
+
+    Lo que se apuntó antes de la tabla conserva la estructura que el usuario revisó y guardó; solo cambian las
+    cifras por 100 g de lo que está en la tabla. Lo que no está, recalcula su energía con los factores de la UE.
+    """
+    ft = table()
+    out = []
+    for item in items:
+        source = item.get("source") or (
+            "etiqueta" if item.get("product_id") else "manual" if item.get("manual") else None
+        )
+        if source in UNTOUCHED:
+            out.append({**item, "source": source})
+            continue
+        entry = _match(ft, item)
+        grams = float(item.get("grams") or 0)
+        out.append(_rounded(_from_entry(item, entry, grams) if entry is not None else _from_ai(item)))
+    return out

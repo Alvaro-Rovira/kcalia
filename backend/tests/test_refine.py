@@ -187,3 +187,27 @@ def test_unit_read_differently_by_the_model_keeps_its_weight():
     # Diferencias normales (huevo de 55 g frente a 50 g comestibles) sí se corrigen con la tabla.
     items, _ = refine([ai_item("huevo", 55, qty=1, unit="pieza", food="huevo")], text="un huevo")
     assert items[0]["grams"] == 50
+
+
+def test_revalue_updates_saved_items_keeping_their_weight_and_structure():
+    from app.refine import revalue
+
+    old = [
+        {"name": "huevo", "qty": 2, "unit": "pieza", "grams": 110, "kcal": 157.3, "protein": 13.9, "carbs": 0.8, "fat": 10.5},
+        {"name": "aceite de oliva", "qty": 5, "unit": "g", "grams": 5, "kcal": 44.2, "protein": 0, "carbs": 0, "fat": 5},
+        {"name": "cachopo", "qty": 1, "unit": "pieza", "grams": 300, "kcal": 500, "protein": 40, "carbs": 30, "fat": 30},
+        {"name": "yogur ligero", "qty": 1, "unit": "pieza", "grams": 125, "kcal": 55, "protein": 5, "carbs": 7, "fat": 0.1,
+         "product_id": 4},
+    ]  # fmt: skip
+    items = revalue(old)
+    assert [i["name"] for i in items] == [
+        "huevo",
+        "aceite de oliva",
+        "cachopo",
+        "yogur ligero",
+    ]  # nada se añade ni quita
+    assert [i["grams"] for i in items] == [110, 5, 300, 125]  # los gramos guardados se respetan
+    assert items[0]["kcal"] == expected("huevo-cocido", 110)["kcal"] and items[0]["source"] == "tabla"
+    assert items[1]["kcal"] == expected("aceite-oliva", 5)["kcal"]
+    assert items[2]["kcal"] == eu_kcal(40, 30, 30) and items[2]["source"] == "ia"
+    assert items[3]["kcal"] == 55 and items[3]["source"] == "etiqueta"

@@ -41,7 +41,7 @@ from .models import (
 )
 from .nutrition import calculate_targets
 from .products import ProductInfo
-from .refine import LIQUID_ML, official_share
+from .refine import LIQUID_ML, official_share, revalue
 from .schemas import Prefs
 from .textnorm import normalize
 
@@ -253,17 +253,16 @@ def slot_usage(db: Session, today: date | None = None) -> tuple[dict[int, dict[s
 
 
 def dish_dict(dish: Dish, aliases: list[str] | None = None, slot_counts: dict[str, int] | None = None) -> dict:
+    # Lo guardado antes de la tabla oficial sale con sus valores (mismos ingredientes y gramos).
+    items = revalue(dish.items or [])
     return {
         "id": dish.id,
         "name": dish.name,
         "text": dish.text,
         "norm": dish.norm,
         "aliases": aliases or [],
-        "items": dish.items,
-        "kcal": dish.kcal,
-        "protein": dish.protein,
-        "carbs": dish.carbs,
-        "fat": dish.fat,
+        "items": items,
+        **totals(items),
         "confidence": dish.confidence,
         "assumptions": dish.assumptions,
         "origin": dish.origin,
@@ -309,17 +308,18 @@ def meal_dict(meal: Meal) -> dict:
 
 
 def draft_from_dish(dish: Dish, source: str, score: float | None = None) -> dict:
+    items = revalue(dish.items or [])
     draft = {
         "name": dish.name,
         "text": dish.text,
-        "items": dish.items,
-        **totals(dish.items),
+        "items": items,
+        **totals(items),
         "confidence": dish.confidence,
         "assumptions": dish.assumptions,
         "source": source,
         "dish_id": dish.id,
         "favorite": dish.favorite,
-        "official_share": official_share(dish.items),
+        "official_share": official_share(items),
     }
     if score is not None:
         draft["score"] = score

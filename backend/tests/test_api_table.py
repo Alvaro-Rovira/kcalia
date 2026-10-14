@@ -95,3 +95,16 @@ def test_table_search_for_manual_ingredients(client):
     assert found[0]["ref"].startswith("ciqual:")
     assert {"name", "kcal100", "protein100", "carbs100", "fat100", "fiber100", "unit_grams", "source"} <= set(found[0])
     assert client.get("/api/foods/table", params={"q": "x"}).json()["foods"] == []
+
+
+def test_history_meals_saved_with_old_ai_values_come_back_with_official_values(client):
+    old = {"name": "huevo", "qty": 2, "unit": "pieza", "grams": 110, "kcal": 157.3, "protein": 13.9, "carbs": 0.8,
+           "fat": 10.5}  # fmt: skip
+    body = {"client_id": "hist-0001", "date": "2026-10-01", "slot": "cena", "name": "Huevos", "text": "mis huevos de la cena",
+            "items": [old], "source": "ai", "dish_id": None}  # fmt: skip
+    assert client.post("/api/meals", json=body).status_code == 201
+    r = resolve(client, "mis huevos de la cena")
+    assert r["status"] == "exact"
+    assert r["draft"]["items"][0]["grams"] == 110 and r["draft"]["kcal"] == kcal("huevo-cocido", 110)
+    dish = next(d for d in client.get("/api/dishes").json()["dishes"] if d["text"] == "mis huevos de la cena")
+    assert dish["kcal"] == kcal("huevo-cocido", 110) and dish["items"][0]["source"] == "tabla"
