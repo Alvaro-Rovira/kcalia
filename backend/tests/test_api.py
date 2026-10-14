@@ -137,7 +137,11 @@ def test_onboarding_calcula_objetivos_y_anota_el_peso(client):
 def test_primera_vez_llama_a_la_ia(client, fake_ai):
     r = client.post("/api/meals/resolve", json={"text": "Dos huevos y una tostada de pan integral"}).json()
     assert r["status"] == "ai" and fake_ai.calls == 1
-    assert r["draft"]["kcal"] == pytest.approx(257.3)
+    # La IA dice qué es y cuánto; los valores salen de la tabla: 2 huevos M = 100 g comestibles de huevo cocido
+    # (134 kcal/100 g) y una rebanada de 40 g de pan integral (234 kcal/100 g), no las 257,3 kcal de la IA.
+    assert r["draft"]["kcal"] == pytest.approx(134 + 93.6)
+    assert [i["source"] for i in r["draft"]["items"]] == ["tabla", "tabla"]
+    assert r["draft"]["official_share"] == 1
     body = fake_ai.bodies[-1]
     assert body["model"] == "kimi-k2.6"
     assert body["thinking"] == {"type": "disabled"} and "temperature" not in body
@@ -168,7 +172,7 @@ def test_coincidencia_aproximada_pregunta_y_aprende_el_alias(client, fake_ai):
 def test_cache_de_ingredientes_resuelve_otras_cantidades(client, fake_ai):
     r = client.post("/api/meals/resolve", json={"text": "3 huevos"}).json()
     assert r["status"] == "cache" and fake_ai.calls == 1
-    assert r["draft"]["items"][0]["grams"] == 165
+    assert r["draft"]["items"][0]["grams"] == 150
     client.post("/api/meals", json=meal_body(r["draft"], "cid-0000004", slot="cena"))
 
 

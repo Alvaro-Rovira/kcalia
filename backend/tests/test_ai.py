@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from app.ai import AiMeal, check_consistency, extract_json, parse_meal
+from app.ai import extract_json, parse_meal
 
 VALID = {
     "name": "Yogur",
@@ -49,26 +49,34 @@ def test_rechaza_vacio_sin_aclaracion():
     assert parse_meal(json.dumps({**VALID, "items": [], "clarification": "¿Qué era?"})).clarification == "¿Qué era?"
 
 
-def test_corrige_calorias_incoherentes_con_los_macros():
-    meal = AiMeal.model_validate({**VALID, "items": [{**VALID["items"][0], "kcal": 40}]})
-    fixed = check_consistency(meal)
-    assert fixed.items[0].kcal == pytest.approx(4 * 7.5 + 4 * 5 + 9 * 11.2, abs=1)
-    assert fixed.confidence <= 0.6
+def test_la_ia_no_corrige_la_energia_eso_lo_hace_la_canalizacion():
+    # La energía de lo que no está en la tabla se recalcula en refine() con los factores de la UE.
+    meal = parse_meal(json.dumps({**VALID, "items": [{**VALID["items"][0], "kcal": 40}]}))
+    assert meal.items[0].kcal == 40 and meal.confidence == VALID["confidence"]
 
 
-def test_el_alcohol_puede_superar_los_macros():
-    beer = {
-        "name": "cerveza",
-        "qty": 330,
-        "unit": "ml",
-        "grams": 330,
-        "kcal": 142,
-        "protein": 1.3,
-        "carbs": 11.9,
-        "fat": 0,
-    }
-    meal = check_consistency(AiMeal.model_validate({**VALID, "items": [beer]}))
-    assert meal.items[0].kcal == 142 and meal.confidence == 0.9
+def test_el_prompt_lleva_valores_y_raciones_de_la_tabla():
+    from app.ai import SYSTEM_PROMPT
+    from app.foodtable import PREPS, table
+
+    rice = table().entries["arroz-blanco-cocido"]
+    assert f"arroz blanco cocido {round(rice.kcal100)}/" in SYSTEM_PROMPT
+    assert "huevo M 50 g" in SYSTEM_PROMPT  # peso comestible de la tabla, no con cáscara
+    assert all(prep in SYSTEM_PROMPT for prep in PREPS)
+    assert '"food"' in SYSTEM_PROMPT and '"prep"' in SYSTEM_PROMPT
+
+
+def test_el_prompt_no_pide_aceite_de_cocinar():
+    from app.ai import SYSTEM_PROMPT
+
+    assert "frito 10 g" not in SYSTEM_PROMPT
+    assert "aliño" in SYSTEM_PROMPT
+
+
+def test_alimento_y_preparacion_se_guardan_y_validan():
+    item = parse_meal(_meal(_item(food="Huevo ", prep="cocido"))).items[0]
+    assert (item.food, item.prep) == ("huevo", "cocido")
+    assert parse_meal(_meal(_item(prep="a la brasa"))).items[0].prep is None
 
 
 def test_las_fotos_pueden_usar_otro_proveedor():
@@ -326,7 +334,7 @@ def test_cerveza_con_alcohol_no_se_corrige():
     )
     meal = parse_meal(_meal(beer))
     assert meal.items[0].alcohol == pytest.approx(7.8) and meal.items[0].kcal == 86
-    assert meal.confidence == 0.9  # 4·0,4 + 4·3,6 + 7·3,9 = 43: coherente, sin ajustes
+    assert meal.confidence == 0.9
 
 
 @pytest.mark.parametrize("bad", [{"alcohol100": 70}, {"fiber100": -1}, {"fiber100": "mucha"}])

@@ -102,12 +102,18 @@ def _grams(item: dict, entry: Entry | None, photo: bool) -> float:
     if qty <= 0 or unit in MASS_UNITS:
         return ai_grams
     if unit in VOLUME_UNITS:
-        return qty * VOLUME_UNITS[unit] * entry.density
-    if unit in entry.units:
-        return qty * entry.units[unit]
-    if unit in LIQUID_ML and entry.liquid:
-        return qty * LIQUID_ML[unit] * entry.density
-    return ai_grams
+        grams = qty * VOLUME_UNITS[unit] * entry.density
+    elif unit in entry.units:
+        grams = qty * entry.units[unit]
+    elif unit in LIQUID_ML and entry.liquid:
+        grams = qty * LIQUID_ML[unit] * entry.density
+    else:
+        return ai_grams
+    # Si la tabla y la IA difieren más del doble, entienden la unidad de forma distinta («1 pieza» de nueces: una nuez
+    # para la tabla, un puñado para la IA). Entonces vale el peso que estimó la IA.
+    if ai_grams > 0 and not 0.5 <= grams / ai_grams <= 2:
+        return ai_grams
+    return grams
 
 
 def _from_entry(item: dict, entry: Entry, grams: float) -> dict:

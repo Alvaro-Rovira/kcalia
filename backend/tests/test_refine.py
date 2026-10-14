@@ -178,3 +178,12 @@ def test_official_share():
 def test_canned_in_oil_is_not_cooking_fat():
     assert not mentions_fat("pollo a la plancha y una lata de atún en aceite")
     assert not mentions_fat("sardinas en aceite de oliva")
+
+
+def test_unit_read_differently_by_the_model_keeps_its_weight():
+    # «1 pieza» de nueces para la tabla es una nuez (5 g); si la IA pesó 30 g, entendía un puñado.
+    items, _ = refine([ai_item("nueces", 30, qty=1, unit="pieza", food="nuez")], text="nueces")
+    assert items[0]["grams"] == 30 and items[0]["source"] == "tabla"
+    # Diferencias normales (huevo de 55 g frente a 50 g comestibles) sí se corrigen con la tabla.
+    items, _ = refine([ai_item("huevo", 55, qty=1, unit="pieza", food="huevo")], text="un huevo")
+    assert items[0]["grams"] == 50

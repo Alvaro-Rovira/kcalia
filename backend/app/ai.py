@@ -10,11 +10,67 @@ import httpx
 from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
 from .config import Settings
+from .foodtable import PREPS, table
 
 log = logging.getLogger("kcalia.ai")
 
 UNIT_ENUM = "g|ml|pieza|cda|cdta|vaso|taza|rebanada|loncha|lata|puñado|plato|racion|bol|cazo"
+PREP_ENUM = "|".join(PREPS)
 MAX_OUTPUT_TOKENS = 1500
+
+# Lo que la IA ve como referencia sale de la misma tabla con la que el código pone los valores: así nombra los
+# alimentos como la tabla y, si alguno no se empareja, su estimación parte de los mismos datos.
+REFERENCE_IDS = (
+    "huevo-cocido", "clara-cocida", "pan-blanco", "pan-integral", "pan-molde", "arroz-blanco-cocido",
+    "arroz-blanco-crudo", "pasta-cocida", "pasta-cruda", "patata-cocida", "patatas-fritas", "avena-copos",
+    "pechuga-pollo-plancha", "pechuga-pollo-cruda", "muslo-pollo-asado", "ternera-plancha", "lomo-cerdo-plancha",
+    "carne-picada-plancha", "salmon-plancha", "merluza-cocida", "atun-natural", "atun-aceite", "jamon-serrano",
+    "jamon-cocido", "fiambre-pavo", "chorizo", "queso-curado", "queso-batido-0", "mozzarella", "leche-entera",
+    "leche-semi", "leche-desnatada", "bebida-avena", "yogur-natural", "yogur-griego", "yogur-proteico",
+    "aceite-oliva", "mantequilla", "aguacate", "lentejas-cocidas", "garbanzos-cocidos", "alubias-blancas-cocidas",
+    "platano", "manzana", "naranja", "fresas", "tomate", "lechuga", "brocoli", "zanahoria", "nueces", "almendras",
+    "crema-cacahuete", "whey", "azucar", "miel", "chocolate-negro", "galletas-maria", "tortilla-patatas", "paella",
+    "lentejas-chorizo", "pizza-margarita", "croquetas-jamon", "cerveza", "vino-tinto", "cola", "zumo-naranja",
+)  # fmt: skip
+# (texto, alimento, unidad): «huevo M 50 g» con el peso comestible que usa el código.
+PORTIONS = (
+    ("huevo M", "huevo-cocido", "pieza"), ("rebanada de pan de molde", "pan-molde", "rebanada"),
+    ("tostada de barra", "tostada-pan", "pieza"), ("plato de pasta o arroz cocido", "pasta-cocida", "plato"),
+    ("plato de legumbres guisadas", "lentejas-chorizo", "plato"), ("filete de pollo", "pechuga-pollo-plancha", "pieza"),
+    ("filete de ternera", "ternera-plancha", "pieza"), ("ración de pescado", "salmon-plancha", "racion"),
+    ("hamburguesa", "hamburguesa-plancha", "pieza"), ("patata mediana", "patata-cocida", "pieza"),
+    ("yogur", "yogur-natural", "pieza"), ("loncha de jamón cocido", "jamon-cocido", "loncha"),
+    ("loncha de jamón serrano", "jamon-serrano", "loncha"), ("loncha de queso", "queso-lonchas", "loncha"),
+    ("lata pequeña de atún escurrido", "atun-natural", "lata"), ("puñado de frutos secos", "frutos-secos", "puñado"),
+    ("pieza de fruta", "manzana", "pieza"), ("plátano sin piel", "platano", "pieza"),
+    ("cucharada de aceite", "aceite-oliva", "cda"), ("cucharada de azúcar", "azucar", "cda"),
+    ("cucharadita", "azucar", "cdta"), ("cazo de proteína", "whey", "cazo"),
+    ("pincho de tortilla", "tortilla-patatas", "pieza"), ("croqueta", "croquetas-jamon", "pieza"),
+    ("onza de chocolate", "chocolate-negro", "pieza"),
+)  # fmt: skip
+
+
+def _num(value: float) -> str:
+    return f"{round(value, 1):g}"
+
+
+def _references() -> str:
+    entries = table().entries
+    return " · ".join(
+        f"{e.name} {round(e.kcal100)}/{_num(e.protein100)}/{_num(e.carbs100)}/{_num(e.fat100)}"
+        for e in (entries[i] for i in REFERENCE_IDS)
+    )
+
+
+def _portions() -> str:
+    entries = table().entries
+    sized = [f"{label} {_num(entries[i].units[unit])} g" for label, i, unit in PORTIONS]
+    fixed = [
+        "vaso 200 ml", "taza 250 ml", "café con leche 200 ml (140 ml de leche)", "cortado 60 ml (25 ml de leche)",
+        "caña 200 ml", "tercio 330 ml", "copa de vino 150 ml", "chorrito de aceite 5 g",
+    ]  # fmt: skip
+    return " · ".join(sized + fixed)
+
 
 SYSTEM_PROMPT = f"""Eres un dietista-nutricionista español. Conviertes la descripción de una comida en su \
 desglose nutricional. Respondes SOLO con un objeto JSON válido, sin texto alrededor ni bloques de código.
@@ -25,6 +81,8 @@ ESQUEMA (todos los campos obligatorios):
   "items": [                 // un elemento por ingrediente, EN EL MISMO ORDEN en que aparecen en el texto
     {{
       "name": string,        // alimento en minúsculas y singular, con la preparación si cambia los macros ("arroz blanco cocido")
+      "food": string,        // alimento base, sin preparación ni cantidad; si está en la lista de referencia, con ese nombre ("pechuga de pollo", "arroz blanco", "huevo")
+      "prep": string,        // preparación, una de: {PREP_ENUM} ("plancha" incluye parrilla y brasa; "salteado", revuelto y a la sartén; "ninguna", lo que se come tal cual)
       "qty": number,         // cantidad en la unidad indicada
       "unit": string,        // una de: {UNIT_ENUM}
       "grams": number,       // peso TOTAL comestible del ingrediente en gramos, con todas sus unidades juntas ("2 huevos" -> 110; líquidos: ml ≈ g)
@@ -42,12 +100,12 @@ ESQUEMA (todos los campos obligatorios):
 }}
 
 REGLAS
-- Fuente de valores: BEDCA (base de datos española) y, si no está, USDA FoodData Central. Alimentos de marca: valores típicos de la etiqueta en España.
+- Fuente de valores: CIQUAL y BEDCA y, si no está, USDA FoodData Central. Alimentos de marca: valores típicos de la etiqueta en España.
 - Si no se indica cantidad, usa la ración típica española de la tabla de abajo y anótalo en "assumptions".
 - Arroz, pasta y legumbres: si no se dice "en crudo" o "en seco", asume peso ya cocido.
 - Carnes y pescados: asume peso cocinado salvo que se diga "en crudo".
-- Frito, rebozado, revuelto, salteado, a la plancha: añade el aceite absorbido como ingrediente aparte si el usuario no lo menciona (plancha 3 g, revuelto/salteado 5 g, frito 10 g) y anótalo en "assumptions". Si el usuario menciona aceite sin cantidad, asume 10 g (una cucharada); "un chorrito" son 5 g.
-- NO calcules totales ni multipliques: da solo los valores por 100 g y el peso total en "grams"; el sistema hace la cuenta. Ejemplo: «2 huevos» -> qty 2, unit "pieza", grams 110, kcal100 143, protein100 12.6, carbs100 0.7, fat100 9.5.
+- Aceite de cocinar: NO lo añadas; el sistema lo calcula a partir de "prep". Solo si el texto menciona aceite, mantequilla u otra grasa, inclúyela con su cantidad (sin cantidad: 1 cda; "un chorrito": 5 g). En una ensalada sí puedes añadir el aliño habitual como "aceite de oliva (aliño)" y anotarlo en "assumptions".
+- NO calcules totales ni multipliques: da solo los valores por 100 g y el peso total en "grams"; el sistema hace la cuenta. Ejemplo: «2 huevos» -> food "huevo", prep "cocido", qty 2, unit "pieza", grams 100, kcal100 134, protein100 12.5, carbs100 0.5, fat100 9.
 - Un solo elemento por alimento: si el mismo alimento sale varias veces (p. ej. aceite en el revuelto y en la tostada), súmalo en uno.
 - Las kcal por 100 g deben ser coherentes con 4·proteína + 4·hidratos + 9·grasa (el alcohol aporta 7 kcal/g y es la única excepción).
 - No inventes ingredientes que el texto no sugiera. No añadas bebida, pan ni postre por tu cuenta.
@@ -55,40 +113,15 @@ REGLAS
 - Si el texto no describe comida o bebida, devuelve "items": [] y una "clarification" amable.
 - Redondea a un decimal. Usa punto decimal en los números.
 
-RACIONES TÍPICAS EN ESPAÑA
-huevo M 55 g · rebanada de pan de molde 30 g · tostada de barra 40 g · bocadillo (media barra) 110 g de pan · \
-plato de pasta o arroz cocido 280 g · plato de legumbres guisadas 330 g · filete de pollo o ternera 150 g · \
-ración de pescado 160 g · hamburguesa 120 g · ensalada mixta 250 g · patata mediana 170 g · \
-vaso 200 ml · taza 250 ml · café con leche 200 ml (140 ml de leche) · cortado 60 ml (25 ml de leche) · \
-yogur 125 g · loncha de jamón cocido 20 g · loncha de jamón serrano 15 g · loncha de queso 20 g · \
-lata pequeña de atún 56 g escurrido · puñado de frutos secos 30 g · pieza de fruta 150 g · plátano 120 g sin piel · \
-cucharada sopera 10 g de aceite o 15 g de azúcar/miel · cucharadita 5 g · cazo de proteína 30 g · \
-pincho de tortilla 150 g · croqueta 35 g · caña 200 ml · tercio 330 ml · copa de vino 150 ml · onza de chocolate 10 g
+RACIONES TÍPICAS EN ESPAÑA (peso comestible)
+{_portions()}
 
-VALORES DE REFERENCIA por 100 g (kcal / proteína / hidratos / grasa)
-huevo 143/12.6/0.7/9.5 · clara de huevo 52/11/0.7/0.2 · pan blanco 265/9/51/3 · pan integral 250/10/42/3.5 · \
-arroz blanco cocido 130/2.7/28/0.3 · arroz crudo 360/7/79/0.7 · pasta cocida 150/5.5/30/0.9 · pasta cruda 360/12.5/72/1.5 · \
-patata cocida 86/1.8/19/0.1 · patatas fritas 312/3.4/41/15 · avena en copos 375/13.5/60/7 · \
-pechuga de pollo a la plancha 165/31/0/3.6 · pechuga de pollo cruda 112/23/0/2 · muslo de pollo asado 190/25/0/10 · \
-ternera magra cocinada 190/28/0/8.5 · lomo de cerdo cocinado 175/27/0/7 · carne picada mixta cocinada 250/24/0/17 · \
-salmón cocinado 208/22/0/13 · merluza cocinada 90/18/0/1.8 · atún al natural 110/25/0/1 · atún en aceite escurrido 190/26/0/9 · \
-jamón serrano 240/31/0/13 · jamón cocido 110/19/1.5/3 · pavo en lonchas 105/20/1.5/2 · chorizo 450/24/2/38 · \
-queso curado 400/25/0.5/33 · queso fresco 175/12/3/13 · queso fresco batido 0% 46/8/3.5/0.2 · mozzarella 280/22/2/20 · \
-leche entera 64/3.2/4.7/3.6 · leche semidesnatada 46/3.3/4.8/1.6 · leche desnatada 35/3.4/5/0.2 · bebida de avena 45/1/7/1.5 · \
-yogur natural 61/3.5/4.7/3.3 · yogur griego 120/6/4/9 · yogur proteico o skyr 62/10/4/0.2 · \
-aceite de oliva 884/0/0/100 · mantequilla 717/0.9/0.1/81 · aguacate 160/2/8.5/14.7 · \
-lentejas cocidas 116/9/20/0.4 · garbanzos cocidos 164/8.9/27/2.6 · alubias cocidas 127/8.7/22/0.5 · \
-plátano 89/1.1/23/0.3 · manzana 52/0.3/14/0.2 · naranja 47/0.9/12/0.1 · fresas 32/0.7/7.7/0.3 · \
-tomate 18/0.9/3.9/0.2 · lechuga 15/1.4/2.9/0.2 · brócoli cocido 35/2.4/7/0.4 · zanahoria 41/0.9/10/0.2 · \
-nueces 654/15/14/65 · almendras 579/21/22/50 · crema de cacahuete 590/25/20/50 · \
-proteína whey en polvo 380/78/6/5 · azúcar 387/0/100/0 · miel 304/0.3/82/0 · chocolate negro 70% 580/8/35/43 · \
-galleta María 440/7/75/12 · tortilla de patatas 190/6.5/12/13 · paella mixta 160/8/20/5 · \
-lentejas con chorizo 130/8/13/5 · pizza margarita 250/11/31/9 · croquetas 200/6/20/11 · \
-cerveza 43/0.4/3.6/0 · vino tinto 85/0.1/2.6/0 · refresco de cola 42/0/10.6/0 · zumo de naranja 45/0.7/10.4/0.2"""
+VALORES DE REFERENCIA por 100 g (kcal / proteína / hidratos / grasa). Si el alimento es uno de estos, usa este nombre en "food".
+{_references()}"""
 
 PHOTO_INSTRUCTIONS = """Analiza la foto de esta comida. Identifica cada alimento visible y estima su peso \
-por el tamaño del plato y las proporciones (un plato llano mide unos 26 cm). Añade el aceite o las salsas \
-que probablemente lleve. Si la foto no muestra comida o no se distingue, devuelve "items": [] y una \
+por el tamaño del plato y las proporciones (un plato llano mide unos 26 cm). Añade las salsas visibles; el \
+aceite de cocinar lo calcula el sistema a partir de "prep". Si la foto no muestra comida o no se distingue, devuelve "items": [] y una \
 "clarification" amable. La confianza con foto rara vez supera 0.7."""
 
 
@@ -250,6 +283,21 @@ class AiItem(BaseModel):
     # Opcionales: respuestas (y cachés) anteriores no los traen, y siguen siendo válidas.
     fiber: float | None = Field(default=None, ge=0, le=300)
     alcohol: float | None = Field(default=None, ge=0, le=500)
+    # Alimento base y preparación para emparejarlo con la tabla oficial (refine.py); opcionales por compatibilidad.
+    food: str | None = Field(default=None, max_length=120)
+    prep: str | None = None
+
+    @field_validator("food")
+    @classmethod
+    def _clean_food(cls, value: str | None) -> str | None:
+        value = (value or "").strip().lower()
+        return value or None
+
+    @field_validator("prep", mode="before")
+    @classmethod
+    def _known_prep(cls, value):
+        value = str(value or "").strip().lower()
+        return value if value in PREPS else None
 
     @model_validator(mode="before")
     @classmethod
@@ -334,21 +382,6 @@ def merge_duplicates(meal: AiMeal) -> AiMeal:
     return meal
 
 
-def check_consistency(meal: AiMeal) -> AiMeal:
-    """Corrige kcal claramente incoherentes con los macros (4/4/9)."""
-    adjusted = False
-    for item in meal.items:
-        atwater = 4 * item.protein + 4 * item.carbs + 9 * item.fat + 7 * (item.alcohol or 0)
-        # Menos kcal de las que suman los macros (y el alcohol) es imposible.
-        if item.kcal < atwater * 0.8 - 10:
-            item.kcal = round(atwater, 1)
-            adjusted = True
-    if adjusted:
-        meal.confidence = round(min(meal.confidence, 0.6), 2)
-        meal.assumptions.append("Calorías recalculadas a partir de los macros por coherencia")
-    return meal
-
-
 PLAN_PROMPT = """Eres un dietista-nutricionista español. Propones comidas sencillas, habituales en España y fáciles \
 de preparar para rellenar huecos de un plan semanal. Respondes SOLO con un objeto JSON válido, sin texto alrededor.
 
@@ -360,7 +393,7 @@ ESQUEMA:
       "slot": "desayuno" | "comida" | "merienda" | "cena" | "snack",
       "name": string,          // título corto, sin cantidades
       "items": [               // ingredientes, igual que al analizar una comida
-        {"name": string, "qty": number, "unit": string, "grams": number,
+        {"name": string, "food": string, "prep": string, "qty": number, "unit": string, "grams": number,
          "kcal100": number, "protein100": number, "carbs100": number, "fat100": number,
          "fiber100": number, "alcohol100": 0}
       ]
@@ -373,7 +406,9 @@ REGLAS
 - Ajusta las cantidades para acercarte a las calorías orientativas de cada hueco SIN pasarte.
 - Prioriza alimentos con proteína. Nada de alcohol.
 - Si la persona ya come ciertos platos, úsalos o propón algo parecido.
-- Valores de referencia: BEDCA y, si no está, USDA. Punto decimal y un decimal."""
+- "food" es el alimento base y "prep" su preparación (crudo, cocido, plancha, horno, salteado, frito, rebozado,
+  guisado o ninguna). No añadas aceite de cocinar: lo calcula el sistema.
+- Valores de referencia: CIQUAL y, si no está, USDA. Punto decimal y un decimal."""
 
 
 class PlanMeal(BaseModel):
@@ -391,8 +426,6 @@ def parse_plan(content: str) -> PlanReply:
     reply = PlanReply.model_validate(extract_json(content))
     if not reply.meals:
         raise ValueError('"meals" está vacío')
-    for meal in reply.meals:
-        check_consistency(merge_duplicates(AiMeal(name=meal.name, items=meal.items)))
     return reply
 
 
@@ -403,8 +436,8 @@ la proteína que le falta. Respondes SOLO con un objeto JSON válido, sin texto 
 ESQUEMA:
 {
   "ideas": [
-    {"name": string, "items": [{"name": string, "qty": number, "unit": string, "grams": number,
-      "kcal100": number, "protein100": number, "carbs100": number, "fat100": number, "fiber100": number,
+    {"name": string, "items": [{"name": string, "food": string, "prep": string, "qty": number, "unit": string,
+      "grams": number, "kcal100": number, "protein100": number, "carbs100": number, "fat100": number, "fiber100": number,
       "alcohol100": 0}]}
   ]
 }
@@ -412,7 +445,9 @@ ESQUEMA:
 REGLAS
 - Valores POR CADA 100 g y la cantidad total en "grams": el sistema calcula los totales y descarta lo que se pase.
 - Nada de alcohol. Nada copioso si es tarde por la noche.
-- Cantidades realistas (una pieza de fruta, un yogur, una lata de atún...)."""
+- Cantidades realistas (una pieza de fruta, un yogur, una lata de atún...).
+- "food" es el alimento base y "prep" su preparación (crudo, cocido, plancha, horno, salteado, frito, rebozado,
+  guisado o ninguna). No añadas aceite de cocinar: lo calcula el sistema."""
 
 
 class SuggestIdea(BaseModel):
@@ -446,7 +481,7 @@ def parse_meal(content: str) -> AiMeal:
     meal = AiMeal.model_validate(extract_json(content))
     if not meal.items and not meal.clarification:
         raise ValueError('"items" está vacío y no hay "clarification"')
-    return check_consistency(merge_duplicates(meal))
+    return merge_duplicates(meal)
 
 
 def _provider_params(model: str) -> dict:

@@ -40,6 +40,7 @@ from .models import (
 )
 from .nutrition import calculate_targets
 from .products import ProductInfo
+from .refine import official_share
 from .schemas import Prefs
 from .textnorm import normalize
 
@@ -313,6 +314,7 @@ def draft_from_dish(dish: Dish, source: str, score: float | None = None) -> dict
         "source": source,
         "dish_id": dish.id,
         "favorite": dish.favorite,
+        "official_share": official_share(dish.items),
     }
     if score is not None:
         draft["score"] = score

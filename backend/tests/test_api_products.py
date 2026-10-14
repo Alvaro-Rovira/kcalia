@@ -216,7 +216,8 @@ def test_si_solo_parte_del_texto_es_un_producto_la_ia_recibe_solo_el_resto(clien
     draft = result["draft"]
     assert [i["name"] for i in draft["items"]] == ["Yogur desnatado ligero sabor limón", "manzana"]
     assert draft["items"][0]["product_id"] is not None and draft["items"][1].get("product_id") is None
-    assert draft["kcal"] == pytest.approx(110 + 78, abs=0.2)
+    # El yogur, de la etiqueta; la manzana (150 g), de la tabla oficial: 54 kcal/100 g.
+    assert draft["kcal"] == pytest.approx(110 + 81, abs=0.2)
 
 
 def test_guardar_comida_de_producto_cuenta_uso_y_ahorro_sin_ensuciar_el_historial(client):

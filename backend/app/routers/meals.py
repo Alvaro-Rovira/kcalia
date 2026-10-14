@@ -12,6 +12,7 @@ from ..deps import get_ai_client, require_approved_user, require_user, today_loc
 from ..matching import extras, totals
 from ..models import Dish, DishAlias, Meal, User, utcnow
 from ..products import resolve_text
+from ..refine import official_share, refine
 from ..schemas import DishPatch, MealIn, MealPatch, ResolveIn
 from ..textnorm import normalize
 from ..usage import check_ai_budget, check_stt_budget, run_ai
@@ -41,6 +42,7 @@ def _draft_from_products(text: str, items: list[dict]) -> dict:
         "source": "product",
         "dish_id": None,
         "favorite": False,
+        "official_share": official_share(items),
     }
 
 
@@ -52,21 +54,24 @@ def _with_products(draft: dict, product_items: list[dict]) -> dict:
         "items": items,
         **totals(items),
         "assumptions": [_product_note(product_items), *draft["assumptions"]],
+        "official_share": official_share(items),
     }
 
 
-def _draft_from_ai(meal: AiMeal, text: str, source: str) -> dict:
-    items = [item.model_dump() for item in meal.items]
+def _draft_from_ai(meal: AiMeal, text: str, source: str, *, photo: bool = False) -> dict:
+    """La IA identifica y pesa; los valores, los gramos de las unidades y el aceite los pone refine()."""
+    items, notes = refine([item.model_dump() for item in meal.items], text=text, photo=photo)
     return {
         "name": meal.name or text[:60] or "Comida",
         "text": text,
         "items": items,
         **totals(items),
         "confidence": meal.confidence,
-        "assumptions": meal.assumptions,
+        "assumptions": [*meal.assumptions, *notes],
         "source": source,
         "dish_id": None,
         "favorite": False,
+        "official_share": official_share(items),
     }
 
 
@@ -160,7 +165,7 @@ def analyze_photo(
     if not meal.items:
         return {"status": "clarify", "question": meal.clarification}
     # Con el texto de la descripción, la próxima vez que se escriba igual sale del historial sin IA.
-    return {"status": "ai", "draft": _draft_from_ai(meal, note.strip(), "photo")}
+    return {"status": "ai", "draft": _draft_from_ai(meal, note.strip(), "photo", photo=True)}
 
 
 @router.post("/transcribe")

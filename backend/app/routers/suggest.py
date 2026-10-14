@@ -11,6 +11,7 @@ from ..db import get_db
 from ..deps import get_ai_client, require_approved_user, require_user
 from ..matching import totals
 from ..models import Dish, User
+from ..refine import refine
 from ..schemas import SuggestAiIn
 from ..usage import check_ai_budget, run_ai
 
@@ -63,7 +64,7 @@ def ai_ideas(
     reply = run_ai(db, "text", lambda: ai.suggest_close(request))
     ideas = []
     for idea in reply.ideas:
-        items = [item.model_dump() for item in idea.items]
+        items, _ = refine([item.model_dump() for item in idea.items])
         if any((item.get("alcohol") or 0) > 0 for item in items):
             continue  # nada con alcohol
         fitted = fit_to(items, body.kcal)

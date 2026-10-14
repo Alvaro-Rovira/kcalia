@@ -16,6 +16,7 @@ from ..db import get_db
 from ..deps import get_ai_client, require_approved_user, require_user
 from ..matching import extras, totals
 from ..models import Dish, MealPlan, ShoppingCheck, User
+from ..refine import refine
 from ..schemas import PlanFillIn, PlanIn, ShoppingCheckIn
 from ..summary import week_start
 from ..usage import check_ai_budget, run_ai
@@ -137,7 +138,7 @@ def fill(
     for meal in reply.meals:
         if (meal.date, meal.slot) not in wanted:
             continue
-        items = [{**item.model_dump(), "alcohol": None} for item in meal.items]
+        items, _ = refine([{**item.model_dump(), "alcohol": None} for item in meal.items])
         suggestions.append(
             {"date": meal.date, "slot": meal.slot, "name": meal.name or "Comida", "items": items, **totals(items)}
         )
