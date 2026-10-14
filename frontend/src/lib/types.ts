@@ -26,6 +26,11 @@ export interface Item extends Macros {
   /** Fibra y gramos de alcohol (opcionales: lo antiguo no los trae y cuentan como 0). */
   fiber?: number | null
   alcohol?: number | null
+  /** Origen de los valores («tabla», «etiqueta», «manual», «usuario» o «ia») y referencia oficial (ciqual:36018). */
+  source?: string | null
+  ref?: string | null
+  food?: string | null
+  prep?: string | null
 }
 
 /** Ingrediente de la caché: macros por 100 g y gramos por unidad habitual. */
@@ -39,6 +44,8 @@ export interface FoodEntry {
   fiber100?: number | null
   alcohol100?: number | null
   unit_grams: Record<string, number>
+  /** «usuario» (añadido a mano), «tabla» o «ia». */
+  source?: string
 }
 
 /** Producto envasado con las cifras de su etiqueta (por 100 g o 100 ml). */
@@ -402,4 +409,21 @@ export interface ProgressPhoto {
   date: string
   size: number
   created_at: string
+}
+
+/** Gasto real medido con lo apuntado y el peso (GET /api/expenditure). */
+export interface Expenditure {
+  status: 'ok' | 'insuficiente' | 'dudoso'
+  reason: string | null
+  observed: number | null
+  estimate: number | null
+  formula: number
+  days: number
+  weighins: number
+  span_days: number
+  slope_kg_week: number | null
+  weight_factor: number
+  mode: 'formula' | 'real'
+  applied: number | null
+  suggest_update: boolean
 }

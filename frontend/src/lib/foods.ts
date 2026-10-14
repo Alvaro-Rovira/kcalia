@@ -16,6 +16,22 @@ export interface FoodSuggestion extends Per100 {
   productId: number | null
   /** Gramos de una unidad, si se conoce (para proponer una cantidad razonable). */
   unitGrams: number | null
+  /** Referencia oficial (ciqual:9104) si sale de la tabla de alimentos. */
+  ref?: string | null
+  /** «usuario» si lo añadió a mano: entonces manda sobre la tabla. */
+  mine?: boolean
+}
+
+/** Alimento de la tabla oficial (GET /api/foods/table). */
+export interface TableFood extends Per100 {
+  key: string
+  name: string
+  ref: string
+  source: string
+  fiber100: number
+  alcohol100: number
+  unit_grams: Record<string, number>
+  density: number
 }
 
 /** Ingredientes conocidos que contienen todas las palabras escritas. Los productos con etiqueta van primero. */
@@ -51,6 +67,8 @@ export function searchFoods(query: string, foods: FoodEntry[], products: Product
       name: food.name,
       productId: null,
       unitGrams: unit ? unit[1] : null,
+      ref: null,
+      mine: food.source === 'usuario',
       kcal100: food.kcal100,
       protein100: food.protein100,
       carbs100: food.carbs100,
@@ -58,6 +76,30 @@ export function searchFoods(query: string, foods: FoodEntry[], products: Product
     })
   }
   return [...fromProducts, ...fromFoods].slice(0, limit)
+}
+
+/**
+ * Añade los alimentos de la tabla oficial a las sugerencias: tus productos y lo que añadiste a mano van primero; lo
+ * aprendido de respuestas de la IA con el mismo nombre se sustituye por el valor oficial.
+ */
+export function mergeTable(local: FoodSuggestion[], table: TableFood[], limit = 6): FoodSuggestion[] {
+  const official: FoodSuggestion[] = table.map((t) => ({
+    key: `t${t.key}`,
+    name: t.name,
+    productId: null,
+    unitGrams: Object.values(t.unit_grams)[0] ?? null,
+    ref: t.ref,
+    kcal100: t.kcal100,
+    protein100: t.protein100,
+    carbs100: t.carbs100,
+    fat100: t.fat100,
+  }))
+  const officialNames = new Set(official.map((o) => normalize(o.name)))
+  const kept = local.filter((s) => s.productId || s.mine || !officialNames.has(normalize(s.name)))
+  const keptNames = new Set(kept.map((s) => normalize(s.name)))
+  const first = kept.filter((s) => s.productId || s.mine)
+  const rest = kept.filter((s) => !s.productId && !s.mine)
+  return [...first, ...official.filter((o) => !keptNames.has(normalize(o.name))), ...rest].slice(0, limit)
 }
 
 export interface ManualInput {
@@ -70,6 +112,8 @@ export interface ManualInput {
   carbs: number
   fat: number
   productId?: number | null
+  /** Elegido de la tabla oficial: sus valores son oficiales, no puestos a mano. */
+  ref?: string | null
 }
 
 /** Las calorías que salen de los macros (4/4/9). */
@@ -105,6 +149,7 @@ export function manualItem(input: ManualInput): Item {
     carbs: round1(input.carbs * factor),
     fat: round1(input.fat * factor),
     product_id: input.productId ?? null,
-    manual: !input.productId,
+    manual: !input.productId && !input.ref,
+    ...(input.ref ? { source: 'tabla', ref: input.ref } : {}),
   }
 }

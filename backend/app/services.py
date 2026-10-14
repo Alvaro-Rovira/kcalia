@@ -497,6 +497,7 @@ def food_dict(food: Food) -> dict:
         "fiber100": food.fiber100,
         "alcohol100": food.alcohol100,
         "unit_grams": food.unit_grams or {},
+        "source": food.source or "ia",
     }
 
 

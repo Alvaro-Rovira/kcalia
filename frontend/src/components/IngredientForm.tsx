@@ -1,9 +1,11 @@
 import clsx from 'clsx'
 import { motion } from 'motion/react'
-import { Plus, Tag } from 'lucide-react'
-import { useId, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { BadgeCheck, Plus, Tag } from 'lucide-react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import { useBootstrap } from '@/hooks/data'
-import { kcalFromMacros, manualItem, manualProblem, searchFoods, type FoodSuggestion } from '@/lib/foods'
+import { api } from '@/lib/api'
+import { kcalFromMacros, manualItem, manualProblem, mergeTable, searchFoods, type FoodSuggestion, type TableFood } from '@/lib/foods'
 import { capitalize, fmt } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
 import { GRAM_MACROS } from '@/lib/macros'
@@ -27,9 +29,22 @@ export function IngredientForm({ onAdd, onCancel }: { onAdd: (item: Item) => voi
   const [picked, setPicked] = useState<FoodSuggestion | null>(null)
   const [error, setError] = useState('')
 
+  // La tabla oficial está en el servidor: se consulta al dejar de escribir (sin conexión quedan las sugerencias locales).
+  const [query, setQuery] = useState('')
+  useEffect(() => {
+    const timer = window.setTimeout(() => setQuery(name.trim()), 250)
+    return () => window.clearTimeout(timer)
+  }, [name])
+  const table = useQuery({
+    queryKey: ['foods-table', query],
+    queryFn: () => api.get<{ foods: TableFood[] }>(`/api/foods/table?q=${encodeURIComponent(query)}`),
+    enabled: !picked && query.length >= 2,
+    staleTime: Infinity,
+  })
+
   const suggestions = useMemo(
-    () => (picked ? [] : searchFoods(name, data?.foods ?? [], data?.products ?? [])),
-    [name, picked, data?.foods, data?.products],
+    () => (picked ? [] : mergeTable(searchFoods(name, data?.foods ?? [], data?.products ?? []), table.data?.foods ?? [])),
+    [name, picked, data?.foods, data?.products, table.data],
   )
 
   function pick(suggestion: FoodSuggestion) {
@@ -51,6 +66,7 @@ export function IngredientForm({ onAdd, onCancel }: { onAdd: (item: Item) => voi
     carbs: macros.carbs ?? 0,
     fat: macros.fat ?? 0,
     productId: picked?.productId ?? null,
+    ref: picked?.ref ?? null,
   }
   const preview = manualProblem(input) ? null : manualItem(input)
 
@@ -100,6 +116,7 @@ export function IngredientForm({ onAdd, onCancel }: { onAdd: (item: Item) => voi
                 <li key={s.key} role="option" aria-selected={false} className="border-b border-border last:border-b-0">
                   <button type="button" onClick={() => pick(s)} className="flex min-h-11 w-full items-center gap-2 px-3 py-2 text-left hover:bg-surface-3">
                     {s.productId ? <Tag className="size-3.5 shrink-0 text-accent-text" aria-label="Producto con etiqueta" /> : null}
+                    {s.ref ? <BadgeCheck className="size-3.5 shrink-0 text-accent-text" aria-label="Valores oficiales de la tabla de alimentos" /> : null}
                     <span className="min-w-0 flex-1 truncate text-[14.5px] text-text">{capitalize(s.name)}</span>
                     <span className="shrink-0 text-[12.5px] text-text-3" data-num>
                       {fmt(s.kcal100)} kcal/100 g
@@ -109,7 +126,11 @@ export function IngredientForm({ onAdd, onCancel }: { onAdd: (item: Item) => voi
               ))}
             </ul>
           )}
-          {picked && <p className="mt-1 text-[12.5px] text-text-3">Con las cifras que ya conocía de «{picked.name}».</p>}
+          {picked && (
+            <p className="mt-1 text-[12.5px] text-text-3">
+              {picked.ref ? `Con los valores oficiales de «${picked.name}».` : `Con las cifras que ya conocía de «${picked.name}».`}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-[1fr_auto] items-end gap-2.5">

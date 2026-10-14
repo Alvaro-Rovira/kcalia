@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { manualItem, manualProblem, searchFoods } from './foods'
+import { manualItem, manualProblem, mergeTable, searchFoods, type TableFood } from './foods'
 import type { FoodEntry, Product } from './types'
 
 const foods: FoodEntry[] = [
@@ -59,4 +59,21 @@ describe('manualProblem', () => {
     expect(manualProblem({ ...ok, basis: 'total', grams: 20, protein: 15, carbs: 10, fat: 0 })).toMatch(/no caben/)
   })
   it('avisa de calorías imposibles', () => expect(manualProblem({ ...ok, kcal: 2000 })).toMatch(/Demasiadas/))
+})
+
+describe('sugerencias con la tabla oficial', () => {
+  const table: TableFood[] = [
+    { key: 'arroz-blanco-cocido', name: 'arroz blanco cocido', ref: 'ciqual:9104', source: 'ciqual', kcal100: 155, protein100: 3.3, carbs100: 33.2, fat100: 0.7, fiber100: 0.4, alcohol100: 0, unit_grams: { plato: 280 }, density: 1 },
+  ]
+  it('la tabla sustituye lo aprendido de la IA con el mismo nombre, pero no lo puesto por el usuario', () => {
+    const merged = mergeTable(searchFoods('arroz', foods, []), table)
+    expect(merged).toHaveLength(1)
+    expect(merged[0]).toMatchObject({ ref: 'ciqual:9104', kcal100: 155, unitGrams: 280 })
+    const mine: FoodEntry[] = [{ ...foods[0], kcal100: 100, source: 'usuario' }]
+    expect(mergeTable(searchFoods('arroz', mine, []), table)[0]).toMatchObject({ kcal100: 100, ref: null })
+  })
+  it('el ingrediente elegido de la tabla lleva su origen oficial', () => {
+    const item = manualItem({ name: 'arroz blanco cocido', grams: 200, basis: 'per100', kcal: 155, protein: 3.3, carbs: 33.2, fat: 0.7, ref: 'ciqual:9104' })
+    expect(item).toMatchObject({ source: 'tabla', ref: 'ciqual:9104', manual: false, kcal: 310 })
+  })
 })

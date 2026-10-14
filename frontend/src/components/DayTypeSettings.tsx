@@ -35,6 +35,9 @@ function TargetsLine({ values }: { values: DayTargetsValues }) {
 }
 
 /** Ajustes de los objetivos por tipo de día: días de entreno, ajuste de cada tipo y objetivos fijados a mano. */
+/** Niveles de actividad que ya incluyen entrenar varios días por semana. */
+const ACTIVE = new Set(['moderado', 'alto', 'muy_alto'])
+
 export function DayTypeSettings() {
   const app = useApp()
   const save = usePrefsActions()
@@ -114,9 +117,13 @@ export function DayTypeSettings() {
         <Switch
           label="Sumar las calorías del entreno al objetivo"
           description={
-            prefs.add_exercise_kcal
-              ? 'Lo entrenado (estimado por duración e intensidad) se suma ese día en forma de hidratos.'
-              : 'Ahora solo se muestran como referencia. Es una estimación, no una medida.'
+            app.targets?.tdee_mode === 'real'
+              ? 'Con tu gasto real no se suman: ese gasto ya incluye lo que entrenas.'
+              : prefs.add_exercise_kcal
+                ? `Lo entrenado (calorías netas, sin el gasto en reposo) se suma ese día en forma de hidratos.${
+                    ACTIVE.has(app.profile.activity) ? ' Tu nivel de actividad ya cuenta el gimnasio: si las sumas, elige uno que no lo incluya.' : ''
+                  }`
+                : 'Ahora solo se muestran como referencia. Es una estimación, no una medida.'
           }
           checked={!!prefs.add_exercise_kcal}
           onChange={(on) => save({ add_exercise_kcal: on })}
