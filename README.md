@@ -152,11 +152,12 @@ El emparejado con la tabla es estricto a propósito: «huevo a la plancha» no t
 
 | | Antes (solo la IA) | Ahora (IA + tabla) |
 |---|---|---|
-| Error medio de calorías | 15,8 % | DESPUES_ERROR |
-| Dentro de ±12 % | 21 de 30 | DESPUES_DENTRO |
-| Comidas sin cantidades en rango | 8 de 10 | DESPUES_AMBIGUAS |
+| Error medio de calorías | 15,8 % | 0,2 % |
+| Dentro de ±12 % | 21 de 30 | 30 de 30 |
+| Error medio por macro | 1,8 g | 0,0 g |
+| Comidas sin cantidades en rango | 8 de 10 | 8 de 10 |
 
-Algunos ejemplos de antes: un huevo frito salía a 197 kcal (oficial: 88), 150 g de patatas fritas a 468 (387, con el aceite contado dos veces) y un café con leche a 157 (73).
+Kimi K2.6, 14 de octubre de 2026, con la clave real. Algunos ejemplos de antes: un huevo frito salía a 197 kcal (oficial: 88), 150 g de patatas fritas a 468 (387, con el aceite contado dos veces) y un café con leche a 157 (73). Ahora las 30 comidas con cantidades dan el valor oficial salvo redondeos. En las comidas sin cantidades lo que queda es la estimación de la ración, que hace la IA; las dos que se salieron del rango fueron un bocadillo (la IA pesó el pan como una rebanada) y una ensalada mixta a 1 kcal del mínimo. Latencia mediana de 4,1 s y unos 2.900 tokens de entrada por comida.
 
 ## Cómo se ahorra IA
 
