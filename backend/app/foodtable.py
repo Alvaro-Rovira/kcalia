@@ -90,6 +90,7 @@ class Entry:
     oil: bool = False
     default: bool = False
     aliases: tuple[str, ...] = ()
+    liquid: bool = False  # tiene densidad propia: «vaso» y «taza» se miden en mililitros
 
     def per100(self) -> dict[str, float]:
         return {f"{n}100": getattr(self, f"{n}100") for n in NUTRIENTS}
@@ -125,6 +126,7 @@ def _entry(spec: dict, values: dict[str, float], ref: str, source: str) -> Entry
         oil=bool(spec.get("oil", False)),
         default=bool(spec.get("default", False)),
         aliases=tuple(spec.get("aliases") or ()),
+        liquid="density" in spec,
     )
 
 

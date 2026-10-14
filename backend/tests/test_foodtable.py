@@ -274,3 +274,8 @@ def test_search_finds_entries_containing_every_word(ft):
 )
 def test_prep_from_words(text, expected):
     assert prep_from_words(text) == expected
+
+
+def test_entries_with_density_are_liquids(ft):
+    assert ft.entries["aceite-oliva"].liquid is True
+    assert ft.entries["arroz-blanco-cocido"].liquid is False
