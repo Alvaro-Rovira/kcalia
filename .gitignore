@@ -36,3 +36,4 @@ playwright-report/
 
 # Capturas sueltas de comprobaciones manuales
 /shots/
+.superpowers/
