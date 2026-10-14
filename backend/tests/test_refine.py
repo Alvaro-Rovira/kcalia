@@ -211,3 +211,12 @@ def test_revalue_updates_saved_items_keeping_their_weight_and_structure():
     assert items[1]["kcal"] == expected("aceite-oliva", 5)["kcal"]
     assert items[2]["kcal"] == eu_kcal(40, 30, 30) and items[2]["source"] == "ia"
     assert items[3]["kcal"] == 55 and items[3]["source"] == "etiqueta"
+
+
+def test_a_portion_the_model_chose_on_purpose_is_kept():
+    # «Un bocadillo»: la IA usa «1 rebanada» grande de 80 g; la rebanada estándar de la tabla (40 g) no la sustituye.
+    items, _ = refine([ai_item("pan de barra", 80, qty=1, unit="rebanada", food="pan blanco")], text="un bocadillo")
+    assert items[0]["grams"] == 80 and items[0]["source"] == "tabla"
+    # Pequeñas imprecisiones sobre tamaños estándar sí las corrige la tabla (manzana de 200 g -> pieza de 150 g).
+    items, _ = refine([ai_item("manzana", 200, qty=1, unit="pieza", food="manzana")], text="una manzana")
+    assert items[0]["grams"] == 150

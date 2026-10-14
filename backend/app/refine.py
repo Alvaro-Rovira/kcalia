@@ -42,6 +42,7 @@ FAT_ENTRIES = frozenset(
 )
 FAT_WORDS = frozenset({"aceite", "aove", "mantequilla", "margarina", "manteca", "ghee"})
 LIQUID_ML = {"vaso": 200, "taza": 250}
+UNIT_AGREEMENT = (0.75, 1.34)  # peso de la tabla ÷ peso de la IA dentro del que manda la tabla
 _DRESSING = frozenset({"aliño", "alino", "aderezo"})  # aceite de aliñar una ensalada: lo propone la IA
 OFFICIAL = frozenset({"tabla", "etiqueta", "manual", "usuario"})
 UNTOUCHED = {"etiqueta", "manual", "usuario"}
@@ -109,9 +110,10 @@ def _grams(item: dict, entry: Entry | None, photo: bool) -> float:
         grams = qty * LIQUID_ML[unit] * entry.density
     else:
         return ai_grams
-    # Si la tabla y la IA difieren más del doble, entienden la unidad de forma distinta («1 pieza» de nueces: una nuez
-    # para la tabla, un puñado para la IA). Entonces vale el peso que estimó la IA.
-    if ai_grams > 0 and not 0.5 <= grams / ai_grams <= 2:
+    # La tabla corrige las imprecisiones de la IA sobre tamaños estándar (un huevo M son 50 g comestibles, no 55). Si
+    # difieren más, la IA ha elegido otro tamaño a propósito («rebanada grande de 80 g» para un bocadillo) o entiende
+    # la unidad de otra forma («1 pieza» de nueces: un puñado, no una nuez); entonces vale su estimación.
+    if ai_grams > 0 and not UNIT_AGREEMENT[0] <= grams / ai_grams <= UNIT_AGREEMENT[1]:
         return ai_grams
     return grams
 
