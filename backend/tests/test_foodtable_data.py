@@ -131,3 +131,8 @@ def test_table_size(ft):
 def test_usda_rows_carry_every_value():
     empty = {code: row["name"] for code, row in _codes("usda_fdc.tsv").items() if not row["kcal"] or not row["protein"]}
     assert empty == {}
+
+
+def test_search_prefers_names_over_aliases(ft):
+    # «Fiambre de pollo» tiene el alias «pechuga de pollo en lonchas», pero quien busca «pechuga pollo» quiere la pechuga.
+    assert ft.search("pechuga pollo")[0].id == "pechuga-pollo-plancha"

@@ -195,8 +195,10 @@ class FoodTable:
             names = [key(n) for n in (entry.name, *entry.aliases)]
             if not any(all(w in n for w in words) for n in names):
                 continue
-            scored.append((0 if k in names else 1, 0 if entry.default else 1, len(entry.name), entry.id, entry))
-        scored.sort(key=lambda row: row[:4])
+            in_name = all(w in names[0] for w in words)  # las palabras están en el nombre, no solo en un alias
+            rank = (0 if k in names else 1, 0 if in_name else 1, 0 if entry.default else 1, len(entry.name), entry.id)
+            scored.append((*rank, entry))
+        scored.sort(key=lambda row: row[:5])
         return [row[-1] for row in scored[:limit]]
 
 
