@@ -17,8 +17,9 @@ CIQUAL = """code\tname\tkcal\tprotein\tcarbs\tfat\tfiber\talcohol
 17270\tHuile d'olive vierge extra\t900\t0\t0\t100\t0\t0
 """
 
-USDA = """code\tname\tkcal\tprotein\tcarbs\tfat\tfiber\talcohol
+USDA = """code\tname\tkcal\tprotein\tcarbs_total\tfat\tfiber\talcohol
 173180\tBeverages, Whey protein powder isolate\t359\t84.4\t6.3\t1.2\t0\t0
+168411\tEdamame, frozen, prepared\t121\t11.91\t8.91\t5.2\t5.2\t
 """
 
 FOODS = [
@@ -124,6 +125,14 @@ FOODS = [
         "units": {"cazo": 30},
         "default": True,
     },
+    {"id": "edamame", "name": "edamame", "food": "edamame", "prep": "cocido", "ref": "usda:168411", "default": True},
+    {
+        "id": "arroz-integral",
+        "name": "arroz integral crudo",
+        "food": "arroz integral",
+        "prep": "crudo",
+        "ref": "ciqual:9100",
+    },
 ]
 
 RECIPES = [
@@ -164,6 +173,13 @@ def test_values_come_unaltered_from_the_source_row(ft):
     assert ft.entries["whey"].protein100 == 84.4 and ft.entries["whey"].source == "usda"
 
 
+def test_usda_carbohydrates_by_difference_exclude_fiber(ft):
+    # USDA publica los hidratos «por diferencia», con la fibra dentro; la tabla guarda los disponibles.
+    edamame = ft.entries["edamame"]
+    assert edamame.carbs100 == pytest.approx(8.91 - 5.2)
+    assert edamame.fiber100 == 5.2 and edamame.alcohol100 == 0
+
+
 def test_food_without_preparation_uses_the_default_entry(ft):
     assert ft.match("arroz").id == "arroz-blanco-cocido"
     assert ft.match("arroz blanco", "ninguna").id == "arroz-blanco-cocido"
@@ -183,6 +199,14 @@ def test_missing_preparation_never_falls_back_to_another_one(ft):
     assert ft.match("huevo", "plancha") is None
     assert ft.match("patata", "frito") is None
     assert ft.match("pechuga de pollo", "crudo") is None
+
+
+def test_food_only_known_raw_needs_an_explicit_preparation(ft):
+    # El arroz blanco tiene «default»; un alimento del que solo hay entrada en crudo y sin «default» no se supone
+    # crudo si no se dice: cocinado pesa y aporta otra cosa.
+    assert ft.match("pechuga de pollo", "crudo") is None
+    assert ft.match("arroz integral") is None
+    assert ft.match("arroz integral", "crudo").id == "arroz-integral"
 
 
 def test_matching_is_strict_between_similar_foods(ft):

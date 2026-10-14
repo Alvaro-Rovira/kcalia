@@ -95,13 +95,20 @@ class Entry:
         return {f"{n}100": getattr(self, f"{n}100") for n in NUTRIENTS}
 
 
+def _read_row(row: dict[str, str]) -> dict[str, float]:
+    values = {n: parse_value(row[n]) for n in NUTRIENTS if n in row}
+    if "carbs_total" in row:
+        # USDA publica los hidratos «por diferencia», con la fibra dentro; en la tabla van los disponibles, como
+        # en CIQUAL y en las etiquetas europeas (la fibra cuenta aparte, a 2 kcal/g).
+        values["carbs"] = max(0.0, parse_value(row["carbs_total"]) - values["fiber"])
+    return values
+
+
 def _read_source(path: Path) -> dict[str, dict[str, float]]:
     if not path.exists():
         return {}
     with path.open(newline="", encoding="utf-8") as handle:
-        return {
-            row["code"]: {n: parse_value(row[n]) for n in NUTRIENTS} for row in csv.DictReader(handle, delimiter="\t")
-        }
+        return {row["code"]: _read_row(row) for row in csv.DictReader(handle, delimiter="\t")}
 
 
 def _entry(spec: dict, values: dict[str, float], ref: str, source: str) -> Entry:
@@ -145,8 +152,9 @@ class FoodTable:
 
     def _pick(self, group: list[Entry], prep: str | None) -> Entry | None:
         if prep in (None, "ninguna"):
+            # Sin «default» (alimentos que solo están en crudo) hace falta decir la preparación.
             defaults = [e for e in group if e.default]
-            return defaults[0] if defaults else (group[0] if len(group) == 1 else None)
+            return defaults[0] if defaults else None
         exact = [e for e in group if e.prep == prep]
         if exact:
             return exact[0]
