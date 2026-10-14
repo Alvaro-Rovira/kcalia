@@ -1,5 +1,6 @@
 """Entrenamientos: catálogo inicial, plantillas, 1RM estimado, volumen y calorías estimadas. Todo en código, sin IA."""
 
+import math
 from datetime import date, timedelta
 
 from sqlalchemy import func, select
@@ -98,8 +99,20 @@ TEMPLATES: list[tuple[str, str, list[tuple[str, int, int]]]] = [
     ),
 ]
 
-# MET (equivalente metabólico) del entrenamiento de fuerza según la intensidad (Compendium of Physical Activities).
+# MET (equivalente metabólico) según la intensidad, del Compendium of Physical Activities 2024 (pacompendium.com).
+# Fuerza: 02054 varios ejercicios de 8-15 repeticiones, 02052 sentadilla o peso muerto, 02050 culturismo intenso.
 MET = {"suave": 3.5, "moderada": 5.0, "intensa": 6.0}
+# Cardio medido en minutos, por ejercicio del catálogo. Cinta: 12020 trote, 12030 a 8 km/h, 12050 a 9,7 km/h.
+# Bici estática: 01218 de 70-80 W, 01220 de 90-100 W, 01228 de 126-150 W. Remo: 02071 por debajo de 100 W, 02072 de
+# 100-149 W, 02073 de 150-199 W. Elíptica: 02048 moderada, 02049 intensa (no hay entrada de esfuerzo ligero).
+CARDIO_MET = {
+    "ex-cinta": {"suave": 7.5, "moderada": 8.5, "intensa": 9.3},
+    "ex-bici": {"suave": 5.8, "moderada": 6.0, "intensa": 8.0},
+    "ex-remo-ergometro": {"suave": 5.0, "moderada": 7.5, "intensa": 11.0},
+    "ex-eliptica": {"suave": 5.0, "moderada": 5.0, "intensa": 9.0},
+}
+GENERIC_CARDIO_MET = CARDIO_MET["ex-bici"]  # ejercicios de cardio creados por el usuario
+RESTING_MET = 1.0
 
 
 def ensure_catalog(db: Session) -> None:
@@ -123,11 +136,38 @@ def estimated_1rm(weight: float, reps: int) -> float:
     return round(weight * (1 + min(reps, 12) / 30), 1)
 
 
-def estimated_kcal(duration_min: int | None, intensity: str, weight_kg: float) -> int:
-    """Calorías estimadas: MET × peso × horas. Es una orientación, no una medida."""
+def estimated_kcal(
+    duration_min: int | None, intensity: str, weight_kg: float, cardio: dict[str, float] | None = None
+) -> int:
+    """Calorías netas del entreno: (MET − 1) × peso × horas. Se resta el gasto en reposo (1 MET) porque el objetivo
+    diario ya lo cuenta; sumarlo otra vez inflaría el día. Los minutos de cardio (`cardio`: ejercicio -> minutos)
+    usan el MET de su actividad y el resto de la duración, el de fuerza. Es una orientación, no una medida."""
     if not duration_min:
         return 0
-    return round(MET.get(intensity, MET["moderada"]) * weight_kg * duration_min / 60)
+    level = intensity if intensity in MET else "moderada"
+    cardio = {k: v for k, v in (cardio or {}).items() if v > 0}
+    cardio_total = sum(cardio.values())
+    scale = min(1.0, duration_min / cardio_total) if cardio_total else 1.0
+    kcal = 0.0
+    for exercise, minutes in cardio.items():
+        met = CARDIO_MET.get(exercise, GENERIC_CARDIO_MET)[level]
+        kcal += (met - RESTING_MET) * weight_kg * minutes * scale / 60
+    strength_min = max(0.0, duration_min - cardio_total * scale)
+    kcal += (MET[level] - RESTING_MET) * weight_kg * strength_min / 60
+    return math.floor(kcal + 0.5)  # mitades hacia arriba, como Math.round en el móvil
+
+
+def cardio_minutes(sets: list[dict], minute_exercises: set[str]) -> dict[str, float]:
+    """Minutos por ejercicio de cardio (los que se miden en minutos) a partir de las series de un entreno."""
+    out: dict[str, float] = {}
+    for item in sets:
+        if item["exercise"] in minute_exercises:
+            out[item["exercise"]] = out.get(item["exercise"], 0) + item["reps"]
+    return out
+
+
+def _minute_exercises(db: Session) -> set[str]:
+    return set(db.scalars(select(Exercise.client_id).where(Exercise.unit == "min")))
 
 
 def _weight_kg(db: Session) -> float:
@@ -137,15 +177,12 @@ def _weight_kg(db: Session) -> float:
 
 def estimated_kcal_by_day(db: Session, start: str, end: str) -> dict[str, float]:
     """Calorías estimadas de los entrenos terminados de cada día."""
-    weight = _weight_kg(db)
+    workouts = db.scalars(
+        select(Workout).where(Workout.date >= start, Workout.date <= end, Workout.duration_min.is_not(None))
+    ).all()
     out: dict[str, float] = {}
-    rows = db.execute(
-        select(Workout.date, Workout.duration_min, Workout.intensity).where(
-            Workout.date >= start, Workout.date <= end, Workout.duration_min.is_not(None)
-        )
-    )
-    for day, minutes, intensity in rows:
-        out[day] = out.get(day, 0) + estimated_kcal(minutes, intensity, weight)
+    for workout in workouts_payload(db, list(workouts)):
+        out[workout["date"]] = out.get(workout["date"], 0) + workout["kcal"]
     return out
 
 
@@ -182,7 +219,9 @@ def set_dict(row: WorkoutSet, exercise_cid: str) -> dict:
     }
 
 
-def workout_dict(workout: Workout, sets: list[dict], weight_kg: float) -> dict:
+def workout_dict(
+    workout: Workout, sets: list[dict], weight_kg: float, minute_exercises: frozenset[str] = frozenset()
+) -> dict:
     volume = sum(s["weight"] * s["reps"] for s in sets)
     return {
         "client_id": workout.client_id,
@@ -194,7 +233,9 @@ def workout_dict(workout: Workout, sets: list[dict], weight_kg: float) -> dict:
         "ended_at": workout.ended_at.isoformat() + "Z" if workout.ended_at else None,
         "duration_min": workout.duration_min,
         "intensity": workout.intensity,
-        "kcal": estimated_kcal(workout.duration_min, workout.intensity, weight_kg),
+        "kcal": estimated_kcal(
+            workout.duration_min, workout.intensity, weight_kg, cardio_minutes(sets, set(minute_exercises))
+        ),
         "volume": round(volume, 1),
         "sets": sets,
     }
@@ -214,7 +255,8 @@ def workouts_payload(db: Session, workouts: list[Workout]) -> list[dict]:
     for row in rows:
         by_workout.setdefault(row.workout_id, []).append(set_dict(row, cids.get(row.exercise_id, "")))
     weight = _weight_kg(db)
-    return [workout_dict(w, by_workout.get(w.id, []), weight) for w in workouts]
+    minutes = frozenset(_minute_exercises(db))
+    return [workout_dict(w, by_workout.get(w.id, []), weight, minutes) for w in workouts]
 
 
 def last_performance(db: Session) -> dict[str, dict]:

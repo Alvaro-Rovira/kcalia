@@ -83,8 +83,17 @@ export const MUSCLES: { key: Muscle; label: string }[] = [
 export const MUSCLE_LABEL = Object.fromEntries(MUSCLES.map((m) => [m.key, m.label])) as Record<Muscle, string>
 export const UNIT_LABEL: Record<ExerciseUnit, string> = { reps: 'reps', seg: 'seg', min: 'min' }
 
-/** MET de fuerza según la intensidad, como el servidor. */
+/** MET de fuerza según la intensidad, como el servidor (Compendium of Physical Activities 2024). */
 export const MET: Record<Intensity, number> = { suave: 3.5, moderada: 5, intensa: 6 }
+/** MET del cardio del catálogo (ejercicios en minutos), como el servidor (backend/app/workouts.py). */
+export const CARDIO_MET: Record<string, Record<Intensity, number>> = {
+  'ex-cinta': { suave: 7.5, moderada: 8.5, intensa: 9.3 },
+  'ex-bici': { suave: 5.8, moderada: 6, intensa: 8 },
+  'ex-remo-ergometro': { suave: 5, moderada: 7.5, intensa: 11 },
+  'ex-eliptica': { suave: 5, moderada: 5, intensa: 9 },
+}
+const GENERIC_CARDIO_MET = CARDIO_MET['ex-bici']
+const RESTING_MET = 1
 
 /** Fórmula de Epley (como el servidor): con 1 repetición, el propio peso; más allá de 12, no sube. */
 export function estimated1rm(weight: number, reps: number): number {
@@ -93,9 +102,33 @@ export function estimated1rm(weight: number, reps: number): number {
   return Math.round(weight * (1 + Math.min(reps, 12) / 30) * 10) / 10
 }
 
-export function estimatedKcal(minutes: number | null, intensity: Intensity, weightKg: number): number {
+/**
+ * Calorías netas del entreno, como el servidor: (MET − 1) × kg × horas. Se resta el gasto en reposo porque el
+ * objetivo del día ya lo cuenta. Los minutos de cardio usan el MET de su actividad; el resto, el de fuerza.
+ */
+export function estimatedKcal(minutes: number | null, intensity: Intensity, weightKg: number, cardio: Record<string, number> = {}): number {
   if (!minutes) return 0
-  return Math.round((MET[intensity] * weightKg * minutes) / 60)
+  const level: Intensity = intensity in MET ? intensity : 'moderada'
+  const entries = Object.entries(cardio).filter(([, m]) => m > 0)
+  const cardioTotal = entries.reduce((sum, [, m]) => sum + m, 0)
+  const scale = cardioTotal ? Math.min(1, minutes / cardioTotal) : 1
+  let kcal = 0
+  for (const [exercise, m] of entries) {
+    const met = (CARDIO_MET[exercise] ?? GENERIC_CARDIO_MET)[level]
+    kcal += ((met - RESTING_MET) * weightKg * m * scale) / 60
+  }
+  const strength = Math.max(0, minutes - cardioTotal * scale)
+  kcal += ((MET[level] - RESTING_MET) * weightKg * strength) / 60
+  return Math.round(kcal)
+}
+
+/** Minutos por ejercicio de cardio (los que se miden en minutos) a partir de las series de la sesión. */
+export function cardioMinutes(sets: { exercise: string; reps: number }[], minuteExercises: Set<string>): Record<string, number> {
+  const out: Record<string, number> = {}
+  for (const set of sets) {
+    if (minuteExercises.has(set.exercise)) out[set.exercise] = (out[set.exercise] ?? 0) + set.reps
+  }
+  return out
 }
 
 export const volumeOf = (sets: WorkoutSetRow[]) => Math.round(sets.reduce((sum, s) => sum + s.weight * s.reps, 0) * 10) / 10

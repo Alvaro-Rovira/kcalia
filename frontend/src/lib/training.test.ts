@@ -12,8 +12,8 @@ describe('entrenos', () => {
     expect(estimated1rm(100, 1)).toBe(100)
     expect(estimated1rm(80, 8)).toBeCloseTo(101.3, 1)
     expect(estimated1rm(50, 20)).toBe(estimated1rm(50, 12))
-    expect(estimatedKcal(60, 'moderada', 80)).toBe(400)
-    expect(estimatedKcal(45, 'intensa', 70)).toBe(315)
+    expect(estimatedKcal(60, 'moderada', 80)).toBe(320)
+    expect(estimatedKcal(45, 'intensa', 70)).toBe(263)
   })
   it('volumen y formato de series', () => {
     expect(volumeOf([set('a', 0, 80, 8), set('a', 1, 85, 6)])).toBe(1150)
