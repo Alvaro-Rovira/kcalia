@@ -186,11 +186,14 @@ def targets_dict(targets: Targets) -> dict:
         "tdee": targets.tdee,
         "custom": targets.custom,
         "basis_weight_kg": targets.basis_weight_kg,
+        "tdee_mode": targets.tdee_mode or "formula",
+        "tdee_real": targets.tdee_real,
     }
 
 
-def plan_for(profile: Profile) -> dict:
+def plan_for(profile: Profile, maintenance: float | None = None) -> dict:
     return calculate_targets(
+        maintenance_override=maintenance,
         sex=profile.sex,
         age=profile.age,
         weight_kg=profile.weight_kg,
@@ -202,8 +205,9 @@ def plan_for(profile: Profile) -> dict:
 
 
 def apply_plan(db: Session, profile: Profile) -> tuple[Targets, dict]:
-    plan = plan_for(profile)
     targets = get_targets(db)
+    measured = targets.tdee_real if targets is not None and targets.tdee_mode == "real" else None
+    plan = plan_for(profile, measured)
     values = {
         "kcal": plan["kcal"],
         "protein": plan["protein"],
@@ -630,11 +634,14 @@ def targets_by_day(
     """Objetivos de cada día entre dos fechas según su tipo (y el entreno, si se suma)."""
     prefs = prefs or get_prefs(db)
     base = targets_dict(targets)
-    if not prefs.day_types and not prefs.add_exercise_kcal:
+    measured = targets.tdee_mode == "real"
+    if not prefs.day_types and (not prefs.add_exercise_kcal or measured):
         same = daytargets.targets_for(base, prefs, None)
         return {(start + timedelta(days=i)).isoformat(): same for i in range((end - start).days + 1)}
     overrides = day_type_overrides(db, start.isoformat(), end.isoformat())
-    exercise = exercise_kcal_by_day(db, start.isoformat(), end.isoformat()) if prefs.add_exercise_kcal else {}
+    exercise = (
+        exercise_kcal_by_day(db, start.isoformat(), end.isoformat()) if prefs.add_exercise_kcal and not measured else {}
+    )
     out = {}
     for offset in range((end - start).days + 1):
         day = start + timedelta(days=offset)

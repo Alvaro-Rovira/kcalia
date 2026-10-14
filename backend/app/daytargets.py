@@ -37,8 +37,10 @@ def _shift(values: dict, kcal_delta: float) -> dict:
     return {**values, "carbs": carbs, "kcal": _round(values["kcal"] + (carbs - values["carbs"]) * 4)}
 
 
-def targets_for(base: dict, prefs: Prefs, kind: str | None, exercise_kcal: float = 0) -> dict:
-    """Objetivos del día (kcal, protein, carbs, fat) a partir de los de siempre."""
+def targets_for(base: dict, prefs: Prefs, kind: str | None, exercise_kcal: float = 0, measured: bool = False) -> dict:
+    """Objetivos del día (kcal, protein, carbs, fat) a partir de los de siempre.
+
+    `measured`: el mantenimiento es el gasto real medido, que ya incluye los entrenos; no se suman otra vez."""
     out = {key: _round(base[key]) for key in MACRO_KEYS}
     if kind == "entreno":
         manual = prefs.training_targets
@@ -46,6 +48,6 @@ def targets_for(base: dict, prefs: Prefs, kind: str | None, exercise_kcal: float
     elif kind == "descanso":
         manual = prefs.rest_targets
         out = manual.model_dump() if manual else _shift(out, prefs.rest_kcal_adjust)
-    if prefs.add_exercise_kcal and exercise_kcal > 0:
+    if prefs.add_exercise_kcal and exercise_kcal > 0 and not measured:
         out = _shift(out, exercise_kcal)
     return out

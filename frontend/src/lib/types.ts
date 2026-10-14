@@ -168,6 +168,9 @@ export interface Targets extends Macros {
   tdee: number
   custom: boolean
   basis_weight_kg: number
+  /** Mantenimiento usado: el de la fórmula o el gasto real medido (lo antiguo no lo trae: fórmula). */
+  tdee_mode?: 'formula' | 'real'
+  tdee_real?: number | null
 }
 
 export interface Warning {

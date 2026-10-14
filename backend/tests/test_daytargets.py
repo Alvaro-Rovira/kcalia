@@ -17,4 +17,5 @@ def test_casos_compartidos(case):
     prefs = Prefs.model_validate(case["prefs"])
     kind = kind_for(date.fromisoformat(case["date"]), prefs, case["overrides"])
     assert kind == case["kind"]
-    assert targets_for(case.get("base", CASES["base"]), prefs, kind, case["exercise"]) == case["targets"]
+    measured = case.get("measured", False)
+    assert targets_for(case.get("base", CASES["base"]), prefs, kind, case["exercise"], measured) == case["targets"]

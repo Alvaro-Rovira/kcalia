@@ -26,11 +26,12 @@ function shift(values: DayTargetsValues, kcalDelta: number): DayTargetsValues {
   return { ...values, carbs, kcal: round(values.kcal + (carbs - values.carbs) * 4) }
 }
 
-export function targetsFor(base: DayTargetsValues, prefs: Partial<Prefs> | undefined, kind: DayKind | null, exerciseKcal = 0): DayTargetsValues {
+/** `measured`: el mantenimiento es el gasto real medido, que ya incluye los entrenos; no se suman otra vez. */
+export function targetsFor(base: DayTargetsValues, prefs: Partial<Prefs> | undefined, kind: DayKind | null, exerciseKcal = 0, measured = false): DayTargetsValues {
   let out: DayTargetsValues = { kcal: round(base.kcal), protein: round(base.protein), carbs: round(base.carbs), fat: round(base.fat) }
   if (kind === 'entreno') out = prefs?.training_targets ? { ...prefs.training_targets } : shift(out, prefs?.training_kcal_adjust ?? DEFAULT_TRAINING_ADJUST)
   else if (kind === 'descanso') out = prefs?.rest_targets ? { ...prefs.rest_targets } : shift(out, prefs?.rest_kcal_adjust ?? DEFAULT_REST_ADJUST)
-  if (prefs?.add_exercise_kcal && exerciseKcal > 0) out = shift(out, exerciseKcal)
+  if (prefs?.add_exercise_kcal && exerciseKcal > 0 && !measured) out = shift(out, exerciseKcal)
   return out
 }
 
