@@ -5,8 +5,8 @@ Si la sesión se para (límite del plan de Claude), retomar por la primera tarea
 
 - [x] Task 1: tabla — cargador y emparejado
 - [x] Task 2: datos (600 alimentos, extractos, recetas)
-- [ ] Task 3: canalización `refine.py`
-- [ ] Task 4: IA y rutas usan la tabla
+- [x] Task 3: canalización `refine.py`
+- [x] Task 4: IA y rutas usan la tabla
 - [ ] Task 5: sin IA, caché con origen, migración v4, búsqueda
 - [ ] Task 6: entrenos con kcal netas
 - [ ] Task 7: gasto real
