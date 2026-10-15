@@ -269,10 +269,14 @@ docs/       Decisiones, guía del atajo de iPhone, capturas
 
 - **Aislamiento entre cuentas.** Cada tabla con datos personales lleva su `user_id` y la sesión de base de datos filtra todas las consultas automáticamente por la cuenta que hace la petición. Si algún código intentara leer o escribir datos sin una cuenta asignada, falla en lugar de mezclar datos. Hay pruebas que crean dos cuentas y comprueban cada ruta de la API, y se verificó que fallan si se quita el filtro.
 - **Acceso.** Todas las rutas de la API exigen sesión y cuenta aprobada, salvo salud, inicio de sesión, registro, estado y cierre de sesión; una prueba recorre todas las rutas registradas para que una nueva no se quede abierta por descuido. `/admin` exige el rol de administrador, que solo se asigna en la migración inicial o con un script en el servidor.
-- **Registro y entrada.** Contraseñas con Argon2 (mínimo 10 caracteres, sin contener el usuario). Espera creciente tras fallos por IP y por usuario, misma respuesta y mismo tiempo exista o no la cuenta, límite de solicitudes por IP, campo trampa contra bots y un máximo de solicitudes pendientes.
+- **Registro y entrada.** Contraseñas con Argon2 (mínimo 10 caracteres, sin contener el usuario). Espera creciente tras fallos desde la misma conexión (bloqueo tras 5), misma respuesta y mismo tiempo exista o no la cuenta, límite de solicitudes por IP, campo trampa contra bots y un máximo de solicitudes pendientes. Un ataque repartido entre muchas IP contra un usuario solo frena unos minutos a conexiones nuevas: nadie puede dejarte fuera de tu cuenta desde la conexión que ya usas.
 - **Gasto controlado.** Topes de IA y de voz por cuenta, global y del administrador, interruptor para pausar la IA y precio estimado por día y por mes en `/admin`.
-- **Cabeceras**: CSP estricta, cookies `HttpOnly` + `Secure` + `SameSite`, comprobación de origen en las peticiones que cambian datos.
+- **Cabeceras**: CSP estricta, HSTS con subdominios, `X-Frame-Options`, `nosniff`, COOP y CORP `same-origin`, Permissions-Policy que apaga lo que la app no usa y sin cabecera `Server`. Cookies `HttpOnly` + `Secure` + `SameSite` y comprobación de origen en las peticiones que cambian datos.
+- **Entradas acotadas.** Peticiones de 1 MiB como mucho en JSON y 16 MiB en total (en Caddy y en la app). Las imágenes se aceptan solo si sus bytes son JPEG, PNG o WebP, y se sirven con el tipo detectado, no con el que dijo el navegador. Las notificaciones push solo se envían a los servicios reales (Google, Mozilla, Apple, Microsoft), nunca a direcciones internas. Las exportaciones CSV neutralizan las celdas que empiezan por `=`, `+`, `-` o `@`.
+- **Contenedor.** Usuario sin privilegios, sistema de archivos de solo lectura, sin capacidades de Linux, `no-new-privileges`, memoria limitada y el puerto solo escucha en `127.0.0.1` detrás de Caddy (TLS 1.2 y 1.3).
 - **Privacidad**: las fotos de progreso nunca van a la IA; el código de barras solo envía el número a Open Food Facts; las copias externas pueden ir cifradas con AES-256-GCM con una frase que solo tienes tú.
+
+Cómo avisar de un fallo de seguridad y qué se revisó: [SECURITY.md](SECURITY.md).
 
 ## Stack
 
