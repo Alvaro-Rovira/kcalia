@@ -62,6 +62,7 @@ parts = [
 	header {{
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		-Server
+		-Via
 	}}
 	reverse_proxy 127.0.0.1:{port}
 	log {{
