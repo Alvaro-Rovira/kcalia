@@ -38,6 +38,8 @@ fail2ban (2.259 intentos SSH fallidos en 24 h), `X11Forwarding no`, `MaxAuthTrie
 Todo en `deploy/harden-vps.sh`; la configuración de SSH se validó en la VPS sin aplicarla (`sshd -t -f` con una copia
 temporal). El Mac del usuario entra a la primera con `id_ed25519`, así que `MaxAuthTries 3` no le afecta. Todos los
 contenedores tienen `restart: always/unless-stopped` y Docker y Caddy están habilitados: el reinicio es seguro.
+Aplicado por el usuario el 2026-10-15: SSH endurecido, fail2ban activo (2 IP bloqueadas al momento) y reinicio
+con el kernel 6.8.0-147. Los 12 contenedores volvieron solos y sanos en 37 s.
 Falta activar el aviso privado de vulnerabilidades del repositorio (Settings → Security), al que apunta SECURITY.md.
 
 ## Pendiente después (pedido el 2026-10-15)
