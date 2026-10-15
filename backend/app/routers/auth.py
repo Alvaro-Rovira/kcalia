@@ -21,10 +21,13 @@ from ..security import (
     SESSION_COOKIE,
     hash_password,
     hash_token,
+    known_logins,
     login_throttle,
     new_session_token,
     password_problem,
     register_limit,
+    remember_login,
+    user_throttle,
     username_problem,
     verify_password,
 )
@@ -140,8 +143,13 @@ def register(body: RegisterIn, request: Request, response: Response, db: Session
 @router.post("/login")
 def login(body: LoginIn, request: Request, response: Response, db: Session = Depends(get_db)) -> dict:
     name = body.username.strip().lower()
-    keys = (f"ip:{_client_ip(request)}", f"user:{name}")
-    wait = max(login_throttle.retry_after(key) for key in keys)
+    ip = _client_ip(request)
+    keys = (f"ip:{ip}", f"pair:{ip}|{name}")
+    user_key = f"user:{name}"
+    waits = [login_throttle.retry_after(key) for key in keys]
+    if ip not in known_logins.get(name, ()):
+        waits.append(user_throttle.retry_after(user_key))
+    wait = max(waits)
     if wait:
         when = f"{max(1, round(wait / 60))} min" if wait >= 60 else f"{wait} s"
         raise HTTPException(429, f"Demasiados intentos fallidos. Espera unos {when} y vuelve a probar.")
@@ -150,9 +158,11 @@ def login(body: LoginIn, request: Request, response: Response, db: Session = Dep
     if user is None or not valid:
         for key in keys:
             login_throttle.fail(key)
+        user_throttle.fail(user_key)
         raise HTTPException(401, "Usuario o contraseña incorrectos.")
     for key in keys:
         login_throttle.reset(key)
+    remember_login(name, ip)
     start_session(db, response, user)
     return {"username": user.username, "status": user.status}
 

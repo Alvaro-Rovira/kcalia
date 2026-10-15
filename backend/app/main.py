@@ -47,9 +47,19 @@ SECURITY_HEADERS = {
     "Content-Security-Policy": CSP,
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin",
-    "Permissions-Policy": "camera=(self), microphone=(self), geolocation=()",
+    # Cámara (código de barras, etiquetas, fotos) y micrófono (voz) solo para la propia app; lo demás, apagado.
+    "Permissions-Policy": (
+        "camera=(self), microphone=(self), geolocation=(), payment=(), usb=(), serial=(), bluetooth=(), hid=(), "
+        "midi=(), magnetometer=(), gyroscope=(), accelerometer=(), display-capture=()"
+    ),
     "X-Frame-Options": "DENY",
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Resource-Policy": "same-origin",
+    "X-Permitted-Cross-Domain-Policies": "none",
 }
+# Tamaño máximo de una petición: el JSON de la app ocupa pocos kB; las subidas (fotos, audio, importar) van aparte.
+MAX_JSON_BYTES = 1024 * 1024
+MAX_BODY_BYTES = 16 * 1024 * 1024
 # Ficheros que no deben quedarse en caché: de ellos depende que llegue una versión nueva.
 NO_CACHE_FILES = {"index.html", "sw.js", "push-sw.js", "registerSW.js", "manifest.webmanifest"}
 
@@ -85,6 +95,14 @@ async def security(request: Request, call_next):
         origin = request.headers.get("origin")
         if origin and urlparse(origin).netloc != request.headers.get("host"):
             return JSONResponse({"detail": "Origen no permitido."}, status_code=403)
+        # Un cuerpo enorme se rechaza antes de leerlo (Caddy también lo limita, también sin Content-Length).
+        try:
+            length = int(request.headers.get("content-length") or 0)
+        except ValueError:
+            return JSONResponse({"detail": "Petición no válida."}, status_code=400)
+        is_json = request.headers.get("content-type", "").startswith("application/json")
+        if length > (MAX_JSON_BYTES if is_json else MAX_BODY_BYTES):
+            return JSONResponse({"detail": "Lo que intentas enviar es demasiado grande."}, status_code=413)
     response = await call_next(request)
     for header, value in SECURITY_HEADERS.items():
         response.headers.setdefault(header, value)

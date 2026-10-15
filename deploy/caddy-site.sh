@@ -55,7 +55,14 @@ parts = [
     "# BEGIN kcalia (gestionado por deploy/caddy-site.sh)",
     f"""{domain} {{
 	encode zstd gzip
-	header Strict-Transport-Security "max-age=31536000"
+	# Cuerpo máximo de una petición (fotos de 6 MB, audio de 12 MB): uno enorme no llega a la app.
+	request_body {{
+		max_size 16MB
+	}}
+	header {{
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}}
 	reverse_proxy 127.0.0.1:{port}
 	log {{
 		output file /var/log/caddy/kcalia.log

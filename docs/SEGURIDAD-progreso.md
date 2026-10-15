@@ -33,3 +33,8 @@ VPS: SSH solo con clave, ufw con 22/80/443, actualizaciones automáticas.
 
 ## Recomendaciones para la VPS (las aplica el usuario)
 fail2ban (2.259 intentos SSH fallidos en 24 h), `X11Forwarding no`, `MaxAuthTries 3`, reiniciar (kernel pendiente).
+
+## Pendiente después (pedido el 2026-10-15)
+Revisar el objetivo calórico: con 1,67 m, 65 kg y 19 años sale ≈ 2.630 kcal los días de entreno y al usuario le
+parece alto. Comprobar si la fórmula, el factor de actividad y el ajuste de entreno se suman de más y darle una
+respuesta con solución.

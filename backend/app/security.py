@@ -92,8 +92,24 @@ class RateLimit:
         return True
 
 
+# Login: por conexión (IP) y por conexión + usuario, estrictos. Por usuario solo hay un freno suave y corto, y no se
+# aplica desde las conexiones con las que esa cuenta ya entró: así nadie puede dejar al dueño fuera de su cuenta
+# fallando a propósito con su nombre desde muchas IP, y un ataque repartido sigue yendo muy despacio.
 login_throttle = Throttle()
+user_throttle = Throttle(free=20, base=15, cap=300)
+known_logins: dict[str, set[str]] = {}
+MAX_KNOWN_PER_USER = 20
 register_limit = RateLimit(limit=5, window=3600)
+
+
+def remember_login(username: str, ip: str) -> None:
+    ips = known_logins.setdefault(username, set())
+    if len(ips) >= MAX_KNOWN_PER_USER:
+        ips.pop()
+    ips.add(ip)
+    if len(known_logins) > 10000:
+        known_logins.pop(next(iter(known_logins)))
+
 
 USERNAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{2,31}$")
 MIN_PASSWORD = 10
@@ -140,3 +156,14 @@ def password_problem(username: str, password: str) -> str | None:
 # Hash de una contraseña cualquiera: se verifica contra él cuando el usuario no existe, para que la respuesta
 # tarde lo mismo exista o no (sin pistas por el tiempo de respuesta).
 DUMMY_HASH = _hasher.hash("kcalia-usuario-inexistente")
+
+
+# Firmas de los formatos de imagen admitidos: el tipo se decide por el contenido, no por lo que diga el navegador.
+def sniff_image(data: bytes) -> str | None:
+    if data.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    return None

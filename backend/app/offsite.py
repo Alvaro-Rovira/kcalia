@@ -153,7 +153,7 @@ class Remote:
         return self.http.request(method, url, content=body or None, headers=signed)
 
     def put(self, key: str, body: bytes, sha256: str) -> None:
-        md5 = base64.b64encode(hashlib.md5(body).digest()).decode()  # noqa: S324 (lo exige S3 para Content-MD5)
+        md5 = base64.b64encode(hashlib.md5(body, usedforsecurity=False).digest()).decode()  # noqa: S324 (lo exige S3 para Content-MD5)
         response = self._request(
             "PUT",
             key,

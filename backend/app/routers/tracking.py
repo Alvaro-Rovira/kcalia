@@ -11,6 +11,7 @@ from ..db import get_db
 from ..deps import require_approved_user
 from ..models import MEASURES, BodyMeasurement, DayType, ProgressPhoto, WaterLog
 from ..schemas import DayTypeIn, MeasurementIn, PrefsPatch, WaterIn
+from ..security import sniff_image
 
 router = APIRouter(prefix="/api", tags=["seguimiento"], dependencies=[Depends(require_approved_user)])
 
@@ -163,6 +164,9 @@ def upload_photo(
         raise HTTPException(413, "La foto pesa demasiado.")
     if not data:
         raise HTTPException(422, "La foto está vacía.")
+    mime = sniff_image(data)  # el tipo lo deciden los bytes, no lo que diga el navegador
+    if mime is None:
+        raise HTTPException(415, "Ese archivo no es una imagen JPG, PNG o WebP.")
     row = ProgressPhoto(client_id=client_id, date=_iso(date), mime=mime, size=len(data), data=data)
     db.add(row)
     db.commit()

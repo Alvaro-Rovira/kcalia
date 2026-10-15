@@ -100,6 +100,24 @@ class SendResult:
     gone: bool
 
 
+# Servicios de push de los navegadores. Solo se envía a ellos: el endpoint lo elige el navegador del usuario y, sin esta
+# lista, alguien con cuenta podría hacer que el servidor llamara a direcciones internas (SSRF).
+PUSH_HOSTS = frozenset({"fcm.googleapis.com", "android.googleapis.com", "updates.push.services.mozilla.com"})
+PUSH_HOST_SUFFIXES = (".push.apple.com", ".notify.windows.com")
+
+
+def push_endpoint_allowed(endpoint: str) -> bool:
+    try:
+        url = urlparse(endpoint)
+        port = url.port
+    except ValueError:
+        return False
+    host = (url.hostname or "").lower()
+    if url.scheme != "https" or url.username or url.password or port not in (None, 443) or not host:
+        return False
+    return host in PUSH_HOSTS or host.endswith(PUSH_HOST_SUFFIXES)
+
+
 def send(
     endpoint: str,
     p256dh: str,
@@ -112,6 +130,8 @@ def send(
     http: httpx.Client,
     ttl: int = 6 * 3600,
 ) -> SendResult:
+    if not push_endpoint_allowed(endpoint):
+        return SendResult(ok=False, status=0, gone=True)  # suscripción anterior a la lista: se borra
     body = encrypt(json.dumps(payload, ensure_ascii=False).encode(), b64url_decode(p256dh), b64url_decode(auth))
     headers = {
         "TTL": str(ttl),

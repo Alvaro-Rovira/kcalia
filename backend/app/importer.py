@@ -223,7 +223,9 @@ def prepare(parsed: Parsed, mapping: dict[str, str | None], month_first: bool = 
         fingerprint = f"{row.date}|{row.slot}|{normalize(row.name)}|{row.kcal}|{row.protein}|{row.carbs}|{row.fat}"
         seen[fingerprint] = seen.get(fingerprint, 0) + 1
         # Filas idénticas del mismo fichero son comidas distintas (dos cafés): la repetición entra en la huella.
-        row.client_id = "imp-" + hashlib.sha1(f"{fingerprint}|{seen[fingerprint]}".encode()).hexdigest()[:30]  # noqa: S324
+        row.client_id = (
+            "imp-" + hashlib.sha1(f"{fingerprint}|{seen[fingerprint]}".encode(), usedforsecurity=False).hexdigest()[:30]
+        )  # noqa: S324
         out.rows.append(row)
     return out
 
