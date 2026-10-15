@@ -15,7 +15,7 @@ from ..db import get_db
 from ..deps import get_ai_client, require_approved_user, require_user
 from ..models import Product, ProductImage, User, utcnow
 from ..schemas import ProductIn, ProductPatch
-from ..security import RateLimit
+from ..security import RateLimit, sniff_image
 from ..usage import check_ai_budget, run_ai
 
 router = APIRouter(prefix="/api/products", tags=["productos"], dependencies=[Depends(require_approved_user)])
@@ -57,7 +57,10 @@ def _read_image(upload: UploadFile) -> tuple[bytes, str]:
         raise HTTPException(413, "La foto pesa demasiado. Prueba con una más pequeña.")
     if not data:
         raise HTTPException(422, "La foto está vacía.")
-    return data, mime
+    detected = sniff_image(data)  # el tipo lo deciden los bytes, no lo que diga el navegador
+    if detected is None:
+        raise HTTPException(415, "Ese archivo no es una imagen JPG, PNG o WebP.")
+    return data, detected
 
 
 def _get(db: Session, product_id: int) -> Product:

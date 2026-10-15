@@ -13,6 +13,7 @@ from ..matching import extras, totals
 from ..models import Dish, DishAlias, Meal, User, utcnow
 from ..products import resolve_text
 from ..schemas import DishPatch, MealIn, MealPatch, ResolveIn
+from ..security import sniff_image
 from ..textnorm import normalize
 from ..usage import check_ai_budget, check_stt_budget, run_ai
 
@@ -155,6 +156,9 @@ def analyze_photo(
     data = image.file.read(MAX_IMAGE_BYTES + 1)
     if len(data) > MAX_IMAGE_BYTES:
         raise HTTPException(413, "La foto pesa demasiado. Prueba con una más pequeña.")
+    mime = sniff_image(data)  # el tipo lo deciden los bytes, no lo que diga el navegador
+    if mime is None:
+        raise HTTPException(415, "Ese archivo no es una imagen JPG, PNG o WebP.")
     check_ai_budget(db, user)
     meal = run_ai(db, "vision", lambda: ai.analyze_photo(data, mime, note))
     if not meal.items:

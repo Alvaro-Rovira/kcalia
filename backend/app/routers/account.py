@@ -29,6 +29,29 @@ from ..models import (
 from ..schemas import PasswordConfirm
 from ..security import SESSION_COOKIE, verify_password
 
+# Una celda de texto que empieza por = + - @ (o tabulador/retorno) la ejecuta Excel o LibreOffice como fórmula al
+# abrir el CSV; con un apóstrofo delante se muestra tal cual. Los números se escriben como números.
+FORMULA_START = ("=", "+", "-", "@", "\t", "\r")
+
+
+def csv_safe(value):
+    if isinstance(value, str) and value.startswith(FORMULA_START):
+        return "'" + value
+    return value
+
+
+class SafeCsvWriter:
+    def __init__(self, out: io.StringIO):
+        self._writer = csv.writer(out, delimiter=";")
+
+    def writerow(self, row) -> None:
+        self._writer.writerow([csv_safe(cell) for cell in row])
+
+    def writerows(self, rows) -> None:
+        for row in rows:
+            self.writerow(row)
+
+
 router = APIRouter(prefix="/api", tags=["cuenta"], dependencies=[Depends(require_approved_user)])
 
 
@@ -119,7 +142,7 @@ def _es(number: float) -> str:
 @router.get("/export/meals.csv")
 def export_meals_csv(db: Session = Depends(get_db)) -> Response:
     out = io.StringIO()
-    writer = csv.writer(out, delimiter=";")
+    writer = SafeCsvWriter(out)
     writer.writerow(
         [
             "fecha",
@@ -161,7 +184,7 @@ def export_meals_csv(db: Session = Depends(get_db)) -> Response:
 @router.get("/export/weights.csv")
 def export_weights_csv(db: Session = Depends(get_db)) -> Response:
     out = io.StringIO()
-    writer = csv.writer(out, delimiter=";")
+    writer = SafeCsvWriter(out)
     writer.writerow(["fecha", "peso_kg"])
     for weight in db.scalars(select(Weight).order_by(Weight.date)):
         writer.writerow([weight.date, f"{weight.kg:.2f}".replace(".", ",")])
@@ -171,7 +194,7 @@ def export_weights_csv(db: Session = Depends(get_db)) -> Response:
 @router.get("/export/water.csv")
 def export_water_csv(db: Session = Depends(get_db)) -> Response:
     out = io.StringIO()
-    writer = csv.writer(out, delimiter=";")
+    writer = SafeCsvWriter(out)
     writer.writerow(["fecha", "agua_ml"])
     rows = db.execute(select(WaterLog.date, func.sum(WaterLog.ml)).group_by(WaterLog.date).order_by(WaterLog.date))
     for day, ml in rows:
@@ -182,7 +205,7 @@ def export_water_csv(db: Session = Depends(get_db)) -> Response:
 @router.get("/export/measurements.csv")
 def export_measurements_csv(db: Session = Depends(get_db)) -> Response:
     out = io.StringIO()
-    writer = csv.writer(out, delimiter=";")
+    writer = SafeCsvWriter(out)
     writer.writerow(["fecha", "cintura_cm", "pecho_cm", "brazo_cm", "cadera_cm", "muslo_cm"])
     for row in db.scalars(select(BodyMeasurement).order_by(BodyMeasurement.date)):
         writer.writerow([row.date, *("" if getattr(row, m) is None else _es(getattr(row, m)) for m in MEASURES)])
@@ -192,7 +215,7 @@ def export_measurements_csv(db: Session = Depends(get_db)) -> Response:
 @router.get("/export/workouts.csv")
 def export_workouts_csv(db: Session = Depends(get_db)) -> Response:
     out = io.StringIO()
-    writer = csv.writer(out, delimiter=";")
+    writer = SafeCsvWriter(out)
     writer.writerow(["fecha", "entreno", "ejercicio", "serie", "repeticiones", "peso_kg", "rpe", "duracion_min"])
     rows = db.execute(
         select(Workout.date, Workout.name, Exercise.name, WorkoutSet.position, WorkoutSet.reps, WorkoutSet.weight)

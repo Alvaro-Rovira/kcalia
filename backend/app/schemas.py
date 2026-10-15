@@ -257,6 +257,15 @@ class PushSubscriptionIn(BaseModel):
     endpoint: str = Field(min_length=10, max_length=800, pattern=r"^https://")
     keys: dict[str, str]
 
+    @field_validator("endpoint")
+    @classmethod
+    def _push_service(cls, value: str) -> str:
+        from .webpush import push_endpoint_allowed
+
+        if not push_endpoint_allowed(value):
+            raise ValueError("no es un servicio de notificaciones conocido")
+        return value
+
     @model_validator(mode="after")
     def _keys(self):
         if not self.keys.get("p256dh") or not self.keys.get("auth"):

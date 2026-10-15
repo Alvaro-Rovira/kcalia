@@ -82,7 +82,8 @@ def test_sin_claves_vapid_no_hay_notificaciones(client):
         assert client.get("/api/push").json()["configured"] is False
         assert (
             client.post(
-                "/api/push/subscribe", json={"endpoint": "https://push.example/a", "keys": browser_keys()}
+                "/api/push/subscribe",
+                json={"endpoint": "https://updates.push.services.mozilla.com/a", "keys": browser_keys()},
             ).status_code
             == 503
         )
@@ -93,7 +94,7 @@ def test_sin_claves_vapid_no_hay_notificaciones(client):
 def test_suscribirse_y_notificacion_de_prueba(client, service):
     status = client.get("/api/push").json()
     assert status["configured"] is True and status["public_key"] == get_settings().vapid_public_key
-    assert subscribe(client, "https://push.example/wpush/ana-movil")["devices"] == 1
+    assert subscribe(client, "https://updates.push.services.mozilla.com/wpush/ana-movil")["devices"] == 1
     assert client.post("/api/push/test").json() == {"sent": 1}
     request = service.requests[-1]
     assert request.headers["content-encoding"] == "aes128gcm" and int(request.headers["ttl"]) > 0
@@ -105,22 +106,22 @@ def test_suscribirse_y_notificacion_de_prueba(client, service):
 
 
 def test_las_suscripciones_caducadas_se_borran(client, service):
-    subscribe(client, "https://push.example/wpush/ana-movil")
-    subscribe(client, "https://push.example/wpush/caducada")
+    subscribe(client, "https://updates.push.services.mozilla.com/wpush/ana-movil")
+    subscribe(client, "https://updates.push.services.mozilla.com/wpush/caducada")
     assert client.post("/api/push/test").json() == {"sent": 1}
     assert client.get("/api/push").json()["devices"] == 1
 
 
 def test_el_mismo_navegador_pasa_a_la_cuenta_que_se_suscribe(client):
-    subscribe(client, "https://push.example/wpush/compartido")
+    subscribe(client, "https://updates.push.services.mozilla.com/wpush/compartido")
     login(client, "alvaro")
-    subscribe(client, "https://push.example/wpush/compartido")
+    subscribe(client, "https://updates.push.services.mozilla.com/wpush/compartido")
     login(client, "ana")
     assert client.get("/api/push").json()["devices"] == 0
 
 
 def test_recordatorio_de_comida_solo_si_falta_y_una_vez(client, service):
-    subscribe(client, "https://push.example/wpush/ana-movil")
+    subscribe(client, "https://updates.push.services.mozilla.com/wpush/ana-movil")
     assert reminders.run(NOW) == 0  # recordatorios apagados por defecto
     client.patch("/api/prefs", json={"reminders": True})
     assert reminders.run(NOW) == 1  # comida a las 16:00, dentro de la franja
@@ -143,7 +144,7 @@ def test_recordatorio_de_comida_solo_si_falta_y_una_vez(client, service):
 
 
 def test_recordatorio_de_peso(client, service):
-    subscribe(client, "https://push.example/wpush/ana-movil")
+    subscribe(client, "https://updates.push.services.mozilla.com/wpush/ana-movil")
     client.patch("/api/prefs", json={"reminders": True, "weigh_reminder": "08:30", "weigh_days": [2]})
     morning = NOW.replace(hour=8, minute=40)
     assert reminders.run(morning) == 1
@@ -153,9 +154,9 @@ def test_recordatorio_de_peso(client, service):
 
 def test_aviso_al_admin_de_una_solicitud_nueva(client, service):
     login(client, "alvaro")
-    subscribe(client, "https://push.example/wpush/admin")
+    subscribe(client, "https://updates.push.services.mozilla.com/wpush/admin")
     client.cookies.clear()
     before = len(service.requests)
     client.post("/api/auth/register", json={"username": "lucia", "password": PASSWORD})
     assert len(service.requests) == before + 1
-    assert str(service.requests[-1].url) == "https://push.example/wpush/admin"
+    assert str(service.requests[-1].url) == "https://updates.push.services.mozilla.com/wpush/admin"
