@@ -36,7 +36,11 @@ destructivas contra producción (TLS 1.0/1.1 rechazados, cabeceras, rutas oculta
 
 ## Si la instalas en tu VPS
 
-- SSH solo con clave (`PasswordAuthentication no`), `MaxAuthTries 3`, `X11Forwarding no`.
+- `deploy/harden-vps.sh` (Ubuntu 24.04): SSH solo con clave, `MaxAuthTries 3`, `LoginGraceTime 30`,
+  `X11Forwarding no` en un fichero propio que se valida con `sshd -t` antes de recargar, y `fail2ban` para SSH
+  (1 h de bloqueo tras 5 fallos, que crece si reincide). No toca Docker, Caddy, el cortafuegos ni otros proyectos.
+  Antes de cerrar la sesión, comprueba en otra terminal que entras.
 - Cortafuegos con solo 22, 80 y 443 abiertos; el contenedor publica su puerto en `127.0.0.1`.
-- `fail2ban` para SSH y actualizaciones automáticas (`unattended-upgrades`), reiniciando cuando lo pida el kernel.
+- Actualizaciones automáticas (`unattended-upgrades`) y reiniciar cuando lo pida el kernel: los contenedores
+  vuelven solos (`restart: unless-stopped`).
 - Copias fuera del servidor cifradas con frase (ver README).

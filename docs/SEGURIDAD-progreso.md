@@ -9,7 +9,9 @@ Encargo: reforzar la seguridad de Kcalia («prácticamente injaqueable»). El us
 - [x] 2. Dependencias (pip-audit, npm audit) y análisis estático (bandit).
 - [x] 3. Contenedores y Caddy: usuario no root, capacidades, cabeceras (CSP, HSTS, etc.), TLS.
 - [x] 4. Pruebas no destructivas contra producción desde fuera.
-- [ ] 5. Arreglos con TDD, despliegue, `SECURITY.md` y sección en el README.
+- [x] 5. Arreglos con TDD, despliegue, `SECURITY.md` y sección en el README. Desplegado el 2026-10-15 (5966c8f y
+      siguientes); comprobado en producción: sin `Server` ni `Via`, cabeceras nuevas, 413 en Caddy (20 MB) y en la
+      app (JSON de 2 MB), resto de contenedores intactos.
 
 ## Ya estaba bien
 Argon2, sesión con token aleatorio guardado como hash y cookie HttpOnly/Secure/SameSite=Lax, comprobación de Origin en
@@ -33,6 +35,10 @@ VPS: SSH solo con clave, ufw con 22/80/443, actualizaciones automáticas.
 
 ## Recomendaciones para la VPS (las aplica el usuario)
 fail2ban (2.259 intentos SSH fallidos en 24 h), `X11Forwarding no`, `MaxAuthTries 3`, reiniciar (kernel pendiente).
+Todo en `deploy/harden-vps.sh`; la configuración de SSH se validó en la VPS sin aplicarla (`sshd -t -f` con una copia
+temporal). El Mac del usuario entra a la primera con `id_ed25519`, así que `MaxAuthTries 3` no le afecta. Todos los
+contenedores tienen `restart: always/unless-stopped` y Docker y Caddy están habilitados: el reinicio es seguro.
+Falta activar el aviso privado de vulnerabilidades del repositorio (Settings → Security), al que apunta SECURITY.md.
 
 ## Pendiente después (pedido el 2026-10-15)
 Revisar el objetivo calórico: con 1,67 m, 65 kg y 19 años sale ≈ 2.630 kcal los días de entreno y al usuario le
