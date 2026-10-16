@@ -272,6 +272,7 @@ def import_kcalia(db, data: dict) -> dict[str, int]:
         MealPlan,
         Product,
         Profile,
+        ShoppingCheck,
         Targets,
         UserPrefs,
         WaterLog,
@@ -536,6 +537,15 @@ def import_kcalia(db, data: dict) -> dict[str, int]:
             )
             plans.add(cid)
             bump("plan")
+
+    checks = {(c.week_start, c.key) for c in db.scalars(select(ShoppingCheck))}
+    for check in data.get("shopping_checks", []):
+        week = parse_date(str(check.get("week_start")))
+        key = str(check.get("key") or "").strip()[:160]
+        if week and key and (week, key) not in checks:
+            db.add(ShoppingCheck(week_start=week, key=key, checked=bool(check.get("checked", True))))
+            checks.add((week, key))
+            bump("lista de la compra")
 
     db.commit()
     return counts

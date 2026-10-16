@@ -116,6 +116,7 @@ def test_json_de_kcalia_a_otra_cuenta_sin_duplicar(client):
     client.post("/api/water", json={"client_id": "agua-imp-01", "date": "2026-09-02", "ml": 500})
     client.put("/api/measurements", json={"date": "2026-09-02", "waist": 70})
     client.get("/api/training")
+    client.put("/api/plan/checks", json={"week_start": "2026-09-28", "key": "lenteja", "checked": True})
     exported = client.get("/api/export/json").content
 
     login(client, "beto")
@@ -124,6 +125,7 @@ def test_json_de_kcalia_a_otra_cuenta_sin_duplicar(client):
     ]
     assert result["comidas"] == 4 and result["pesos"] >= 1 and result["agua"] == 1 and result["medidas"] == 1
     assert result["perfil"] == 1 and result["objetivos"] == 1 and result["ejercicios"] >= 40
+    assert result["lista de la compra"] == 1  # antes se perdían las marcas de la lista de la compra
     again = client.post("/api/import/json", files={"file": ("kcalia.json", exported, "application/json")}).json()[
         "created"
     ]

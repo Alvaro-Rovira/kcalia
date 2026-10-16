@@ -163,9 +163,11 @@ export async function flush(): Promise<void> {
         synced.add(op.type)
       } catch (error) {
         const apiError = error instanceof ApiError ? error : new ApiError('', 0)
-        // Sin red, sesión caducada, cuenta sin aprobar o servidor caído: se queda en cola y se reintenta.
+        // Sin red, sesión caducada, cuenta sin aprobar, demasiadas peticiones, tiempo agotado o servidor caído: es
+        // pasajero, así que se queda en cola y se reintenta (descartarlo perdería el cambio).
         const accountBlocked = apiError.status === 403 && !!apiError.code?.startsWith('account_')
-        if (apiError.offline || apiError.status === 401 || accountBlocked || apiError.status >= 500) break
+        const transient = [401, 408, 429].includes(apiError.status) || apiError.status >= 500
+        if (apiError.offline || accountBlocked || transient) break
         // El servidor lo rechaza de forma definitiva: no tiene sentido insistir.
         onRejected(op, apiError)
         synced.add(op.type)
