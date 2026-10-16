@@ -45,6 +45,8 @@ def servers():
         "BACKUP_DIR": str(data / "backups"),
         "STATIC_DIR": str(DIST),
         "COOKIE_SECURE": "false",
+        "AI_MODEL": "modelo-de-prueba",
+        "AI_EFFORT": "",
         "AI_BASE_URL": f"http://127.0.0.1:{ai_port}/v1",
         "AI_API_KEY": "fake",
         "STT_BASE_URL": f"http://127.0.0.1:{ai_port}/v1",

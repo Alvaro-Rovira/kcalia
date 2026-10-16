@@ -33,9 +33,11 @@ class Settings(BaseSettings):
     gzip: bool = False
     cookie_secure: bool = True
 
-    ai_base_url: str = "https://api.moonshot.ai/v1"
+    # Modelo de IA. Los «claude-...» van por el SDK de Anthropic; cualquier otro, por un proveedor compatible con
+    # OpenAI en AI_BASE_URL con la clave AI_API_KEY.
+    ai_model: str = "claude-haiku-5-5"
+    ai_base_url: str = ""
     ai_api_key: str = ""
-    ai_model: str = "kimi-k2.6"
     # Fotos: vacío = se usa el mismo modelo, proveedor y clave que para el texto. Rellenar solo
     # si prefieres otro modelo (o incluso otro proveedor compatible con OpenAI) para las imágenes.
     ai_vision_model: str = ""
@@ -43,8 +45,9 @@ class Settings(BaseSettings):
     ai_vision_api_key: str = ""
     # Claude (SDK oficial de Anthropic): se usa cuando AI_MODEL o AI_VISION_MODEL empiezan por «claude-».
     anthropic_api_key: str = ""
-    # Razonamiento de Claude: vacío = desactivado (lo más rápido, como Kimi); low, medium o high = adaptativo.
-    ai_effort: str = ""
+    # Razonamiento de Claude: vacío = desactivado (lo más rápido); low, medium o high = adaptativo. Con low las fotos
+    # salen bastante mejor (app.bench_photos) y el texto igual.
+    ai_effort: str = "low"
     # Tope GLOBAL de consultas de IA al día entre todos los usuarios (texto y foto).
     ai_daily_limit: int = 60
     # Tope por usuario; el admin puede cambiarlo a cada uno desde el panel.
@@ -53,8 +56,8 @@ class Settings(BaseSettings):
     admin_ai_daily_limit: int = 0
     ai_timeout: float = 45.0
     # Precios por millón de tokens, solo para estimar el coste en el panel de administración.
-    ai_price_input: float = 0.95
-    ai_price_output: float = 4.00
+    ai_price_input: float = 0.10
+    ai_price_output: float = 0.50
 
     stt_base_url: str = "http://stt:8000/v1"
     stt_api_key: str = ""

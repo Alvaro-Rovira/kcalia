@@ -16,7 +16,7 @@ Si la sesión se para (límite del plan de Claude), retomar por la primera tarea
 Ficheros de trabajo fuera del repo (se pueden volver a descargar): Excel de CIQUAL 2025 en
 `https://ciqual.anses.fr/cms/sites/default/files/inline-files/Table%20Ciqual%202025_FR_2025_11_03.xlsx`.
 
-Después del despliegue (pedido por el usuario el 2026-10-14): analizar Kimi K2.6 frente a Haiku 5.5 para analizar
+Después del despliegue (pedido por el usuario el 2026-10-14): comparar el modelo de IA de entonces con Haiku 5.5 para analizar
 comidas y darle un veredicto de cuál calculará mejor las kcal (con la canalización nueva, la IA solo identifica y
 pesa). Usar la skill claude-api para datos de Haiku 5.5; medir con `bench.py` si hay clave de Anthropic.
 
@@ -38,4 +38,4 @@ ambiguas 8/10, 2.600 tokens de entrada y 147 de salida por comida, mediana 4,2 s
 3. Task 9: README («Cómo calcula las calorías» + atribución CIQUAL/USDA), docs/DECISIONES.md, merge a main, push,
    `deploy/deploy.sh` (copia previa, migración v4), comprobar `PRAGMA user_version = 4`, y medir «después»:
    `docker compose exec app python -m app.bench --rpm 3 --price-in 0.95 --price-out 4.00`.
-4. Comparativa Kimi K2.6 frente a Haiku 5.5 (pedida por el usuario).
+4. Comparativa del modelo de IA con Haiku 5.5 (pedida por el usuario): se eligió Haiku 5.5.

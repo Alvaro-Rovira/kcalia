@@ -8,7 +8,11 @@ os.environ.update(
     BACKUP_DIR=os.path.join(_TMP, "backups"),
     STATIC_DIR=os.path.join(_TMP, "static"),
     COOKIE_SECURE="false",
+    # Las pruebas de la API usan un proveedor compatible con OpenAI simulado; Claude se prueba en test_claude.
+    AI_MODEL="modelo-de-prueba",
+    AI_BASE_URL="https://ia.test/v1",
     AI_API_KEY="test-key",
+    AI_EFFORT="",
     AI_DAILY_LIMIT="5",
 )
 

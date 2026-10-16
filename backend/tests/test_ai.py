@@ -343,7 +343,7 @@ def test_fibra_o_alcohol_imposibles_se_rechazan(bad):
         parse_meal(_meal(_item(**bad)))
 
 
-def test_kimi_recibe_el_prompt_de_sistema_primero_y_un_reintento_si_el_json_no_vale():
+def test_proveedor_compatible_recibe_el_sistema_primero_y_un_reintento_si_el_json_no_vale():
     import httpx
 
     from app.ai import SYSTEM_PROMPT, AiClient
@@ -358,7 +358,7 @@ def test_kimi_recibe_el_prompt_de_sistema_primero_y_un_reintento_si_el_json_no_v
         usage = {"prompt_tokens": 100, "completion_tokens": 10}
         return httpx.Response(200, json={"choices": [{"message": {"content": content}}], "usage": usage})
 
-    settings = Settings(_env_file=None, ai_api_key="k", ai_model="kimi-k2.6")
+    settings = Settings(_env_file=None, ai_api_key="k", ai_model="modelo-compatible", ai_base_url="https://ia.test/v1")
     client = AiClient(settings, http=httpx.Client(transport=httpx.MockTransport(handler)))
     meal, usage = client.analyze_text("un yogur")
     assert meal.items[0].grams == 125 and usage == {"calls": 2, "prompt_tokens": 200, "completion_tokens": 20}
@@ -367,6 +367,6 @@ def test_kimi_recibe_el_prompt_de_sistema_primero_y_un_reintento_si_el_json_no_v
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": "Comida: un yogur"},
     ]
-    assert first["response_format"] == {"type": "json_object"} and first["thinking"] == {"type": "disabled"}
+    assert first["response_format"] == {"type": "json_object"} and first["temperature"] == 0.1
     assert [m["role"] for m in retry["messages"]] == ["system", "user", "assistant", "user"]
     assert "no cumple el esquema" in retry["messages"][-1]["content"]

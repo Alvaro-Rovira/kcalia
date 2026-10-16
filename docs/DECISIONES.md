@@ -25,7 +25,7 @@ Decisiones tomadas sin poder preguntar, con el motivo. La más reciente, abajo.
    se aplica a los datos del diario.
 9. **Bloquear no cierra la sesión**: la siguiente petición ya responde 403 y la persona ve «Tu cuenta está
    bloqueada» en lugar de un login sin explicación. Para echarla del todo está «Cerrar sesiones».
-10. **Precios del panel en dólares** (los de Moonshot): `AI_PRICE_INPUT`/`AI_PRICE_OUTPUT` por millón de tokens y
+10. **Precios del panel en dólares** (los del proveedor): `AI_PRICE_INPUT`/`AI_PRICE_OUTPUT` por millón de tokens y
     `STT_PRICE_PER_CALL` (0 con el Whisper propio). Es una estimación, no la factura.
 11. **Escáner.** `BarcodeDetector` nativo (Android) y, si no existe (Safari en iPhone), `zxing-wasm` cargado bajo
     demanda desde el propio servidor (≈ 420 KB gzip, fuera de la precarga; se guarda en caché la primera vez). La CSP

@@ -143,8 +143,7 @@ def test_primera_vez_llama_a_la_ia(client, fake_ai):
     assert [i["source"] for i in r["draft"]["items"]] == ["tabla", "tabla"]
     assert r["draft"]["official_share"] == 1
     body = fake_ai.bodies[-1]
-    assert body["model"] == "kimi-k2.6"
-    assert body["thinking"] == {"type": "disabled"} and "temperature" not in body
+    assert body["model"] == "modelo-de-prueba" and body["temperature"] == 0.1
     assert body["response_format"] == {"type": "json_object"}
     created = client.post("/api/meals", json=meal_body(r["draft"], "cid-0000001"))
     assert created.status_code == 201

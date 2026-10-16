@@ -3,7 +3,7 @@
     python3 -I scripts/fetch_nutrition5k.py /root/n5k          # muestra fija de 20 platos
     docker compose run --rm --no-deps -T -v /root/n5k:/n5k:ro app \\
         python -m app.bench_photos /n5k --model claude-haiku-5-5 --price-in 0.10 --price-out 0.50
-    ... --model kimi-k2.6 --rpm 3 --price-in 0.95 --price-out 4.00
+    ... --effort ""        # sin razonamiento; --rpm N si la cuenta limita las peticiones por minuto
 
 Cada foto pasa por lo mismo que en la app (la IA identifica y pesa; refine() pone los valores de la tabla y el aceite)
 y se compara con la báscula: error de calorías, de peso total y de macros, latencia y tokens.
@@ -100,7 +100,7 @@ def run(folder: Path, model: str, effort: str | None, rpm: float | None, passes:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("folder", type=Path, help="Carpeta creada por scripts/fetch_nutrition5k.py")
-    parser.add_argument("--model", required=True, help="Modelo de fotos a probar (kimi-k2.6, claude-haiku-5-5...)")
+    parser.add_argument("--model", required=True, help="Modelo de fotos a probar (claude-haiku-5-5...)")
     parser.add_argument("--effort", help="Solo Claude: low, medium o high activa el razonamiento")
     parser.add_argument("--rpm", type=float, help="Peticiones por minuto que permite tu cuenta")
     parser.add_argument("--passes", type=int, default=1, help="Pasadas por la muestra (las respuestas varían)")

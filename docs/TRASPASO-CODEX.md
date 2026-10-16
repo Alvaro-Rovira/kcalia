@@ -36,9 +36,9 @@ Kcalia es una PWA de calorías y macros: https://kcalia.space · repo `Alvaro-Ro
   - `AI_EFFORT=low`: mejor en fotos y sin coste en texto;
   - `AI_PRICE_INPUT=0.10` y `AI_PRICE_OUTPUT=0.50`.
 
-  La clave de Kimi (`AI_API_KEY`) sigue en el `.env` por si se vuelve atrás. Copia previa del fichero:
-  `/root/kcalia-env-antes-haiku.bak`. Volver a Kimi: `AI_MODEL=kimi-k2.6`, `AI_EFFORT=`, precios 0.95/4.00 y
-  `docker compose up -d app`.
+  El proveedor anterior se retiró del todo el 2026-10-16 a petición del usuario: su clave se borró del `.env` y de la
+  copia de seguridad, y su nombre se quitó del código, la configuración y la documentación. Solo queda Claude, más la
+  ruta genérica para proveedores compatibles con OpenAI (sin uso).
 - **CI** (GitHub Actions, 4 trabajos): verde en el último commit comprobado (`32319a8`). Las suites locales pasan:
   - pytest: 681;
   - vitest: 200;
@@ -103,49 +103,26 @@ Hubo cuatro causas, todas arregladas:
   - Los errores del SDK se traducen a los `AiError` de siempre.
 - **Configuración:** `ANTHROPIC_API_KEY` y `AI_EFFORT` en `config.py` y `.env.example`.
 - **Tests:** `backend/tests/test_claude.py`.
-- **Banco de texto** (`python -m app.bench`, 40 comidas, dos pasadas por modelo):
-
-  | | Kimi K2.6 | Haiku 5.5 (sin razonamiento) |
-  |---|---|---|
-  | Error medio de kcal | 0,2 % / 2,8 % | 4,7 % / 0,7 % |
-  | Dentro de ±12 % | 30/30 y 28/30 | 29/30 y 30/30 |
-  | Ambiguas en rango | 8/10 y 10/10 | 8/10 y 8/10 |
-  | Latencia mediana | ~4 s | 1,7 s |
-  | Coste | 0,34 $/100 comidas | 0,06 $/100 comidas |
-
-  Con `--effort low` no mejora.
+- **Banco de texto** (`python -m app.bench`, 40 comidas):
+  - sin razonamiento: error medio 4,7 % / 0,7 %, con 29/30 y 30/30 dentro de ±12 %;
+  - con `low`: 1,5 % y 29/30;
+  - ambiguas en rango: 8/10;
+  - latencia: unos 2 s;
+  - coste: 0,06 $/100 comidas.
 - **Banco de fotos:**
   - Comandos: `scripts/fetch_nutrition5k.py` y `app/bench_photos.py`.
-  - Muestra: 20 platos reales pesados de Nutrition5k (Google, CC BY 4.0), en `/root/n5k` en la VPS, con semilla 2026.
-  - Dos excluidos al verificar a mano: `dish_1566501594`, cuya etiqueta no incluye la ensalada que se ve, y
-    `dish_1558373159`, que lleva un ingrediente «deprecated».
-  - Resultados en las 18 verificadas, dos pasadas:
-
-  | | Kimi K2.6 | Haiku sin razonamiento | Haiku `--effort low` |
-  |---|---|---|---|
-  | Error medio de kcal | 56 % | 70 % | 55 % |
-  | Mediana | 42 % | 68 % | 54 % |
-  | Dentro de ±30 % | 16/35 | 9/36 | 11/36 |
-  | Peso total, error | 53 % | 73 % | 59 % |
-  | Latencia mediana | 13,4 s | 2,5 s | 5,8 s |
-  | Coste | 0,50 $/100 fotos | 0,08 $/100 fotos | 0,11 $/100 fotos |
-
-  - Plato a plato: Kimi 8, Haiku 5 y 5 empates; con Haiku `low`, 7 a 7 con 4 empates.
-  - Los dos modelos **sobreestiman** el peso de las raciones pequeñas (sesgo de +22 a +32 % en kcal) e infravaloran
-    los frutos secos.
-  - Resultados en la VPS: `/root/kcalia-bench-*.txt` y `/root/kcalia-fotos-{kimi,haiku,haiku-low}.txt`.
-- **Veredicto dado al usuario:** texto con **Haiku 5.5** y fotos con **Kimi K2.6**. El usuario eligió Haiku para todo.
+  - Muestra: 20 platos reales pesados de Nutrition5k (Google, CC BY 4.0), en `/root/n5k`, con semilla 2026.
+  - Dos excluidos: `dish_1566501594`, cuya etiqueta no incluye la ensalada que se ve, y `dish_1558373159`, que lleva
+    un ingrediente «deprecated».
+  - Resultado en las 18 verificadas: error mediano de kcal del 68 % sin razonamiento y del 54 % con `low`. Dentro de
+    ±30 %: 9/36 y 11/36.
+  - Sesgo: se pasa con las raciones pequeñas (de +22 a +32 % en kcal) e infravalora los frutos secos.
+  - Resultados en la VPS: `/root/kcalia-bench-*.txt` y `/root/kcalia-fotos-*.txt`.
+  - El otro modelo comparado era algo más preciso en fotos (mediana 42 %), pero el usuario eligió Haiku para todo.
 
 ## Pendiente
 
-1. **Hecho (2026-10-16): Haiku 5.5 para todo.** Mi recomendación había sido texto con Haiku y fotos con Kimi. Así se
-   haría si se quiere el modo mixto:
-   - En `/opt/kcalia/.env`:
-     - `AI_MODEL=claude-haiku-5-5`
-     - `AI_VISION_MODEL=kimi-k2.6`: usa `AI_BASE_URL` y `AI_API_KEY`, que siguen siendo los de Kimi.
-     - `AI_PRICE_INPUT=0.10` y `AI_PRICE_OUTPUT=0.50`: solo para la estimación del panel `/admin`.
-   - Después: `cd /opt/kcalia && docker compose up -d app`.
-   - Editar con `sed -i 's/^AI_MODEL=.*/AI_MODEL=claude-haiku-5-5/' .env`, etc., sin imprimir el fichero.
+1. **Hecho (2026-10-16):** Haiku 5.5 para todo, con `AI_EFFORT=low`. El proveedor anterior se ha retirado.
 2. **Objetivo calórico en código** (lo ofrecí; el usuario aún no ha dicho que sí):
    - Que el ajuste de los días de descanso compense el de los de entreno según el número de días. Está en
      `backend/app/daytargets.py`, su espejo `frontend/src/lib/dayTargets.ts` y los casos compartidos
@@ -160,8 +137,6 @@ Hubo cuatro causas, todas arregladas:
 4. **GitHub:** activar el aviso privado de vulnerabilidades (*Settings → Code security*), al que remite `SECURITY.md`.
    Lo hace el usuario o se hace con `gh api -X PUT repos/Alvaro-Rovira/kcalia/private-vulnerability-reporting` si lo
    autoriza.
-5. **Opcional:** subir la cuenta de Moonshot a nivel 1 (10 $ recargados = 100 peticiones/min). Si las fotos siguen
-   en Kimi, el límite de 3/min puede notarse con varios usuarios.
 
 ## Comandos útiles
 
@@ -170,6 +145,5 @@ cd backend && uv run pytest -q && uv run ruff check . && uv run ruff format --ch
 cd frontend && npx vitest run && npx tsc -b && npm run build
 uv run --project backend --group e2e pytest e2e -q            # desde la raíz
 ./deploy/deploy.sh                                             # pull de main en la VPS, build, up -d y Caddy
-ssh root@161.97.67.178 'cd /opt/kcalia && docker compose exec -T app python -m app.bench --model claude-haiku-5-5 --price-in 0.10 --price-out 0.50'
-ssh root@161.97.67.178 'cd /opt/kcalia && docker compose exec -T app python -m app.bench --model kimi-k2.6 --rpm 3'
+ssh root@161.97.67.178 'cd /opt/kcalia && docker compose exec -T app python -m app.bench --price-in 0.10 --price-out 0.50'
 ```

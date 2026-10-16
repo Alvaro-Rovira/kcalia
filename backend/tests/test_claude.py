@@ -50,7 +50,12 @@ class FakeMessages:
 
 
 def make(replies, **settings):
-    base = {"ai_model": "claude-haiku-5-5", "anthropic_api_key": "sk-ant-prueba", "ai_api_key": "clave-kimi"}
+    base = {
+        "ai_effort": "",
+        "ai_model": "claude-haiku-5-5",
+        "anthropic_api_key": "sk-ant-prueba",
+        "ai_api_key": "clave-otro",
+    }
     fake = SimpleNamespace(messages=FakeMessages(replies))
     client = AiClient(Settings(_env_file=None, **{**base, **settings}), claude=fake)
     return client, fake.messages
@@ -64,7 +69,7 @@ def test_text_meal_goes_to_claude_with_the_json_schema_and_no_sampling_params():
     assert call["system"].startswith("Eres un dietista-nutricionista")
     assert call["messages"] == [{"role": "user", "content": "Comida: 2 huevos cocidos"}]
     assert call["output_config"]["format"] == {"type": "json_schema", "schema": MEAL_SCHEMA}
-    assert call["thinking"] == {"type": "disabled"}  # sin AI_EFFORT: igual que Kimi, sin razonamiento
+    assert call["thinking"] == {"type": "disabled"}  # AI_EFFORT vacío: sin razonamiento
     assert "temperature" not in call and "top_p" not in call
     assert meal.items[0].kcal == 134 and meal.items[0].grams == 100  # el código hace la cuenta por 100 g
     assert usage == {"calls": 1, "prompt_tokens": 3000, "completion_tokens": 150}
@@ -99,8 +104,8 @@ def test_claude_message_keeps_plain_text_and_converts_data_uris():
     }
 
 
-def test_vision_model_can_be_claude_while_text_stays_on_kimi():
-    client, api = make([reply(MEAL)], ai_model="kimi-k2.6", ai_vision_model="claude-haiku-5-5")
+def test_vision_model_can_be_claude_while_text_uses_another_provider():
+    client, api = make([reply(MEAL)], ai_model="modelo-compatible", ai_vision_model="claude-haiku-5-5")
     client.analyze_photo(b"\xff\xd8\xffimagen", "image/jpeg")
     assert api.calls[0]["model"] == "claude-haiku-5-5"
 

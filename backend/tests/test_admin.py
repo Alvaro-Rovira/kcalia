@@ -80,7 +80,10 @@ def test_solicitar_aprobar_y_usar(client):
     login(client, "alvaro")
     lucia = user_by_name(client, "lucia")
     assert lucia["today"]["ai"] == 1 and lucia["today"]["prompt_tokens"] == 2000
-    assert lucia["today"]["cost"] == pytest.approx(2000 / 1e6 * 0.95 + 100 / 1e6 * 4.0)
+    prices = get_settings()  # el panel redondea el coste a 4 decimales
+    assert lucia["today"]["cost"] == pytest.approx(
+        2000 / 1e6 * prices.ai_price_input + 100 / 1e6 * prices.ai_price_output, abs=1e-4
+    )
     assert client.get("/api/admin/overview").json()["today"]["ai"] == 1
 
 

@@ -157,7 +157,7 @@ El emparejado con la tabla es estricto a propósito: «huevo a la plancha» no t
 | Error medio por macro | 1,8 g | 0,0 g |
 | Comidas sin cantidades en rango | 8 de 10 | 8 de 10 |
 
-Kimi K2.6, 14 de octubre de 2026, con la clave real. Algunos ejemplos de antes: un huevo frito salía a 197 kcal (oficial: 88), 150 g de patatas fritas a 468 (387, con el aceite contado dos veces) y un café con leche a 157 (73). Ahora las 30 comidas con cantidades dan el valor oficial salvo redondeos. En las comidas sin cantidades lo que queda es la estimación de la ración, que hace la IA; las dos que se salieron del rango fueron un bocadillo (la IA pesó el pan como una rebanada) y una ensalada mixta a 1 kcal del mínimo. Latencia mediana de 4,1 s y unos 2.900 tokens de entrada por comida.
+Medido el 14 de octubre de 2026 con la IA real. Algunos ejemplos de antes: un huevo frito salía a 197 kcal (oficial: 88), 150 g de patatas fritas a 468 (387, con el aceite contado dos veces) y un café con leche a 157 (73). Ahora las 30 comidas con cantidades dan el valor oficial salvo redondeos. En las comidas sin cantidades lo que queda es la estimación de la ración, que hace la IA; las dos que se salieron del rango fueron un bocadillo (la IA pesó el pan como una rebanada) y una ensalada mixta a 1 kcal del mínimo. Latencia mediana de 4,1 s y unos 2.900 tokens de entrada por comida.
 
 ## Cómo se ahorra IA
 
@@ -286,7 +286,7 @@ Cómo avisar de un fallo de seguridad y qué se revisó: [SECURITY.md](SECURITY.
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, Motion, Recharts, TanStack Query, Lucide, Geist auto-hospedada |
 | PWA | vite-plugin-pwa (Workbox), IndexedDB, Web Push, BarcodeDetector con zxing-wasm de respaldo |
 | Voz | faster-whisper (CTranslate2) en CPU |
-| IA | Cualquier proveedor compatible con la API de OpenAI; por defecto Kimi K2.6 (Moonshot) |
+| IA | Claude Haiku 5.5 (Anthropic, SDK oficial); también vale cualquier proveedor compatible con la API de OpenAI |
 | Infraestructura | Docker Compose, Caddy, GitHub Actions |
 | Pruebas | pytest, Vitest, Playwright |
 
@@ -339,15 +339,16 @@ Todas viven en `.env`. `.env.example` las trae comentadas; las que no pongas usa
 | `REDIRECT_DOMAINS` | `www.kcalia.space` | Dominios que redirigen con 301 al principal (www, dominios antiguos), separados por espacios. |
 | `APP_PORT` | `8095` | Puerto local (solo loopback) al que llega el proxy. |
 | `TZ` | `Europe/Madrid` | Zona horaria para las copias, los recordatorios y el resumen del domingo. |
-| `AI_BASE_URL` | `https://api.moonshot.ai/v1` | Base de la API compatible con OpenAI. |
-| `AI_API_KEY` | vacío | Clave de la IA. Se rellena con `scripts/set-ai-key.sh`. |
-| `AI_MODEL` | `kimi-k2.6` | Modelo para el texto. |
+| `AI_MODEL` | `claude-haiku-5-5` | Modelo para el texto. Los `claude-...` van por el SDK de Anthropic. |
+| `ANTHROPIC_API_KEY` | vacío | Clave de Claude. Se rellena con `scripts/set-ai-key.sh ANTHROPIC_API_KEY`. |
+| `AI_EFFORT` | `low` | Razonamiento de Claude: vacío lo desactiva; `low`, `medium` o `high`. |
+| `AI_BASE_URL`, `AI_API_KEY` | vacío | Solo para un proveedor compatible con OpenAI (un `AI_MODEL` que no empiece por `claude-`). |
 | `AI_VISION_MODEL` | vacío | Modelo para las fotos. Vacío usa `AI_MODEL`. |
 | `AI_VISION_BASE_URL`, `AI_VISION_API_KEY` | vacío | Solo si quieres otro proveedor para las fotos. |
 | `AI_DAILY_LIMIT` | `60` | Tope global de consultas de IA al día, sumando todas las cuentas. |
 | `AI_USER_DAILY_LIMIT` | `20` | Tope por cuenta y día (se puede cambiar a cada cuenta en `/admin`). |
 | `ADMIN_AI_DAILY_LIMIT` | `0` | Tope propio del administrador, aparte del global. `0` = igual que `AI_DAILY_LIMIT`. |
-| `AI_PRICE_INPUT`, `AI_PRICE_OUTPUT` | `0.95`, `4.00` | Dólares por millón de tokens, para estimar el gasto en `/admin`. |
+| `AI_PRICE_INPUT`, `AI_PRICE_OUTPUT` | `0.10`, `0.50` | Dólares por millón de tokens, para estimar el gasto en `/admin`. |
 | `AI_TIMEOUT` | `45` | Segundos de espera máxima a la IA. |
 | `WHISPER_MODEL` | `small` | Modelo de voz: `tiny`, `base`, `small` o `medium`. |
 | `WHISPER_THREADS` | `3` | Hilos de CPU para transcribir. |
@@ -456,45 +457,32 @@ Cuando hay una versión nueva, la app muestra un aviso con el botón «Actualiza
 
 ## Elegir el modelo de IA
 
-Cambiar de modelo es cambiar `AI_MODEL` (y `AI_BASE_URL` y la clave si cambias de proveedor). El cliente se adapta: a los modelos Kimi les desactiva el razonamiento y no les envía temperatura, porque la fijan ellos; al resto les pide temperatura baja. Si un proveedor rechaza algún parámetro, reintenta con lo mínimo.
+Por defecto, **Claude Haiku 5.5** para texto, fotos y etiquetas, con el SDK oficial de Anthropic. Recibe el formato de respuesta como salida estructurada (JSON con esquema, garantizado) y las fotos como bloque de imagen, con razonamiento bajo (`AI_EFFORT=low`). La clave se guarda con `scripts/set-ai-key.sh ANTHROPIC_API_KEY`. Cambiar de modelo es cambiar `AI_MODEL` (y `AI_VISION_MODEL` si quieres otro para las fotos). Un modelo que no empiece por `claude-` va por cualquier proveedor compatible con OpenAI (`AI_BASE_URL` y `AI_API_KEY`). Si ese proveedor rechaza algún parámetro, se reintenta con lo mínimo.
 
-**Claude.** Los modelos `claude-...` van por el SDK oficial de Anthropic, con los mismos prompts y la misma validación. Reciben el formato de respuesta como salida estructurada (JSON con esquema, garantizado), las fotos como bloque de imagen y, salvo que pongas `AI_EFFORT`, sin razonamiento. La clave se guarda con `scripts/set-ai-key.sh ANTHROPIC_API_KEY`. Para usar Claude solo en las fotos basta con `AI_VISION_MODEL=claude-haiku-5-5`.
-
-Para decidir con datos y no con impresiones, hay una herramienta que mide cualquier modelo contra 40 comidas de referencia (30 con cantidades, cuya referencia son los valores de la tabla oficial, y 10 sin ellas, con un rango aceptable): error de calorías y macros, latencia y coste. Con `--raw` mide la IA sola, sin la tabla.
+Para decidir con datos y no con impresiones hay dos herramientas. La de texto mide contra 40 comidas de referencia: 30 con cantidades, cuya referencia son los valores de la tabla oficial, y 10 sin ellas, con un rango aceptable. La de fotos usa platos reales pesados en báscula. Las dos dan error, latencia y coste, usan la clave que ya está en el contenedor y no la muestran. Con `--raw`, la de texto mide la IA sola, sin la tabla.
 
 ```bash
-docker compose exec app python -m app.bench --price-in 0.95 --price-out 4.00
-docker compose exec app python -m app.bench --model claude-haiku-5-5 --price-in 0.10 --price-out 0.50
+docker compose exec app python -m app.bench --price-in 0.10 --price-out 0.50
+python3 -I scripts/fetch_nutrition5k.py /root/n5k      # 20 platos de Nutrition5k (Google Research, CC BY 4.0)
+docker compose run --rm --no-deps -T -v /root/n5k:/n5k:ro app python -m app.bench_photos /n5k --model claude-haiku-5-5 --passes 2
 ```
 
-Usa la clave que ya está en el contenedor y no la muestra.
+**Claude Haiku 5.5, medido el 16 de octubre de 2026** (dos pasadas, porque las respuestas varían de una vez a otra):
 
-**Kimi K2.6 frente a Claude Haiku 5.5** (16 de octubre de 2026, las 40 comidas con la tabla oficial; dos pasadas de cada uno, porque las respuestas varían de una vez a otra):
-
-| | Kimi K2.6 | Haiku 5.5 sin razonamiento |
+| | Sin razonamiento | `AI_EFFORT=low` |
 |---|---|---|
-| Error medio de calorías (30 con cantidades) | 0,2 % y 2,8 % | 4,7 % y 0,7 % |
-| Dentro de ±12 % | 30/30 y 28/30 | 29/30 y 30/30 |
-| Comidas sin cantidades en rango | 8/10 y 10/10 | 8/10 y 8/10 |
-| Latencia mediana · p95 | 3,7-4,1 s · 11-12 s | 1,7 s · 2,6-3,9 s |
-| Coste cada 100 comidas | 0,34 $ | 0,06 $ |
+| Texto: error medio de calorías (30 con cantidades) | 4,7 % y 0,7 % | 1,5 % |
+| Texto: dentro de ±12 % | 29/30 y 30/30 | 29/30 |
+| Texto: comidas sin cantidades en rango | 8/10 y 8/10 | 8/10 |
+| Texto: latencia mediana | 1,7 s | 2,0 s |
+| Fotos: error mediano de calorías ([Nutrition5k](https://github.com/google-research-datasets/Nutrition5k), 18 platos) | 68 % | 54 % |
+| Fotos: dentro de ±30 % | 9/36 | 11/36 |
+| Fotos: latencia mediana | 2,5 s | 5,8 s |
+| Coste | 0,06 $/100 comidas · 0,08 $/100 fotos | 0,06 $/100 comidas · 0,11 $/100 fotos |
 
-La precisión es equivalente: cada uno falla de vez en cuando en una comida (Kimi, el yogur griego; Haiku, el café con leche), porque la tabla oficial pone casi todas las cifras. Haiku es el doble de rápido y unas 6 veces más barato. Con `--effort low` no mejora (1,5 %, 29/30, 8/10) y tarda algo más.
+En texto casi todas las cifras las pone la tabla oficial, y el fallo ocasional es una comida que el modelo descompone de otra forma (el café con leche). En fotos el modelo estima los gramos a ojo y tiende a pasarse con las raciones pequeñas. Añadir una frase a la foto («150 g de pollo») mejora mucho el resultado.
 
-**Fotos** (`app.bench_photos`, 18 platos reales pesados de [Nutrition5k](https://github.com/google-research-datasets/Nutrition5k), Google Research, CC BY 4.0; dos pasadas): Kimi K2.6 tiene un error mediano de calorías del 42 % (16 de 35 dentro de ±30 %, 13 s por foto). Haiku 5.5 tiene un 68 % (9 de 36, 2,5 s), y con `--effort low` un 54 % (11 de 36, 6 s). Los dos se pasan con las raciones pequeñas. En fotos, Kimi es algo más preciso.
-
-**Medición anterior a la tabla oficial** (Kimi K2.6, 30 de septiembre de 2026, 21 comidas con referencias del propio prompt; la de octubre está en [Cómo se calculan las calorías](#cómo-se-calculan-las-calorías)):
-
-| | Resultado |
-|---|---|
-| Calorías con cantidades explícitas (15 comidas) | error medio 0,9 %, las 15 dentro de ±12 % |
-| Macros (proteínas, hidratos, grasas) | error medio 0,1 g por macro |
-| Comidas sin cantidades (6, con rango aceptable) | 5 de 6 en rango; la sexta, a un 3 % del límite |
-| Latencia | mediana 2,9 s, p95 6,5 s |
-| Tokens por comida | ≈ 2.500 de entrada, 110 de salida |
-| Coste | ≈ 0,28 $ cada 100 comidas sin caché; 5 $/mes en el peor caso de 60 al día |
-
-**Límites del proveedor.** Muchas cuentas nuevas traen un tope de peticiones por minuto (las de Moonshot de nivel 0 permiten 3 por minuto). Si lo alcanzas, Kcalia espera un instante y reintenta una vez; si sigue, te lo explica en lugar de mostrar un error genérico. Para medir con una cuenta así, añade `--rpm 3` a la herramienta.
+**Límites del proveedor.** Algunas cuentas traen un tope de peticiones por minuto. Si lo alcanzas, Kcalia espera un instante y reintenta una vez; si sigue, te lo explica en lugar de mostrar un error genérico. Para medir con una cuenta así, añade `--rpm N` a las herramientas.
 
 **Por qué el modelo da valores «por 100 g».** En la primera prueba real, un modelo escaló dos veces el huevo (314 kcal en lugar de 157). Multiplicar es justo lo que un modelo hace mal y un programa nunca, así que el modelo aporta el conocimiento (calorías y macros por cada 100 g, y el peso del ingrediente) y el código hace la cuenta.
 

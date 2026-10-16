@@ -2,9 +2,8 @@
 
     docker compose exec app python -m app.bench --rpm 3
     docker compose exec app python -m app.bench --raw --rpm 3      # sin la canalización: solo lo que dice la IA
-    docker compose exec app python -m app.bench --model kimi-k2.6 --price-in 0.95 --price-out 4.00
-    docker compose exec app python -m app.bench --model claude-haiku-5-5 --price-in 0.10 --price-out 0.50
-    docker compose exec app python -m app.bench --model claude-haiku-5-5 --effort low   # con razonamiento
+    docker compose exec app python -m app.bench --price-in 0.10 --price-out 0.50
+    docker compose exec app python -m app.bench --model claude-haiku-5-5 --effort ""     # sin razonamiento
 
 Las 30 comidas con cantidades explícitas tienen como referencia los valores oficiales de la tabla (CIQUAL 2025 y
 USDA) para esas cantidades: mide cuánto se aleja cada sistema de los datos oficiales. Las 10 ambiguas se juzgan con un

@@ -1,7 +1,7 @@
 """Cliente de IA: texto y foto -> desglose nutricional validado.
 
-Dos proveedores: cualquiera compatible con OpenAI (Kimi K2.6 por defecto) y Claude con el SDK oficial de Anthropic
-(modelos «claude-...»). Los dos reciben los mismos prompts y pasan por la misma validación.
+Claude (modelos «claude-...», por defecto Haiku 5.5) con el SDK oficial de Anthropic, o cualquier proveedor compatible
+con OpenAI. Los dos reciben los mismos prompts y pasan por la misma validación.
 """
 
 import base64
@@ -583,10 +583,7 @@ def claude_message(message: dict) -> dict:
 
 
 def _provider_params(model: str) -> dict:
-    # Kimi fija la temperatura (0.6 sin razonamiento) y rechaza cualquier otra; el
-    # razonamiento se desactiva para ganar rapidez y reducir tokens de salida.
-    if model.lower().startswith("kimi"):
-        return {"thinking": {"type": "disabled"}, "max_completion_tokens": MAX_OUTPUT_TOKENS}
+    """Parámetros para proveedores compatibles con OpenAI (si alguno los rechaza, `_post` reintenta sin ellos)."""
     return {"temperature": 0.1, "max_tokens": MAX_OUTPUT_TOKENS}
 
 

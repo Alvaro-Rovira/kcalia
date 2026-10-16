@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Guarda la clave de la IA en .env sin mostrarla ni dejarla en el historial ni en la lista de procesos.
-#   ssh -t root@TU_VPS /opt/kcalia/scripts/set-ai-key.sh                     # AI_API_KEY (Kimi u otro compatible)
-#   ssh -t root@TU_VPS /opt/kcalia/scripts/set-ai-key.sh ANTHROPIC_API_KEY   # clave de Claude
+#   ssh -t root@TU_VPS /opt/kcalia/scripts/set-ai-key.sh                     # AI_API_KEY (proveedor compatible con OpenAI)
+#   ssh -t root@TU_VPS /opt/kcalia/scripts/set-ai-key.sh ANTHROPIC_API_KEY   # clave de Claude (la habitual)
 # Después: cd /opt/kcalia && docker compose up -d app
 set -euo pipefail
 cd "$(dirname "$0")/.."
