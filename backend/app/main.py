@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from . import tenancy  # noqa: F401  (registra el filtro por usuario en las sesiones)
 from .ai import AiError
 from .config import get_settings
+from .conflicts import RetryOnConflict
 from .db import init_db
 from .deps import enforce_access
 from .jobs import start_scheduler
@@ -213,3 +214,8 @@ def _mount_frontend() -> None:
 
 
 _mount_frontend()
+
+
+# La más externa de las nuestras (se añade la última): si dos escrituras simultáneas chocan en un UNIQUE, la petición
+# se repite en lugar de dar un 500 (ver conflicts.py).
+app.add_middleware(RetryOnConflict, max_body=MAX_BODY_BYTES)
