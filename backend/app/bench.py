@@ -3,6 +3,8 @@
     docker compose exec app python -m app.bench --rpm 3
     docker compose exec app python -m app.bench --raw --rpm 3      # sin la canalización: solo lo que dice la IA
     docker compose exec app python -m app.bench --model kimi-k2.6 --price-in 0.95 --price-out 4.00
+    docker compose exec app python -m app.bench --model claude-haiku-5-5 --price-in 0.10 --price-out 0.50
+    docker compose exec app python -m app.bench --model claude-haiku-5-5 --effort low   # con razonamiento
 
 Las 30 comidas con cantidades explícitas tienen como referencia los valores oficiales de la tabla (CIQUAL 2025 y
 USDA) para esas cantidades: mide cuánto se aleja cada sistema de los datos oficiales. Las 10 ambiguas se juzgan con un
@@ -14,7 +16,7 @@ import argparse
 import statistics
 import time
 
-from .ai import AiClient, AiError
+from .ai import AiClient, AiError, is_claude
 from .config import get_settings
 
 try:  # el banco también corre en versiones sin la tabla (para medir el «antes»)
@@ -114,13 +116,19 @@ def _totals(meal, text: str, raw: bool) -> dict[str, float]:
 
 
 def run(
-    model: str | None, base_url: str | None, api_key: str | None, rpm: float | None = None, raw: bool = False
+    model: str | None,
+    base_url: str | None,
+    api_key: str | None,
+    rpm: float | None = None,
+    raw: bool = False,
+    effort: str | None = None,
 ) -> dict:
     settings = get_settings()
-    update = {k: v for k, v in {"ai_model": model, "ai_base_url": base_url, "ai_api_key": api_key}.items() if v}
-    client = AiClient(settings.model_copy(update=update))
+    key_field = "anthropic_api_key" if is_claude(model or settings.ai_model) else "ai_api_key"
+    update = {"ai_model": model, "ai_base_url": base_url, key_field: api_key, "ai_effort": effort}
+    client = AiClient(settings.model_copy(update={k: v for k, v in update.items() if v is not None}))
     if not client.configured:
-        raise SystemExit("Falta AI_API_KEY (o --api-key).")
+        raise SystemExit(f"Falta {key_field.upper()} (o --api-key).")
 
     spacing = 60 / rpm + 1.5 if rpm else 0.0
     last_start = [0.0]
@@ -140,7 +148,9 @@ def run(
 
     latencies, prompt_tokens, completion_tokens, kcal_errors, macro_errors, within, failures = [], [], [], [], [], 0, 0
     mode = "solo IA (--raw)" if raw or refine is None else "IA + tabla oficial"
-    print(f"\nModelo: {client.settings.ai_model}  ·  {client.settings.ai_base_url}  ·  {mode}\n")
+    s = client.settings
+    where = f"Anthropic · razonamiento {s.ai_effort or 'desactivado'}" if is_claude(s.ai_model) else s.ai_base_url
+    print(f"\nModelo: {s.ai_model}  ·  {where}  ·  {mode}\n")
     for text, kcal, protein, carbs, fat in EXACT:
         meal, seconds, usage, error = ask(text)
         latencies.append(seconds)
@@ -201,12 +211,15 @@ def main() -> None:
         "--api-key", help="Clave (por defecto AI_API_KEY). Mejor pasarla por entorno que por argumento."
     )
     parser.add_argument("--raw", action="store_true", help="Sumar lo que dice la IA, sin la tabla ni las reglas")
+    parser.add_argument(
+        "--effort", help="Solo Claude: low, medium o high activa el razonamiento (por defecto AI_EFFORT)"
+    )
     parser.add_argument("--rpm", type=float, help="Peticiones por minuto que permite tu cuenta (espacia las llamadas)")
     parser.add_argument("--price-in", type=float, help="USD por millón de tokens de entrada, para estimar el coste")
     parser.add_argument("--price-out", type=float, help="USD por millón de tokens de salida")
     args = parser.parse_args()
 
-    r = run(args.model, args.base_url, args.api_key, args.rpm, raw=args.raw)
+    r = run(args.model, args.base_url, args.api_key, args.rpm, raw=args.raw, effort=args.effort)
     print("\n" + "─" * 64)
     band = f"{TOLERANCE * 100:.0f}"
     print(f"Calorías: error medio {r['kcal_mape']:.1f} %  ·  dentro de ±{band} %: {r['within']}/{r['exact']}")

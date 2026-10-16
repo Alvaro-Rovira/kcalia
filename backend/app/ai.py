@@ -1,4 +1,8 @@
-"""Cliente de IA compatible con OpenAI: texto y foto -> desglose nutricional validado."""
+"""Cliente de IA: texto y foto -> desglose nutricional validado.
+
+Dos proveedores: cualquiera compatible con OpenAI (Kimi K2.6 por defecto) y Claude con el SDK oficial de Anthropic
+(modelos «claude-...»). Los dos reciben los mismos prompts y pasan por la misma validación.
+"""
 
 import base64
 import json
@@ -6,6 +10,7 @@ import logging
 import re
 import time
 
+import anthropic
 import httpx
 from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
@@ -484,6 +489,99 @@ def parse_meal(content: str) -> AiMeal:
     return merge_duplicates(meal)
 
 
+# Salida estructurada de Claude: el formato que piden los prompts (valores por 100 g), no el modelo interno. Objetos
+# cerrados, todos los campos obligatorios y sin límites numéricos (eso lo comprueba la validación de siempre).
+def _obj(**properties) -> dict:
+    return {"type": "object", "properties": properties, "required": list(properties), "additionalProperties": False}
+
+
+def _nullable(schema: dict) -> dict:
+    return {"anyOf": [schema, {"type": "null"}]}
+
+
+_NUM, _STR = {"type": "number"}, {"type": "string"}
+_ITEM_SCHEMA = _obj(
+    name=_STR,
+    food=_STR,
+    prep={"type": "string", "enum": list(PREPS)},
+    qty=_NUM,
+    unit={"type": "string", "enum": UNIT_ENUM.split("|")},
+    grams=_NUM,
+    kcal100=_NUM,
+    protein100=_NUM,
+    carbs100=_NUM,
+    fat100=_NUM,
+    fiber100=_NUM,
+    alcohol100=_NUM,
+)
+_ITEMS = {"type": "array", "items": _ITEM_SCHEMA}
+MEAL_SCHEMA = _obj(
+    name=_STR,
+    items=_ITEMS,
+    confidence=_NUM,
+    assumptions={"type": "array", "items": _STR},
+    clarification=_nullable(_STR),
+)
+PLAN_SCHEMA = _obj(
+    meals={
+        "type": "array",
+        "items": _obj(
+            date=_STR,
+            slot={"type": "string", "enum": ["desayuno", "comida", "merienda", "cena", "snack"]},
+            name=_STR,
+            items=_ITEMS,
+        ),
+    }
+)
+SUGGEST_SCHEMA = _obj(ideas={"type": "array", "items": _obj(name=_STR, items=_ITEMS)})
+_NUM_OR_NULL = _nullable(_NUM)
+LABEL_SCHEMA = _obj(
+    is_label={"type": "boolean"},
+    name=_STR,
+    short_name=_STR,
+    basis={"type": "string", "enum": ["g", "ml"]},
+    kcal100=_NUM_OR_NULL,
+    energy_kj100=_NUM_OR_NULL,
+    protein100=_NUM_OR_NULL,
+    carbs100=_NUM_OR_NULL,
+    fat100=_NUM_OR_NULL,
+    fiber100=_NUM_OR_NULL,
+    sugars100=_NUM_OR_NULL,
+    salt100=_NUM_OR_NULL,
+    serving_g=_NUM_OR_NULL,
+    serving_label=_nullable(_STR),
+    per_serving=_nullable(_obj(kcal=_NUM_OR_NULL, protein=_NUM_OR_NULL, carbs=_NUM_OR_NULL, fat=_NUM_OR_NULL)),
+    confidence=_NUM,
+    notes={"type": "array", "items": _STR},
+)
+CLAUDE_MAX_TOKENS = 8000  # con razonamiento: el razonamiento también cuenta para el tope
+
+
+def is_claude(model: str) -> bool:
+    return model.lower().startswith("claude-")
+
+
+_DATA_URI = re.compile(r"^data:(?P<mime>[\w/+.-]+);base64,(?P<data>.+)$", re.S)
+
+
+def claude_message(message: dict) -> dict:
+    """Mensaje en formato OpenAI -> formato de Claude (las fotos van como bloque de imagen en base64)."""
+    content = message["content"]
+    if isinstance(content, str):
+        return {"role": message["role"], "content": content}
+    blocks = []
+    for part in content:
+        if part.get("type") == "image_url":
+            found = _DATA_URI.match(part["image_url"]["url"])
+            if not found:
+                raise ValueError("la imagen debe ir como data URI en base64")
+            source = {"type": "base64", "media_type": found["mime"], "data": found["data"]}
+            blocks.append({"type": "image", "source": source})
+        else:
+            blocks.append({"type": "text", "text": part["text"]})
+    return {"role": message["role"], "content": blocks}
+
+
 def _provider_params(model: str) -> dict:
     # Kimi fija la temperatura (0.6 sin razonamiento) y rechaza cualquier otra; el
     # razonamiento se desactiva para ganar rapidez y reducir tokens de salida.
@@ -508,26 +606,90 @@ def _is_quota_error(resp: httpx.Response) -> bool:
     return any(mark in text for mark in ("quota", "insufficient", "balance", "billing", "credit"))
 
 
+NO_KEY_MESSAGE = (
+    "La IA todavía no está configurada en el servidor. Mientras tanto puedes añadir comidas de tu historial."
+)
+
+
 class AiClient:
-    def __init__(self, settings: Settings, http: httpx.Client | None = None, sleep=time.sleep):
+    def __init__(self, settings: Settings, http: httpx.Client | None = None, sleep=time.sleep, claude=None):
         self.settings = settings
         self.http = http or httpx.Client(timeout=settings.ai_timeout)
         self._sleep = sleep
+        self._claude = claude  # cliente del SDK de Anthropic; se crea al primer uso
 
     @property
     def configured(self) -> bool:
+        if is_claude(self.settings.ai_model):
+            return bool(self.settings.anthropic_api_key)
         return bool(self.settings.ai_api_key)
+
+    def _claude_client(self):
+        if self._claude is None:
+            # Un solo reintento del SDK (429, 5xx, red): el usuario está esperando delante del móvil.
+            self._claude = anthropic.Anthropic(
+                api_key=self.settings.anthropic_api_key, timeout=self.settings.ai_timeout, max_retries=1
+            )
+        return self._claude
+
+    def _post_claude(self, system: str, messages: list[dict], schema: dict, model: str) -> tuple[str, dict]:
+        """Una llamada a Claude con salida JSON según `schema`. Devuelve el texto y el uso de tokens."""
+        if not self.settings.anthropic_api_key:
+            raise AiError("no_key", NO_KEY_MESSAGE, 503)
+        effort = self.settings.ai_effort.strip().lower()
+        output_config: dict = {"format": {"type": "json_schema", "schema": schema}}
+        if effort:
+            output_config["effort"] = effort
+        params = {
+            "model": model,
+            "system": system,
+            "messages": [claude_message(m) for m in messages],
+            "max_tokens": CLAUDE_MAX_TOKENS if effort else MAX_OUTPUT_TOKENS,
+            "thinking": {"type": "adaptive"} if effort else {"type": "disabled"},
+            "output_config": output_config,
+        }
+        try:
+            response = self._claude_client().messages.create(**params)
+        except (anthropic.AuthenticationError, anthropic.PermissionDeniedError) as exc:
+            raise AiError("auth", "La clave de la IA no es válida o ha caducado. Revísala en el servidor.") from exc
+        except anthropic.RateLimitError as exc:
+            log.warning("Límite de Claude (429): %s", exc.message[:300])
+            raise AiError(
+                "rate",
+                "Tu cuenta de IA ha llegado a su límite de peticiones por minuto. "
+                "Espera un poco (hasta un minuto) y vuelve a intentarlo.",
+                503,
+            ) from exc
+        except anthropic.BadRequestError as exc:
+            if "credit balance" in exc.message.lower():
+                raise AiError(
+                    "quota",
+                    "La cuenta de la IA se ha quedado sin saldo. Recárgala en la consola del proveedor.",
+                    503,
+                ) from exc
+            log.error("Claude rechazó la petición: %s", exc.message[:500])
+            raise AiError("upstream", "La IA ha devuelto un error. Inténtalo de nuevo en un momento.") from exc
+        except anthropic.APIStatusError as exc:
+            log.error("Error %s de Claude: %s", exc.status_code, exc.message[:500])
+            raise AiError("upstream", "La IA ha devuelto un error. Inténtalo de nuevo en un momento.") from exc
+        except anthropic.APITimeoutError as exc:
+            raise AiError("timeout", "La IA ha tardado demasiado en responder. Prueba otra vez.", 504) from exc
+        except anthropic.APIConnectionError as exc:
+            raise AiError("network", "No he podido conectar con la IA. Inténtalo en un momento.") from exc
+        usage = {"prompt_tokens": response.usage.input_tokens, "completion_tokens": response.usage.output_tokens}
+        if response.stop_reason == "refusal":
+            error = AiError("refused", "La IA no ha querido analizar esto. Prueba a describirlo de otra forma.")
+            error.usage = {"calls": 1, **usage}  # type: ignore[attr-defined]
+            raise error
+        # Con razonamiento, la respuesta empieza por bloques «thinking»: el JSON va en los de texto.
+        text = "".join(block.text for block in response.content if block.type == "text")
+        return text, usage
 
     def _post(self, body: dict, *, base_url: str | None = None, api_key: str | None = None) -> dict:
         s = self.settings
         api_key = s.ai_api_key if api_key is None else api_key
         if not api_key:
-            raise AiError(
-                "no_key",
-                "La IA todavía no está configurada en el servidor. Mientras tanto puedes "
-                "añadir comidas de tu historial.",
-                503,
-            )
+            raise AiError("no_key", NO_KEY_MESSAGE, 503)
         url = (base_url or s.ai_base_url).rstrip("/") + "/chat/completions"
         headers = {"Authorization": f"Bearer {api_key}"}
         try:
@@ -571,42 +733,66 @@ class AiClient:
             raise AiError("upstream", "La IA ha devuelto un error. Inténtalo de nuevo en un momento.")
         return resp.json()
 
+    def _ask(
+        self, system: str, messages: list[dict], schema: dict, *, model: str, base_url: str | None, api_key: str | None
+    ) -> tuple[str, dict]:
+        """Una llamada al proveedor que toque. Devuelve el texto de la respuesta y los tokens."""
+        if is_claude(model):
+            return self._post_claude(system, messages, schema, model)
+        body = {
+            "model": model,
+            "messages": [{"role": "system", "content": system}, *messages],
+            "response_format": {"type": "json_object"},
+            **_provider_params(model),
+        }
+        data = self._post(body, base_url=base_url, api_key=api_key)
+        reported = data.get("usage") or {}
+        tokens = {
+            "prompt_tokens": int(reported.get("prompt_tokens") or 0),
+            "completion_tokens": int(reported.get("completion_tokens") or 0),
+        }
+        try:
+            return data["choices"][0]["message"]["content"] or "", tokens
+        except (KeyError, IndexError, TypeError):
+            return "", tokens
+
     def _complete(
-        self, system: str, user_content: str | list, parse, *, model: str, base_url: str | None, api_key: str | None
+        self,
+        system: str,
+        user_content: str | list,
+        parse,
+        schema: dict,
+        *,
+        model: str,
+        base_url: str | None,
+        api_key: str | None,
     ):
         """Pide una respuesta JSON, la valida con `parse` y, si no cumple el esquema, un único reintento.
 
-        Devuelve lo validado y el uso (llamadas y tokens).
+        `schema` es el formato que pide el prompt; Claude lo recibe como salida estructurada. Devuelve lo validado y el
+        uso (llamadas y tokens).
         """
-        messages: list[dict] = [
-            {"role": "system", "content": system},
-            {"role": "user", "content": user_content},
-        ]
+        messages: list[dict] = [{"role": "user", "content": user_content}]
         usage = {"calls": 0, "prompt_tokens": 0, "completion_tokens": 0}
         last_error = ""
         for attempt in range(2):
-            body = {
-                "model": model,
-                "messages": messages,
-                "response_format": {"type": "json_object"},
-                **_provider_params(model),
-            }
-            data = self._post(body, base_url=base_url, api_key=api_key)
-            usage["calls"] += 1
-            reported = data.get("usage") or {}
-            usage["prompt_tokens"] += int(reported.get("prompt_tokens") or 0)
-            usage["completion_tokens"] += int(reported.get("completion_tokens") or 0)
             try:
-                content = data["choices"][0]["message"]["content"] or ""
+                content, tokens = self._ask(system, messages, schema, model=model, base_url=base_url, api_key=api_key)
+            except AiError as error:
+                spent = getattr(error, "usage", None)
+                if spent:
+                    error.usage = {key: usage[key] + spent[key] for key in usage}  # type: ignore[attr-defined]
+                raise
+            usage["calls"] += 1
+            usage["prompt_tokens"] += tokens["prompt_tokens"]
+            usage["completion_tokens"] += tokens["completion_tokens"]
+            try:
                 return parse(content), usage
             except (KeyError, IndexError, TypeError, ValueError, ValidationError) as exc:
                 last_error = str(exc)[:400]
                 log.warning("Respuesta de IA inválida (intento %s): %s", attempt + 1, last_error)
-                messages = messages[:2] + [
-                    {
-                        "role": "assistant",
-                        "content": str(data.get("choices", [{}])[0].get("message", {}).get("content", ""))[:2000],
-                    },
+                messages = messages[:1] + [
+                    {"role": "assistant", "content": content[:2000] or "(respuesta vacía)"},
                     {
                         "role": "user",
                         "content": "Tu respuesta no cumple el esquema: "
@@ -621,7 +807,9 @@ class AiClient:
         self, user_content: str | list, *, model: str, base_url: str | None = None, api_key: str | None = None
     ) -> tuple[AiMeal, dict]:
         """Devuelve la comida validada y el uso (llamadas y tokens). Un reintento si el JSON falla."""
-        return self._complete(SYSTEM_PROMPT, user_content, parse_meal, model=model, base_url=base_url, api_key=api_key)
+        return self._complete(
+            SYSTEM_PROMPT, user_content, parse_meal, MEAL_SCHEMA, model=model, base_url=base_url, api_key=api_key
+        )
 
     def analyze_label(self, image: bytes, mime: str) -> tuple[dict, dict]:
         """Lee la tabla nutricional de la foto del envase. Devuelve los datos del producto y el uso."""
@@ -634,6 +822,7 @@ class AiClient:
             LABEL_PROMPT,
             content,
             parse_label,
+            LABEL_SCHEMA,
             model=self.settings.vision_model,
             base_url=self.settings.vision_base_url,
             api_key=self.settings.vision_api_key,
@@ -641,12 +830,18 @@ class AiClient:
 
     def suggest_plan(self, request: str) -> tuple[PlanReply, dict]:
         return self._complete(
-            PLAN_PROMPT, request, parse_plan, model=self.settings.ai_model, base_url=None, api_key=None
+            PLAN_PROMPT, request, parse_plan, PLAN_SCHEMA, model=self.settings.ai_model, base_url=None, api_key=None
         )
 
     def suggest_close(self, request: str) -> tuple[SuggestReply, dict]:
         return self._complete(
-            SUGGEST_PROMPT, request, parse_suggestions, model=self.settings.ai_model, base_url=None, api_key=None
+            SUGGEST_PROMPT,
+            request,
+            parse_suggestions,
+            SUGGEST_SCHEMA,
+            model=self.settings.ai_model,
+            base_url=None,
+            api_key=None,
         )
 
     def analyze_text(self, text: str) -> tuple[AiMeal, dict]:

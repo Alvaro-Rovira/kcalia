@@ -458,10 +458,13 @@ Cuando hay una versión nueva, la app muestra un aviso con el botón «Actualiza
 
 Cambiar de modelo es cambiar `AI_MODEL` (y `AI_BASE_URL` y la clave si cambias de proveedor). El cliente se adapta: a los modelos Kimi les desactiva el razonamiento y no les envía temperatura, porque la fijan ellos; al resto les pide temperatura baja. Si un proveedor rechaza algún parámetro, reintenta con lo mínimo.
 
+**Claude.** Los modelos `claude-...` van por el SDK oficial de Anthropic, con los mismos prompts y la misma validación. Reciben el formato de respuesta como salida estructurada (JSON con esquema, garantizado), las fotos como bloque de imagen y, salvo que pongas `AI_EFFORT`, sin razonamiento. La clave se guarda con `scripts/set-ai-key.sh ANTHROPIC_API_KEY`. Para usar Claude solo en las fotos basta con `AI_VISION_MODEL=claude-haiku-5-5`.
+
 Para decidir con datos y no con impresiones, hay una herramienta que mide cualquier modelo contra 40 comidas de referencia (30 con cantidades, cuya referencia son los valores de la tabla oficial, y 10 sin ellas, con un rango aceptable): error de calorías y macros, latencia y coste. Con `--raw` mide la IA sola, sin la tabla.
 
 ```bash
 docker compose exec app python -m app.bench --price-in 0.95 --price-out 4.00
+docker compose exec app python -m app.bench --model claude-haiku-5-5 --price-in 0.10 --price-out 0.50
 ```
 
 Usa la clave que ya está en el contenedor y no la muestra.

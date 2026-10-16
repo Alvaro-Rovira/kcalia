@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     ai_vision_model: str = ""
     ai_vision_base_url: str = ""
     ai_vision_api_key: str = ""
+    # Claude (SDK oficial de Anthropic): se usa cuando AI_MODEL o AI_VISION_MODEL empiezan por «claude-».
+    anthropic_api_key: str = ""
+    # Razonamiento de Claude: vacío = desactivado (lo más rápido, como Kimi); low, medium o high = adaptativo.
+    ai_effort: str = ""
     # Tope GLOBAL de consultas de IA al día entre todos los usuarios (texto y foto).
     ai_daily_limit: int = 60
     # Tope por usuario; el admin puede cambiarlo a cada uno desde el panel.
