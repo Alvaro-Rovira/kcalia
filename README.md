@@ -475,12 +475,12 @@ docker compose run --rm --no-deps -T -v /root/n5k:/n5k:ro app python -m app.benc
 | Texto: dentro de ±12 % | 29/30 y 30/30 | 29/30 |
 | Texto: comidas sin cantidades en rango | 8/10 y 8/10 | 8/10 |
 | Texto: latencia mediana | 1,7 s | 2,0 s |
-| Fotos: error mediano de calorías ([Nutrition5k](https://github.com/google-research-datasets/Nutrition5k), 18 platos) | 68 % | 54 % |
+| Fotos: error mediano de calorías ([Nutrition5k](https://github.com/google-research-datasets/Nutrition5k), 18 platos) | 68 % | 41 % |
 | Fotos: dentro de ±30 % | 9/36 | 11/36 |
-| Fotos: latencia mediana | 2,5 s | 5,8 s |
-| Coste | 0,06 $/100 comidas · 0,08 $/100 fotos | 0,06 $/100 comidas · 0,11 $/100 fotos |
+| Fotos: latencia mediana | 2,5 s | 3,3 s |
+| Coste | 0,06 $/100 comidas · 0,08 $/100 fotos | 0,06 $/100 comidas · 0,10 $/100 fotos |
 
-En texto casi todas las cifras las pone la tabla oficial, y el fallo ocasional es una comida que el modelo descompone de otra forma (el café con leche). En fotos el modelo estima los gramos a ojo y tiende a pasarse con las raciones pequeñas. Añadir una frase a la foto («150 g de pollo») mejora mucho el resultado.
+En texto casi todas las cifras las pone la tabla oficial, y el fallo ocasional es una comida que el modelo descompone de otra forma (el café con leche). En fotos el modelo estima los gramos a ojo. Antes tendía a pasarse con las raciones pequeñas (+22 %), porque usaba las raciones típicas. Ahora las instrucciones de foto le piden pesar lo que se ve y contar las piezas: el error mediano bajó del 54 al 41 % y el sesgo a +9 % (la columna sin razonamiento es de antes de ese cambio). Añadir una frase a la foto («150 g de pollo») mejora mucho el resultado.
 
 **Límites del proveedor.** Algunas cuentas traen un tope de peticiones por minuto. Si lo alcanzas, Kcalia espera un instante y reintenta una vez; si sigue, te lo explica en lugar de mostrar un error genérico. Para medir con una cuenta así, añade `--rpm N` a las herramientas.
 

@@ -370,3 +370,10 @@ def test_proveedor_compatible_recibe_el_sistema_primero_y_un_reintento_si_el_jso
     assert first["response_format"] == {"type": "json_object"} and first["temperature"] == 0.1
     assert [m["role"] for m in retry["messages"]] == ["system", "user", "assistant", "user"]
     assert "no cumple el esquema" in retry["messages"][-1]["content"]
+
+
+def test_en_las_fotos_se_pesa_lo_que_se_ve():
+    """Con las raciones típicas, la IA se pasaba con los platos pequeños (+22 % en app.bench_photos; +9 % así)."""
+    from app.ai import PHOTO_INSTRUCTIONS
+
+    assert "pesa lo que se ve" in PHOTO_INSTRUCTIONS and "almendra 1,2 g" in PHOTO_INSTRUCTIONS

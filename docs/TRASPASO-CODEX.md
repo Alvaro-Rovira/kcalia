@@ -120,25 +120,18 @@ Hubo cuatro causas, todas arregladas:
 
 ## Pendiente
 
-1. **Hecho (2026-10-16):** Haiku 5.5 para todo, con `AI_EFFORT=low`. El proveedor anterior se ha retirado.
-2. **Objetivo calórico en código** (lo ofrecí; el usuario aún no ha dicho que sí):
-   - Que el ajuste de los días de descanso compense el de los de entreno según el número de días. Está en
-     `backend/app/daytargets.py`, su espejo `frontend/src/lib/dayTargets.ts` y los casos compartidos
-     `backend/tests/fixtures/day_target_cases.json`.
-   - Describir los niveles de actividad por pasos y tipo de trabajo, no por días de gimnasio
-     (`frontend/src/lib/options.ts`).
-3. **Mejorar las fotos:**
-   - Calibrar `PHOTO_INSTRUCTIONS` en `ai.py`: hoy los modelos se pasan con las raciones.
-   - Volver a medir con
-     `docker compose run --rm --no-deps -T -v /root/n5k:/n5k:ro app python -m app.bench_photos /n5k --model ... --passes 2`.
-   - Cuidado: sobreajustarse a 18 platos de cafetería estadounidense.
-4. **GitHub:** activar el aviso privado de vulnerabilidades (*Settings → Code security*), al que remite `SECURITY.md`.
-   Lo hace el usuario o se hace con `gh api -X PUT repos/Alvaro-Rovira/kcalia/private-vulnerability-reporting` si lo
-   autoriza.
-5. **Restos del proveedor anterior:**
-   - En `/root` de la VPS quedan ficheros de resultados de las pruebas con su nombre: `/root/kcalia-bench-*.txt` y
-     `/root/kcalia-fotos-*.txt`. Se borran solo si el usuario lo autoriza.
-   - El usuario tiene que revocar la clave en la consola de ese proveedor; en el servidor ya no está.
+Todo lo que quedaba se terminó el 2026-10-16 (por la tarde):
+- **Haiku 5.5 para todo**, con `AI_EFFORT=low`. El proveedor anterior se retiró, su clave se borró del servidor y sus
+  ficheros de resultados también.
+- **Objetivo calórico:** los días de descanso compensan los de entreno (`balance_rest`, por defecto activado), en
+  `daytargets.py`, `dayTargets.ts` y los casos compartidos. Los niveles de actividad se describen por el día entero.
+- **Fotos:** `PHOTO_INSTRUCTIONS` pide pesar lo que se ve y contar las piezas. Medido con las 18 fotos verificadas:
+  error mediano del 54 al 41 % y sesgo del +22 al +9 %.
+- **GitHub:** activado el aviso privado de vulnerabilidades.
+
+Queda solo lo que hace el usuario:
+- revocar la clave del proveedor anterior en su consola;
+- si quiere, poner su actividad en «Ligero» en Ajustes.
 
 ## Comandos útiles
 

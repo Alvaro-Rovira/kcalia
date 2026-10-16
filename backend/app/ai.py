@@ -124,10 +124,13 @@ RACIONES TÍPICAS EN ESPAÑA (peso comestible)
 VALORES DE REFERENCIA por 100 g (kcal / proteína / hidratos / grasa). Si el alimento es uno de estos, usa este nombre en "food".
 {_references()}"""
 
-PHOTO_INSTRUCTIONS = """Analiza la foto de esta comida. Identifica cada alimento visible y estima su peso \
-por el tamaño del plato y las proporciones (un plato llano mide unos 26 cm). Añade las salsas visibles; el \
-aceite de cocinar lo calcula el sistema a partir de "prep". Si la foto no muestra comida o no se distingue, devuelve "items": [] y una \
-"clarification" amable. La confianza con foto rara vez supera 0.7."""
+PHOTO_INSTRUCTIONS = """Analiza la foto de esta comida. Identifica cada alimento visible y estima su peso por lo que \
+ocupa: la parte del plato que cubre y su altura (un plato llano mide unos 26 cm; un cuenco, unos 15 cm). En una foto \
+las raciones típicas de la tabla NO sirven: pesa lo que se ve, aunque sea bastante menos (o más) que una ración normal. \
+Lo que se pueda contar (frutos secos, uvas, tomates cherry, gajos, trozos), cuéntalo y calcula su peso con lo que pesa \
+una pieza: almendra 1,2 g, avellana 1,5 g, nuez 5 g, uva 5 g, tomate cherry 15 g, gajo de naranja 12 g. Añade las salsas \
+visibles; el aceite de cocinar lo calcula el sistema a partir de "prep". Si la foto no muestra comida o no se distingue, \
+devuelve "items": [] y una "clarification" amable. La confianza con foto rara vez supera 0.7."""
 
 
 LABEL_PROMPT = """Eres un experto en leer etiquetas nutricionales de productos envasados vendidos en España. \
