@@ -479,7 +479,9 @@ Usa la clave que ya está en el contenedor y no la muestra.
 | Latencia mediana · p95 | 3,7-4,1 s · 11-12 s | 1,7 s · 2,6-3,9 s |
 | Coste cada 100 comidas | 0,34 $ | 0,06 $ |
 
-La precisión es equivalente: cada uno falla de vez en cuando en una comida (Kimi, el yogur griego; Haiku, el café con leche), porque la tabla oficial pone casi todas las cifras. Haiku es el doble de rápido y unas 6 veces más barato. Con `--effort low` no mejora (1,5 %, 29/30, 8/10) y tarda algo más. Las fotos no están medidas.
+La precisión es equivalente: cada uno falla de vez en cuando en una comida (Kimi, el yogur griego; Haiku, el café con leche), porque la tabla oficial pone casi todas las cifras. Haiku es el doble de rápido y unas 6 veces más barato. Con `--effort low` no mejora (1,5 %, 29/30, 8/10) y tarda algo más.
+
+**Fotos** (`app.bench_photos`, 18 platos reales pesados de [Nutrition5k](https://github.com/google-research-datasets/Nutrition5k), Google Research, CC BY 4.0; dos pasadas): Kimi K2.6 tiene un error mediano de calorías del 42 % (16 de 35 dentro de ±30 %, 13 s por foto). Haiku 5.5 tiene un 68 % (9 de 36, 2,5 s), y con `--effort low` un 54 % (11 de 36, 6 s). Los dos se pasan con las raciones pequeñas. En fotos, Kimi es algo más preciso.
 
 **Medición anterior a la tabla oficial** (Kimi K2.6, 30 de septiembre de 2026, 21 comidas con referencias del propio prompt; la de octubre está en [Cómo se calculan las calorías](#cómo-se-calculan-las-calorías)):
 
