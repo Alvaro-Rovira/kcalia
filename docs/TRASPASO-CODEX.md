@@ -24,11 +24,9 @@ Kcalia es una PWA de calorías y macros: https://kcalia.space · repo `Alvaro-Ro
 
 ## Estado actual
 
-- **Producción:** desplegado desde `0e675e0`. Contenedores `kcalia-app` y `kcalia-stt`. Base SQLite en
+- **Producción:** desplegado desde `21ebe20`. Contenedores `kcalia-app` y `kcalia-stt`. Base SQLite en
   `user_version` 4. Hay una cuenta (la del usuario, administradora).
-- **`main` = rama `haiku` = `83bcec5`:** por delante de producción solo con documentación y `app/bench_photos.py`. El
-  próximo `./deploy/deploy.sh` lo incluye; ahora mismo `python -m app.bench_photos` no existe en la imagen y se ha
-  pasado el script por stdin.
+- **`main` = rama `haiku`**, igual que producción salvo este documento. `python -m app.bench_photos` ya está en la imagen.
 - **Modelos en producción** (`/opt/kcalia/.env`, desde el 2026-10-16, por decisión del usuario): **Claude Haiku 5.5
   para todo**:
   - `AI_MODEL=claude-haiku-5-5`;
