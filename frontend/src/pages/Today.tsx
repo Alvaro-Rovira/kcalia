@@ -324,10 +324,10 @@ export default function Today() {
                           </Ring>
                           <span className="mt-2 text-[12px] font-medium text-text-2">{m.short}</span>
                           <span className="mt-0.5 text-[13.5px] font-semibold text-text" aria-hidden>
-                            <AnimatedNumber value={value} />
-                            <span className="font-medium text-text-3" data-num>
-                              {' '}
-                              / {fmt(target)} g
+                            <AnimatedNumber value={value} />{' '}
+                            {/* «/ 58 g» no se parte: con cifras grandes salta entero a la línea siguiente. */}
+                            <span className="font-medium whitespace-nowrap text-text-3" data-num>
+                              / {fmt(target)}{'\u00a0'}g
                             </span>
                           </span>
                         </div>

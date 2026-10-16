@@ -8,8 +8,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.concurrency import run_in_threadpool
 
-from . import tenancy  # noqa: F401  (registra el filtro por usuario en las sesiones)
+from . import notify, tenancy  # noqa: F401  (tenancy registra el filtro por usuario en las sesiones)
 from .ai import AiError
 from .config import get_settings
 from .conflicts import RetryOnConflict
@@ -134,8 +135,10 @@ async def validation_error(_: Request, exc: RequestValidationError):
 
 
 @app.exception_handler(Exception)
-async def unexpected_error(_: Request, exc: Exception):
+async def unexpected_error(request: Request, exc: Exception):
     log.exception("Error no controlado", exc_info=exc)
+    # El administrador se entera (push como mucho cada cuarto de hora y lista en el panel).
+    await run_in_threadpool(notify.server_error, request.method, request.url.path, exc)
     return JSONResponse(
         {"detail": "Algo ha fallado por nuestra parte. Inténtalo de nuevo en un momento."}, status_code=500
     )

@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
-from .. import offsite, services
+from .. import notify, offsite, services
 from ..config import get_settings
 from ..db import get_db
 from ..deps import require_admin, today_local
@@ -165,6 +165,7 @@ def overview(db: Session = Depends(get_db)) -> dict:
             "encrypted": bool(settings.backup_encryption_key),
             **(services.app_setting(db, BACKUP_STATUS_KEY, {}) or {}),
         },
+        "errors": notify.errors_summary(),
         "prices": {
             "ai_input_per_million": settings.ai_price_input,
             "ai_output_per_million": settings.ai_price_output,
