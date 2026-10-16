@@ -4,7 +4,7 @@ se pierden al exportar e importar. Va después de test_flow (su registro espera 
 import pytest
 from app_dates import app_today
 from conftest import PASSWORD
-from playwright.sync_api import Page
+from playwright.sync_api import Page, expect
 
 PAGES = ["/", "/historial", "/resumen", "/peso", "/entreno", "/plan", "/ajustes", "/admin", "/no-existe"]
 LONG_WORD = "Superextraordinariamentelarguísimoplatoconnombreinterminable" * 3
@@ -89,3 +89,30 @@ def test_datos_doble_envio_y_exportar_importar(page: Page, servers):
     again_exported = api.get(base + "/api/export/json").json()
     again_counts = {k: len(v) for k, v in again_exported.items() if isinstance(v, list)}
     assert again_counts == counts
+
+
+CORRUPT_CACHE = """async () => {
+  const db = await new Promise((ok, ko) => { const r = indexedDB.open('keyval-store'); r.onsuccess = () => ok(r.result); r.onerror = ko })
+  const store = () => db.transaction('keyval', 'readwrite').objectStore('keyval')
+  const value = await new Promise((ok) => { const r = store().get('kcalia:cache'); r.onsuccess = () => ok(r.result) })
+  if (!value) return false
+  const data = typeof value === 'string' ? JSON.parse(value) : value
+  const boot = data.clientState.queries.find((q) => q.queryKey[0] === 'bootstrap')
+  boot.state.data.user = null  // una copia guardada que ya no encaja con la app
+  await new Promise((ok) => { const r = store().put(typeof value === 'string' ? JSON.stringify(data) : data, 'kcalia:cache'); r.onsuccess = ok })
+  return true
+}"""
+
+
+def test_una_copia_local_rota_no_deja_la_app_en_blanco(page: Page, servers):
+    page.goto(servers["app"] + "/")
+    page.wait_for_load_state("networkidle")
+    page.wait_for_timeout(1500)  # la caché se guarda con un pequeño retraso
+    assert page.evaluate(CORRUPT_CACHE)
+    page.context.set_offline(True)  # sin red, la app solo tiene la copia rota
+    page.reload()
+    # Antes, la pantalla en blanco; ahora, un aviso con salida.
+    expect(page.get_by_role("alert")).to_contain_text("Algo ha fallado al mostrar esta pantalla")
+    page.context.set_offline(False)
+    page.get_by_role("button", name="Borrar la copia de este dispositivo y recargar").click()
+    expect(page.get_by_role("link", name="Ajustes")).to_be_visible()

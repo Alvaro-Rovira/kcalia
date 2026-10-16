@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Route, Routes } from 'react-router'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { Shell } from './components/Shell'
 import { Splash } from './components/Splash'
 import { UpdateBanner } from './components/UpdateBanner'
@@ -69,18 +70,21 @@ function AuthedApp() {
   return (
     <Shell>
       {(location) => (
-        <Routes location={location}>
-          <Route path="/" element={<Today />} />
-          <Route path="/historial" element={<History />} />
-          <Route path="/resumen" element={<Summary />} />
-          <Route path="/peso" element={<WeightPage />} />
-          <Route path="/entreno" element={<WorkoutPage />} />
-          <Route path="/plan" element={<PlanPage />} />
-          <Route path="/ajustes" element={<Settings />} />
-          {/* Solo existe para el administrador; para el resto es una ruta desconocida (y la API responde 403). */}
-          {bootstrap.data.user.is_admin && <Route path="/admin" element={<Admin />} />}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        // Un fallo en una pantalla no tumba la barra de navegación; al cambiar de pantalla se vuelve a intentar.
+        <ErrorBoundary key={location.pathname}>
+          <Routes location={location}>
+            <Route path="/" element={<Today />} />
+            <Route path="/historial" element={<History />} />
+            <Route path="/resumen" element={<Summary />} />
+            <Route path="/peso" element={<WeightPage />} />
+            <Route path="/entreno" element={<WorkoutPage />} />
+            <Route path="/plan" element={<PlanPage />} />
+            <Route path="/ajustes" element={<Settings />} />
+            {/* Solo existe para el administrador; para el resto es una ruta desconocida (y la API responde 403). */}
+            {bootstrap.data.user.is_admin && <Route path="/admin" element={<Admin />} />}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </ErrorBoundary>
       )}
     </Shell>
   )

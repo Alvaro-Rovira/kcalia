@@ -4,6 +4,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router'
 import App, { preloadRoute } from './App'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { outbox, type Op } from './offline/outbox'
 import { CACHE_BUSTER, CACHE_MAX_AGE, keys, persister, queryClient } from './offline/queryClient'
 import './styles/index.css'
@@ -67,16 +68,18 @@ outbox.init({
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{ persister, maxAge: CACHE_MAX_AGE, buster: CACHE_BUSTER }}
-    >
-      {/* "user": las animaciones de movimiento se reducen solas con prefers-reduced-motion. */}
-      <MotionConfig reducedMotion="user">
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </MotionConfig>
-    </PersistQueryClientProvider>
+    <ErrorBoundary>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{ persister, maxAge: CACHE_MAX_AGE, buster: CACHE_BUSTER }}
+      >
+        {/* "user": las animaciones de movimiento se reducen solas con prefers-reduced-motion. */}
+        <MotionConfig reducedMotion="user">
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </MotionConfig>
+      </PersistQueryClientProvider>
+    </ErrorBoundary>
   </StrictMode>,
 )
