@@ -135,6 +135,10 @@ Hubo cuatro causas, todas arregladas:
 4. **GitHub:** activar el aviso privado de vulnerabilidades (*Settings → Code security*), al que remite `SECURITY.md`.
    Lo hace el usuario o se hace con `gh api -X PUT repos/Alvaro-Rovira/kcalia/private-vulnerability-reporting` si lo
    autoriza.
+5. **Restos del proveedor anterior:**
+   - En `/root` de la VPS quedan ficheros de resultados de las pruebas con su nombre: `/root/kcalia-bench-*.txt` y
+     `/root/kcalia-fotos-*.txt`. Se borran solo si el usuario lo autoriza.
+   - El usuario tiene que revocar la clave en la consola de ese proveedor; en el servidor ya no está.
 
 ## Comandos útiles
 
