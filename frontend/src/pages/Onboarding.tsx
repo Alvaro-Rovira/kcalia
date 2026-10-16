@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { ArrowLeft, ArrowRight, Camera, Check, Mars, Mic, Sparkles, Venus, Zap } from 'lucide-react'
+import { Armchair, ArrowLeft, ArrowRight, Camera, Check, Footprints, Hammer, Mars, Mic, Sparkles, Venus, Zap } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Logo, Wordmark } from '@/components/Logo'
 import { PlanExplanation } from '@/components/PlanExplanation'
@@ -9,6 +9,7 @@ import { api, errorMessage } from '@/lib/api'
 import { todayISO } from '@/lib/dates'
 import { haptic } from '@/lib/haptics'
 import { GRAM_MACROS } from '@/lib/macros'
+import { activityFor, DAY_OPTIONS, TRAINING_OPTIONS, type DayAnswer, type TrainingAnswer } from '@/lib/activity'
 import { ACTIVITIES, GOALS } from '@/lib/options'
 import type { Activity, Bootstrap, Goal, Plan, Profile, ProfileInput, Sex, Targets } from '@/lib/types'
 import { keys } from '@/offline/queryClient'
@@ -26,6 +27,8 @@ interface Answers {
   weight_kg: number
   height_cm: number
   activity: Activity | null
+  day: DayAnswer | null
+  training: TrainingAnswer | null
   goal: Goal | null
   target_weight_kg: number | null
 }
@@ -103,6 +106,8 @@ export default function Onboarding() {
     weight_kg: 75,
     height_cm: 172,
     activity: null,
+    day: null,
+    training: null,
     goal: null,
     target_weight_kg: null,
   })
@@ -300,20 +305,49 @@ export default function Onboarding() {
             )}
 
             {step === 'activity' && (
-              <Question title="¿Cuánto te mueves?" text="Piensa en tu día entero y en cuántos días entrenas. Si dudas entre dos, elige el de abajo: luego la app lo afina con tu peso real.">
-                <div role="radiogroup" aria-label="Nivel de actividad" className="space-y-2.5">
-                  {ACTIVITIES.map(({ value, label, text, Icon, factor }) => (
+              <Question title="¿Cómo es tu día?" text="Contando todo, no solo el gimnasio. Con esto y los días que entrenas elijo tu nivel de actividad.">
+                <div role="radiogroup" aria-label="Cómo es tu día" className="space-y-2.5">
+                  {DAY_OPTIONS.map(({ value, label, text }, i) => (
                     <Choice
                       key={value}
-                      selected={answers.activity === value}
-                      onClick={() => pick('activity', value)}
-                      icon={<Icon className="size-5" aria-hidden />}
+                      selected={answers.day === value}
+                      onClick={() => {
+                        haptic('select')
+                        setAnswers((a) => ({ ...a, day: value, activity: a.training ? activityFor(value, a.training) : null }))
+                      }}
+                      icon={[<Armchair key="a" className="size-5" aria-hidden />, <Footprints key="f" className="size-5" aria-hidden />, <Hammer key="h" className="size-5" aria-hidden />][i]}
                       title={label}
                       text={text}
-                      tag={`×${String(factor).replace('.', ',')}`}
                     />
                   ))}
                 </div>
+                <p className="mt-6 mb-2.5 text-[15px] font-semibold text-text">¿Cuántos días entrenas a la semana?</p>
+                <div role="radiogroup" aria-label="Días de entreno a la semana" className="grid grid-cols-4 gap-2">
+                  {TRAINING_OPTIONS.map(({ value, label }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      role="radio"
+                      aria-checked={answers.training === value}
+                      onClick={() => {
+                        haptic('select')
+                        setAnswers((a) => ({ ...a, training: value, activity: a.day ? activityFor(a.day, value) : null }))
+                      }}
+                      className={clsx(
+                        'h-12 rounded-md border text-[14px] font-semibold transition-colors',
+                        answers.training === value ? 'border-accent bg-accent-soft text-accent-text' : 'border-border bg-surface-2 text-text-2',
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {answers.activity && (
+                  <p className="mt-4 text-[14px] text-text-2" aria-live="polite">
+                    Tu nivel de actividad: <strong className="text-text">{ACTIVITIES.find((a) => a.value === answers.activity)?.label}</strong> (×
+                    {String(ACTIVITIES.find((a) => a.value === answers.activity)?.factor).replace('.', ',')})
+                  </p>
+                )}
               </Question>
             )}
 

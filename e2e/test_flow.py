@@ -99,7 +99,11 @@ def test_01_registro_y_onboarding(page: Page):
     page.get_by_role("button", name="Aumentar peso").click()  # 75,5 kg
     page.get_by_role("button", name="Continuar").click()
     page.get_by_role("button", name="Continuar").click()  # altura por defecto
-    page.get_by_role("radio", name=" Moderado").click()
+    # Actividad en dos preguntas: de pie buena parte del día y 4-5 días de entreno = Moderado (× 1,55).
+    page.get_by_role("radio", name="De pie o andando").click()
+    page.get_by_role("radio", name="4-5 días").click()
+    expect(page.get_by_text("Tu nivel de actividad: Moderado")).to_be_visible()
+    page.get_by_role("button", name="Continuar").click()
     page.get_by_role("radio", name="Definición ligera").click()
     page.get_by_role("button", name="Saltar").click()  # sin peso objetivo
 

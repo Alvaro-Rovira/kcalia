@@ -591,12 +591,7 @@ Lo que queda, en orden (estado del 16 de octubre de 2026, por la tarde):
    - El login acepta un `code` opcional. Si la cuenta tiene doble factor y falta el código, responde `401` con `code: "totp_required"`; un código erróneo cuenta en el freno de intentos. Se admite un paso de margen (±30 s).
    - En Ajustes → Cuenta, el usuario lo activa y desactiva confirmando su contraseña. Ve un código QR (un SVG generado en el servidor, por ejemplo con `segno`) y un código para escribir a mano, confirma con un primer código y recibe los códigos de recuperación, que se muestran una sola vez.
    - Obligatorio para el administrador: sin él, `/api/admin/*` responde que lo active. Habrá un script de emergencia `scripts/disable-2fa.py` para usarlo por ssh.
-3. **Cuestionario de actividad en dos preguntas, aprobado y sin empezar.** En el cuestionario inicial, en lugar de la lista de niveles: «¿Cómo es tu día?» (sentado / de pie o andando / trabajo físico) × «¿Cuántos días entrenas?» (0 / 1-3 / 4-5 / 6-7), con esta tabla:
-   - sentado: `sedentario`, `ligero`, `medio`, `moderado`;
-   - de pie: `ligero`, `medio`, `moderado`, `alto`;
-   - trabajo físico: `moderado`, `alto`, `alto`, `muy_alto`.
-
-   Es solo del frontend (`Onboarding.tsx`, con la tabla probada en vitest), y hay que actualizar el paso de actividad de `e2e/test_flow.py::test_01`.
+3. *(Hecho el 16 de octubre: el cuestionario inicial elige el nivel de actividad con dos preguntas, en `frontend/src/lib/activity.ts`.)*
 4. **Lista de errores en la pantalla del panel.** La API ya los da (`errors.recent`) y el estado de la comprobación de copias (`backup.check`); falta pintarlos en `Admin.tsx`.
 5. **Revocar la clave del proveedor de IA anterior** en su consola. Lo hace el dueño.
 6. **Fotos.** El error mediano de calorías con foto es del 41 % (`app.bench_photos`). Si se toca `PHOTO_INSTRUCTIONS`, conviene validarlo con otra muestra (`scripts/fetch_nutrition5k.py --seed` distinta).
@@ -634,6 +629,8 @@ Hecho después:
 - [x] Claude Haiku 5.5 como modelo de IA (texto y fotos), medido frente al anterior
 - [x] Días de descanso que compensan los de entreno y nivel de actividad «Medio»
 - [x] Cambio de contraseña, freno en las confirmaciones, fuzzing de toda la API, escrituras simultáneas sin errores y aviso en vez de pantalla en blanco
+- [x] Avisos de errores 500, de caídas de la web y comprobación semanal de las copias
+- [x] Nivel de actividad elegido con dos preguntas («¿cómo es tu día?» y «¿cuántos días entrenas?»)
 
 Ideas para más adelante:
 
