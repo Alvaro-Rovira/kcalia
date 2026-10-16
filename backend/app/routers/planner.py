@@ -17,7 +17,7 @@ from ..deps import get_ai_client, require_approved_user, require_user
 from ..matching import extras, totals
 from ..models import Dish, MealPlan, ShoppingCheck, User
 from ..refine import refine
-from ..schemas import PlanFillIn, PlanIn, ShoppingCheckIn
+from ..schemas import PlanFillIn, PlanIn, ShoppingCheckIn, parse_day
 from ..summary import week_start
 from ..usage import check_ai_budget, run_ai
 
@@ -29,7 +29,7 @@ SLOT_SHARE = {"desayuno": 0.25, "comida": 0.35, "merienda": 0.1, "cena": 0.3, "s
 
 def _monday(value: str) -> date_type:
     try:
-        return week_start(date_type.fromisoformat(value))
+        return week_start(parse_day(value))
     except ValueError as exc:
         raise HTTPException(422, "Esa fecha no es válida.") from exc
 

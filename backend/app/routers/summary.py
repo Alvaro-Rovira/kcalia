@@ -1,5 +1,3 @@
-from datetime import date
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -9,6 +7,7 @@ from ..config import get_settings
 from ..db import get_db
 from ..deps import require_approved_user, require_user, today_local
 from ..models import User, WeeklySummary
+from ..schemas import parse_day
 from ..summary import week_start
 from ..usage import ai_limit_for
 
@@ -23,7 +22,7 @@ def week(start: str | None = None, db: Session = Depends(get_db)) -> dict:
         raise HTTPException(409, "Completa primero tu perfil.")
     today = today_local()
     try:
-        monday = week_start(date.fromisoformat(start)) if start else week_start(today)
+        monday = week_start(parse_day(start)) if start else week_start(today)
     except ValueError as exc:
         raise HTTPException(422, "Esa fecha no es válida.") from exc
     return services.compute_week(db, monday, today, targets)

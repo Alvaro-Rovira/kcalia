@@ -16,6 +16,7 @@ from ..db import get_db
 from ..deps import require_admin, today_local
 from ..jobs import BACKUP_STATUS_KEY
 from ..models import AdminAudit, AiUsage, AuthSession, User
+from ..schemas import DbId
 from ..usage import ai_limit_for, stt_limit_for
 from .auth import signup_state
 
@@ -189,7 +190,7 @@ def list_users(db: Session = Depends(get_db)) -> dict:
 
 
 @router.post("/users/{user_id}/approve")
-def approve(user_id: int, admin: User = Depends(require_admin), db: Session = Depends(get_db)) -> dict:
+def approve(user_id: DbId, admin: User = Depends(require_admin), db: Session = Depends(get_db)) -> dict:
     user = _get_user(db, user_id)
     if user.status != "pending":
         raise HTTPException(409, "Esa cuenta no está pendiente de aprobación.")
@@ -200,7 +201,7 @@ def approve(user_id: int, admin: User = Depends(require_admin), db: Session = De
 
 
 @router.post("/users/{user_id}/reject")
-def reject(user_id: int, admin: User = Depends(require_admin), db: Session = Depends(get_db)) -> dict:
+def reject(user_id: DbId, admin: User = Depends(require_admin), db: Session = Depends(get_db)) -> dict:
     """Rechazar una solicitud borra la cuenta pendiente (no tiene datos)."""
     user = _get_user(db, user_id)
     _not_self(admin, user, "rechazar")
@@ -212,7 +213,7 @@ def reject(user_id: int, admin: User = Depends(require_admin), db: Session = Dep
 
 
 @router.post("/users/{user_id}/suspend")
-def suspend(user_id: int, admin: User = Depends(require_admin), db: Session = Depends(get_db)) -> dict:
+def suspend(user_id: DbId, admin: User = Depends(require_admin), db: Session = Depends(get_db)) -> dict:
     user = _get_user(db, user_id)
     _not_self(admin, user, "bloquear")
     user.status = "suspended"
@@ -222,7 +223,7 @@ def suspend(user_id: int, admin: User = Depends(require_admin), db: Session = De
 
 
 @router.post("/users/{user_id}/unsuspend")
-def unsuspend(user_id: int, admin: User = Depends(require_admin), db: Session = Depends(get_db)) -> dict:
+def unsuspend(user_id: DbId, admin: User = Depends(require_admin), db: Session = Depends(get_db)) -> dict:
     user = _get_user(db, user_id)
     if user.status != "suspended":
         raise HTTPException(409, "Esa cuenta no está bloqueada.")
@@ -234,7 +235,7 @@ def unsuspend(user_id: int, admin: User = Depends(require_admin), db: Session = 
 
 @router.post("/users/{user_id}/delete")
 def delete_account(
-    user_id: int, body: ConfirmIn, admin: User = Depends(require_admin), db: Session = Depends(get_db)
+    user_id: DbId, body: ConfirmIn, admin: User = Depends(require_admin), db: Session = Depends(get_db)
 ) -> dict:
     user = _get_user(db, user_id)
     _not_self(admin, user, "eliminar")
@@ -247,7 +248,7 @@ def delete_account(
 
 @router.patch("/users/{user_id}/limits")
 def set_limits(
-    user_id: int, body: LimitsIn, admin: User = Depends(require_admin), db: Session = Depends(get_db)
+    user_id: DbId, body: LimitsIn, admin: User = Depends(require_admin), db: Session = Depends(get_db)
 ) -> dict:
     user = _get_user(db, user_id)
     changes = body.model_dump(exclude_unset=True)
@@ -259,7 +260,7 @@ def set_limits(
 
 
 @router.post("/users/{user_id}/logout-all")
-def logout_all(user_id: int, admin: User = Depends(require_admin), db: Session = Depends(get_db)) -> dict:
+def logout_all(user_id: DbId, admin: User = Depends(require_admin), db: Session = Depends(get_db)) -> dict:
     user = _get_user(db, user_id)
     closed = db.execute(delete(AuthSession).where(AuthSession.user_id == user.id)).rowcount
     _audit(db, admin, "logout_all", user, sessions=closed)

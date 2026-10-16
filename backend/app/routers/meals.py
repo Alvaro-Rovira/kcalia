@@ -1,5 +1,3 @@
-from datetime import date as date_type
-
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -14,7 +12,7 @@ from ..matching import extras, totals
 from ..models import Dish, DishAlias, Meal, User, utcnow
 from ..products import resolve_text
 from ..refine import official_share, refine
-from ..schemas import DishPatch, MealIn, MealPatch, ResolveIn
+from ..schemas import DbId, DishPatch, MealIn, MealPatch, ResolveIn, parse_day
 from ..security import sniff_image
 from ..textnorm import normalize
 from ..usage import check_ai_budget, check_stt_budget, run_ai
@@ -201,7 +199,7 @@ def transcribe_audio(
 @router.get("/meals")
 def list_meals(date: str, db: Session = Depends(get_db)) -> dict:
     try:
-        date_type.fromisoformat(date)
+        parse_day(date)
     except ValueError as exc:
         raise HTTPException(422, "Esa fecha no es válida.") from exc
     meals = db.scalars(
@@ -384,7 +382,7 @@ def list_dishes(db: Session = Depends(get_db)) -> dict:
 
 
 @router.patch("/dishes/{dish_id}")
-def update_dish(dish_id: int, body: DishPatch, db: Session = Depends(get_db)) -> dict:
+def update_dish(dish_id: DbId, body: DishPatch, db: Session = Depends(get_db)) -> dict:
     dish = db.get(Dish, dish_id)
     if dish is None:
         raise HTTPException(404, "Esa comida ya no está en tu historial.")
@@ -397,7 +395,7 @@ def update_dish(dish_id: int, body: DishPatch, db: Session = Depends(get_db)) ->
 
 
 @router.delete("/dishes/{dish_id}")
-def delete_dish(dish_id: int, db: Session = Depends(get_db)) -> dict:
+def delete_dish(dish_id: DbId, db: Session = Depends(get_db)) -> dict:
     dish = db.get(Dish, dish_id)
     if dish is not None:
         db.delete(dish)

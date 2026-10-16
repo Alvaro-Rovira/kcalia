@@ -1,6 +1,7 @@
 from datetime import date, datetime
-from typing import Annotated, Literal
+from typing import Annotated, Literal, get_args
 
+from fastapi import Path
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 Sex = Literal["hombre", "mujer"]
@@ -13,8 +14,24 @@ Source = Literal[
 Via = Literal["text", "voice", "photo", "tap"]
 
 
+# Fechas que llegan de fuera: fuera de este margen no hay comidas reales y las cuentas con fechas (semanas, rachas) se
+# salen del calendario de Python y rompen la petición.
+MIN_DAY, MAX_DAY = date(1900, 1, 1), date(2199, 12, 31)
+# Identificadores en la ruta: SQLite no admite enteros mayores (sin el tope, /api/products/9999…9999 daba 500).
+DbId = Annotated[int, Path(ge=1, le=2**63 - 1)]
+BodyId = Annotated[int, Field(ge=1, le=2**63 - 1)]  # lo mismo para los identificadores que llegan en el cuerpo
+
+
+def parse_day(value: str) -> date:
+    """Fecha AAAA-MM-DD dentro del margen admitido; ValueError si no lo es."""
+    day = date.fromisoformat(value)
+    if not MIN_DAY <= day <= MAX_DAY:
+        raise ValueError(f"la fecha debe estar entre {MIN_DAY.year} y {MAX_DAY.year}")
+    return day
+
+
 def _iso_date(value: str) -> str:
-    date.fromisoformat(value)
+    parse_day(value)
     return value
 
 
@@ -70,7 +87,7 @@ class Item(BaseModel):
     unit: str = Field(default="g", max_length=16)
     grams: float = Field(default=0, ge=0, le=5000)
     # Si el ingrediente sale de la etiqueta de un producto guardado.
-    product_id: int | None = None
+    product_id: BodyId | None = None
     # Añadido a mano por el usuario: al guardar la comida se aprende en la caché de ingredientes.
     manual: bool = False
     kcal: float = Field(ge=0, le=6000)
@@ -100,7 +117,7 @@ class MealIn(BaseModel):
     via: Via = "text"
     confidence: float = Field(default=0.8, ge=0, le=1)
     assumptions: list[str] = Field(default_factory=list, max_length=12)
-    dish_id: int | None = None
+    dish_id: BodyId | None = None
 
     _check_date = field_validator("date")(lambda cls, v: _iso_date(v))
 
@@ -248,6 +265,18 @@ class PrefsPatch(BaseModel):
     suggest_hour: HHMM | None = None
     suggest_hidden: list[Annotated[str, Field(max_length=120)]] | None = Field(default=None, max_length=300)
 
+    @model_validator(mode="after")
+    def _no_nulls_where_not_allowed(self):
+        """«null» solo vale en lo que de verdad puede quedar vacío (agua automática, recordatorio apagado...)."""
+        wrong = [
+            key
+            for key in self.model_fields_set
+            if getattr(self, key) is None and type(None) not in get_args(Prefs.model_fields[key].annotation)
+        ]
+        if wrong:
+            raise ValueError(f"{', '.join(sorted(wrong))} no puede quedar vacío")
+        return self
+
 
 class SuggestAiIn(BaseModel):
     kcal: float = Field(gt=0, le=5000)
@@ -377,7 +406,7 @@ class PlanIn(BaseModel):
     name: str = Field(min_length=1, max_length=160)
     items: list[Item] = Field(min_length=1, max_length=30)
     servings: float = Field(default=1.0, gt=0, le=20)
-    dish_id: int | None = None
+    dish_id: BodyId | None = None
     source: Literal["dish", "product", "manual", "ai"] = "dish"
 
     _check_date = field_validator("date")(lambda cls, v: _iso_date(v))

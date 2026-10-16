@@ -14,7 +14,7 @@ from ..ai import AiClient, finalize_label
 from ..db import get_db
 from ..deps import get_ai_client, require_approved_user, require_user
 from ..models import Product, ProductImage, User, utcnow
-from ..schemas import ProductIn, ProductPatch
+from ..schemas import DbId, ProductIn, ProductPatch
 from ..security import RateLimit, sniff_image
 from ..usage import check_ai_budget, run_ai
 
@@ -149,7 +149,7 @@ def create_product(
 
 
 @router.patch("/{product_id}")
-def update_product(product_id: int, body: ProductPatch, db: Session = Depends(get_db)) -> dict:
+def update_product(product_id: DbId, body: ProductPatch, db: Session = Depends(get_db)) -> dict:
     product = _get(db, product_id)
     changes = body.model_dump(exclude_unset=True)
     if "barcode" in changes:
@@ -167,7 +167,7 @@ def update_product(product_id: int, body: ProductPatch, db: Session = Depends(ge
 
 
 @router.put("/{product_id}/image")
-def replace_image(product_id: int, image: UploadFile = File(...), db: Session = Depends(get_db)) -> dict:
+def replace_image(product_id: DbId, image: UploadFile = File(...), db: Session = Depends(get_db)) -> dict:
     product = _get(db, product_id)
     blob, mime = _read_image(image)
     row = db.get(ProductImage, product_id)
@@ -182,7 +182,7 @@ def replace_image(product_id: int, image: UploadFile = File(...), db: Session = 
 
 
 @router.get("/{product_id}/image")
-def get_image(product_id: int, db: Session = Depends(get_db)) -> Response:
+def get_image(product_id: DbId, db: Session = Depends(get_db)) -> Response:
     row = db.get(ProductImage, product_id)
     if row is None:
         raise HTTPException(404, "Este producto no tiene foto.")
@@ -190,7 +190,7 @@ def get_image(product_id: int, db: Session = Depends(get_db)) -> Response:
 
 
 @router.delete("/{product_id}")
-def delete_product(product_id: int, db: Session = Depends(get_db)) -> dict:
+def delete_product(product_id: DbId, db: Session = Depends(get_db)) -> dict:
     product = db.get(Product, product_id)
     if product is not None:
         image = db.get(ProductImage, product_id)

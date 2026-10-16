@@ -10,7 +10,7 @@ from .. import daytargets, services
 from ..db import get_db
 from ..deps import require_approved_user
 from ..models import MEASURES, BodyMeasurement, DayType, ProgressPhoto, WaterLog
-from ..schemas import DayTypeIn, MeasurementIn, PrefsPatch, WaterIn
+from ..schemas import DayTypeIn, DbId, MeasurementIn, PrefsPatch, WaterIn, parse_day
 from ..security import sniff_image
 
 router = APIRouter(prefix="/api", tags=["seguimiento"], dependencies=[Depends(require_approved_user)])
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/api", tags=["seguimiento"], dependencies=[Depends(re
 
 def _iso(value: str) -> str:
     try:
-        date_type.fromisoformat(value)
+        parse_day(value)
     except ValueError as exc:
         raise HTTPException(422, "Esa fecha no es válida.") from exc
     return value
@@ -174,7 +174,7 @@ def upload_photo(
 
 
 @router.get("/photos/{photo_id}/image")
-def photo_image(photo_id: int, db: Session = Depends(get_db)) -> Response:
+def photo_image(photo_id: DbId, db: Session = Depends(get_db)) -> Response:
     row = db.get(ProgressPhoto, photo_id)
     if row is None:
         raise HTTPException(404, "Esa foto ya no existe.")
@@ -182,7 +182,7 @@ def photo_image(photo_id: int, db: Session = Depends(get_db)) -> Response:
 
 
 @router.delete("/photos/{photo_id}")
-def delete_photo(photo_id: int, db: Session = Depends(get_db)) -> dict:
+def delete_photo(photo_id: DbId, db: Session = Depends(get_db)) -> dict:
     row = db.get(ProgressPhoto, photo_id)
     if row is not None:
         db.delete(row)

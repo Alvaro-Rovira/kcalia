@@ -12,6 +12,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
 
+from .schemas import MAX_DAY, MIN_DAY
 from .textnorm import normalize
 
 MAX_BYTES = 5 * 1024 * 1024
@@ -129,7 +130,7 @@ def parse_date(text: str, month_first: bool = False) -> str | None:
     text = (text or "").strip()[:10]
     for pattern in ("%Y-%m-%d", "%Y/%m/%d"):
         try:
-            return datetime.strptime(text, pattern).date().isoformat()
+            return _in_range(datetime.strptime(text, pattern).date())
         except ValueError:
             pass
     patterns = (
@@ -144,10 +145,16 @@ def parse_date(text: str, month_first: bool = False) -> str | None:
     )
     for pattern in patterns:
         try:
-            return datetime.strptime(text, pattern).date().isoformat()
+            return _in_range(datetime.strptime(text, pattern).date())
         except ValueError:
             pass
     return None
+
+
+def _in_range(day: date) -> str:
+    if not MIN_DAY <= day <= MAX_DAY:
+        raise ValueError("fecha fuera de rango")
+    return day.isoformat()
 
 
 def parse_slot(text: str) -> str:
