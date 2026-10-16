@@ -29,8 +29,16 @@ Kcalia es una PWA de calorías y macros: https://kcalia.space · repo `Alvaro-Ro
 - **`main` = rama `haiku` = `83bcec5`:** por delante de producción solo con documentación y `app/bench_photos.py`. El
   próximo `./deploy/deploy.sh` lo incluye; ahora mismo `python -m app.bench_photos` no existe en la imagen y se ha
   pasado el script por stdin.
-- **Modelos en producción** (`/opt/kcalia/.env`): `AI_MODEL=kimi-k2.6`, `AI_VISION_MODEL=` (vacío, es decir, Kimi
-  también para fotos), `AI_EFFORT=` (vacío). `ANTHROPIC_API_KEY` ya está puesta: la metió el usuario.
+- **Modelos en producción** (`/opt/kcalia/.env`, desde el 2026-10-16, por decisión del usuario): **Claude Haiku 5.5
+  para todo**:
+  - `AI_MODEL=claude-haiku-5-5`;
+  - `AI_VISION_MODEL=`: vacío, así que las fotos también van a Haiku;
+  - `AI_EFFORT=low`: mejor en fotos y sin coste en texto;
+  - `AI_PRICE_INPUT=0.10` y `AI_PRICE_OUTPUT=0.50`.
+
+  La clave de Kimi (`AI_API_KEY`) sigue en el `.env` por si se vuelve atrás. Copia previa del fichero:
+  `/root/kcalia-env-antes-haiku.bak`. Volver a Kimi: `AI_MODEL=kimi-k2.6`, `AI_EFFORT=`, precios 0.95/4.00 y
+  `docker compose up -d app`.
 - **CI** (GitHub Actions, 4 trabajos): verde en el último commit comprobado (`32319a8`). Las suites locales pasan:
   - pytest: 681;
   - vitest: 200;
@@ -126,11 +134,12 @@ Hubo cuatro causas, todas arregladas:
   - Los dos modelos **sobreestiman** el peso de las raciones pequeñas (sesgo de +22 a +32 % en kcal) e infravaloran
     los frutos secos.
   - Resultados en la VPS: `/root/kcalia-bench-*.txt` y `/root/kcalia-fotos-{kimi,haiku,haiku-low}.txt`.
-- **Veredicto dado al usuario:** texto con **Haiku 5.5** y fotos con **Kimi K2.6**.
+- **Veredicto dado al usuario:** texto con **Haiku 5.5** y fotos con **Kimi K2.6**. El usuario eligió Haiku para todo.
 
 ## Pendiente
 
-1. **Aplicar el veredicto de modelos** si el usuario dice que sí:
+1. **Hecho (2026-10-16): Haiku 5.5 para todo.** Mi recomendación había sido texto con Haiku y fotos con Kimi. Así se
+   haría si se quiere el modo mixto:
    - En `/opt/kcalia/.env`:
      - `AI_MODEL=claude-haiku-5-5`
      - `AI_VISION_MODEL=kimi-k2.6`: usa `AI_BASE_URL` y `AI_API_KEY`, que siguen siendo los de Kimi.
