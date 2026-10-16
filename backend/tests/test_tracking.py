@@ -198,7 +198,9 @@ def test_tipos_de_dia_y_objetivos_por_tipo(client):
     kinds = [d["kind"] for d in week["days"]]
     assert kinds == ["entreno", "descanso", "descanso", "entreno", "descanso", "descanso", "descanso"]
     assert week["kinds"]["entreno"]["kcal"] == targets["kcal"] + 200
-    assert week["kinds"]["descanso"]["kcal"] == targets["kcal"] - 100
+    # Los 5 días de descanso compensan los 2 de entreno (2 × 200 / 5 = 80): la semana queda en el objetivo de siempre.
+    assert week["kinds"]["descanso"]["kcal"] == targets["kcal"] - 80
+    assert abs(sum(d["targets"]["kcal"] for d in week["days"]) / 7 - targets["kcal"]) <= 5
 
     changed = client.put("/api/day-types", json={"date": "2026-10-07", "kind": "entreno"}).json()
     assert changed["days"][0]["kind"] == "entreno" and changed["days"][0]["manual"] is True

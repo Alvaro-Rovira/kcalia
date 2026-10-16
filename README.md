@@ -79,7 +79,7 @@ Kcalia es una PWA en español, pensada primero para el móvil, que vive en tu pr
 
 **Entrenamiento**
 
-- **Días de entreno y de descanso** con objetivos propios: por defecto +200 kcal los días que entrenas y −100 los que no, o cifras a mano. Se marca por día de la semana o día a día; en Hoy, «¿Entrenas hoy?» lo activa con un toque (y «Deshacer» lo revierte).
+- **Días de entreno y de descanso** con objetivos propios: por defecto +200 kcal los días que entrenas y los de descanso bajan lo justo para compensarlo, de modo que la semana queda en tu objetivo (con 4 días de entreno, −270). También admite un ajuste fijo o cifras a mano. Se marca por día de la semana o día a día; en Hoy, «¿Entrenas hoy?» lo activa con un toque (y «Deshacer» lo revierte).
 - **Registro de entrenos** en `/entreno`: rutinas de ejemplo (empuje, tirón, pierna, cuerpo completo) y las tuyas, series con peso y repeticiones, «Repetir» la anterior, temporizador de descanso, última marca de cada ejercicio, 1RM estimado y progresión. Funciona sin conexión.
 - **Calorías del entreno** netas: (MET − 1) × peso × duración, sin volver a contar el gasto en reposo, con los MET del Compendium of Physical Activities 2024 (la cinta, la bici, el remo y la elíptica, cada uno con el suyo). Por defecto son solo una referencia; se pueden sumar al objetivo del día desde Ajustes.
 - **Tu gasto real.** Con 4 semanas de lo que apuntas y de tu peso, Kcalia mide lo que gastas de verdad y te deja usarlo en lugar de la fórmula.
@@ -209,7 +209,7 @@ Sin IA y sin cajas negras: la app enseña el cálculo paso a paso.
 | Volumen | +7,5 % | 1,8 g/kg | 1,0 g/kg |
 
 4. **Hidratos**: las calorías que quedan, a 4 kcal por gramo.
-5. **Días de entreno y de descanso** (opcional): el ajuste de cada tipo de día se suma o resta a las calorías y lo absorben los hidratos; proteína y grasa no cambian.
+5. **Días de entreno y de descanso** (opcional): el ajuste de cada tipo de día se suma o resta a las calorías y lo absorben los hidratos; proteína y grasa no cambian. Por defecto, los días de descanso compensan los de entreno (−ajuste × días de entreno ÷ días de descanso, redondeado a 10 kcal), así la media semanal es el objetivo del plan. El nivel de actividad ya incluye el gimnasio, y sumar en los días de entreno sin restar en los demás lo contaría dos veces. Los niveles de actividad se describen por cómo es el día entero (sentado, de pie, trabajo físico), no por los días de gimnasio.
 6. **Gasto real** (opcional): la fórmula del paso 2 puede desviarse un 10-20 %. Con las últimas 4 semanas, Kcalia calcula `media de lo comido − tendencia del peso × 7.700 kcal/kg`. Solo cuenta días con al menos la mitad del objetivo apuntado (hacen falta 10) y la pendiente de al menos 4 pesajes repartidos en 10 días, y lo mezcla con la fórmula hasta tener 3 semanas de datos. Si el resultado no es creíble (por agua o registros incompletos) lo explica y no lo ofrece. Desde Ajustes → Cómo se calculan puedes usarlo como mantenimiento o volver a la fórmula; con él, las calorías del entreno ya van incluidas y no se suman aparte.
 
 **Avisos de seguridad.** El plan nunca baja de 1.200 kcal en mujeres ni de 1.500 en hombres, ni propone un déficit mayor de 1.000 kcal al día. Con un IMC por debajo de 18,5 no aplica déficit y lo dice. Con un IMC por encima de 30 calcula proteína y grasa con un peso de referencia. Avisa si el objetivo queda por debajo del metabolismo basal, si eres menor de edad o si el peso objetivo no cuadra con el plan. Son orientaciones generales, no consejo médico.

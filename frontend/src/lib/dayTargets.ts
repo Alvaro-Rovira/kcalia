@@ -21,6 +21,26 @@ export function kindFor(iso: string, prefs: Partial<Prefs> | undefined, override
   return (prefs.training_days ?? DEFAULT_TRAINING_DAYS).includes(weekdayIndex(iso)) ? 'entreno' : 'descanso'
 }
 
+const trainingCount = (prefs: Partial<Prefs> | undefined) => new Set(prefs?.training_days ?? DEFAULT_TRAINING_DAYS).size
+
+/** Los días de descanso compensan los de entreno salvo que se haya desactivado. */
+export const balancesRest = (prefs: Partial<Prefs> | undefined) => prefs?.balance_rest !== false
+
+/** Calorías que se suman los días de entreno. Si se entrena a diario no hay días con los que compensar: ninguna. */
+export function trainingAdjust(prefs: Partial<Prefs> | undefined): number {
+  if (balancesRest(prefs) && trainingCount(prefs) === 7) return 0
+  return prefs?.training_kcal_adjust ?? DEFAULT_TRAINING_ADJUST
+}
+
+/** Calorías de los días de descanso: compensando, lo que suben los de entreno repartido entre ellos (a 10 kcal). */
+export function restAdjust(baseKcal: number, prefs: Partial<Prefs> | undefined): number {
+  if (!balancesRest(prefs)) return prefs?.rest_kcal_adjust ?? DEFAULT_REST_ADJUST
+  const training = trainingCount(prefs)
+  if (training === 0 || training === 7) return 0
+  const extra = prefs?.training_targets ? prefs.training_targets.kcal - round(baseKcal) : (prefs?.training_kcal_adjust ?? DEFAULT_TRAINING_ADJUST)
+  return round((-extra * training) / (7 - training) / 10) * 10
+}
+
 function shift(values: DayTargetsValues, kcalDelta: number): DayTargetsValues {
   const carbs = Math.max(0, round(values.carbs + kcalDelta / 4))
   return { ...values, carbs, kcal: round(values.kcal + (carbs - values.carbs) * 4) }
@@ -29,8 +49,8 @@ function shift(values: DayTargetsValues, kcalDelta: number): DayTargetsValues {
 /** `measured`: el mantenimiento es el gasto real medido, que ya incluye los entrenos; no se suman otra vez. */
 export function targetsFor(base: DayTargetsValues, prefs: Partial<Prefs> | undefined, kind: DayKind | null, exerciseKcal = 0, measured = false): DayTargetsValues {
   let out: DayTargetsValues = { kcal: round(base.kcal), protein: round(base.protein), carbs: round(base.carbs), fat: round(base.fat) }
-  if (kind === 'entreno') out = prefs?.training_targets ? { ...prefs.training_targets } : shift(out, prefs?.training_kcal_adjust ?? DEFAULT_TRAINING_ADJUST)
-  else if (kind === 'descanso') out = prefs?.rest_targets ? { ...prefs.rest_targets } : shift(out, prefs?.rest_kcal_adjust ?? DEFAULT_REST_ADJUST)
+  if (kind === 'entreno') out = prefs?.training_targets ? { ...prefs.training_targets } : shift(out, trainingAdjust(prefs))
+  else if (kind === 'descanso') out = prefs?.rest_targets ? { ...prefs.rest_targets } : shift(out, restAdjust(base.kcal, prefs))
   if (prefs?.add_exercise_kcal && exerciseKcal > 0 && !measured) out = shift(out, exerciseKcal)
   return out
 }

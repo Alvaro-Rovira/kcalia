@@ -218,6 +218,8 @@ export interface Prefs {
   training_days?: number[]
   training_kcal_adjust?: number
   rest_kcal_adjust?: number
+  /** Los días de descanso compensan los de entreno (por defecto sí). */
+  balance_rest?: boolean
   training_targets?: DayTargetsValues | null
   rest_targets?: DayTargetsValues | null
   add_exercise_kcal?: boolean

@@ -558,13 +558,14 @@ def test_17_dias_de_entreno_y_descanso(page: Page, servers):
     page.goto(servers["app"] + "/ajustes")
     base = api_get(page, servers, "/api/bootstrap")["targets"]["kcal"]
     page.get_by_role("switch", name="Objetivos distintos para entreno y descanso").click()
-    # Hoy es día de entreno (todos los días marcados) y se nota en el objetivo.
+    # Solo hoy es día de entreno: hoy suben las 200 kcal y los otros seis días las compensan.
     group = page.get_by_role("group", name="Días de entreno habituales")
     for index, name in enumerate(["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]):
         button = group.get_by_role("button", name=name, exact=True)
-        if button.get_attribute("aria-pressed") == "false":
+        if (button.get_attribute("aria-pressed") == "true") != (index == today.weekday()):
             button.click()
-    wait_until(lambda: api_get(page, servers, "/api/prefs")["training_days"] == [0, 1, 2, 3, 4, 5, 6])
+    wait_until(lambda: api_get(page, servers, "/api/prefs")["training_days"] == [today.weekday()])
+    expect(page.get_by_text("Compensan los días de entreno")).to_be_visible()
     page.get_by_role("link", name="Hoy").click()
     chip = page.get_by_role("button", name="Día de entreno. Cambiar a descanso")
     expect(chip).to_contain_text(f"{base + 200:,}".replace(",", "."))

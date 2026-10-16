@@ -2,11 +2,11 @@ import { Armchair, Bike, Dumbbell, Equal, Flame, Footprints, PersonStanding, Roc
 import type { Activity, Goal } from './types'
 
 export const ACTIVITIES: { value: Activity; label: string; text: string; factor: number; Icon: LucideIcon }[] = [
-  { value: 'sedentario', label: 'Sedentario', text: 'Trabajo sentado y poco o nada de ejercicio', factor: 1.2, Icon: Armchair },
-  { value: 'ligero', label: 'Ligero', text: 'Ejercicio suave 1-3 días por semana', factor: 1.375, Icon: Footprints },
-  { value: 'moderado', label: 'Moderado', text: 'Entreno 3-5 días por semana', factor: 1.55, Icon: PersonStanding },
-  { value: 'alto', label: 'Alto', text: 'Entreno intenso 6-7 días por semana', factor: 1.725, Icon: Bike },
-  { value: 'muy_alto', label: 'Muy alto', text: 'Trabajo físico o doble sesión diaria', factor: 1.9, Icon: Dumbbell },
+  { value: 'sedentario', label: 'Sedentario', text: 'Sentado casi todo el día y poco o nada de ejercicio', factor: 1.2, Icon: Armchair },
+  { value: 'ligero', label: 'Ligero', text: 'Sentado casi todo el día y entrenas 2-4 días por semana', factor: 1.375, Icon: Footprints },
+  { value: 'moderado', label: 'Moderado', text: 'Mucho rato de pie o andando (10.000 pasos o más) y entrenas', factor: 1.55, Icon: PersonStanding },
+  { value: 'alto', label: 'Alto', text: 'Trabajo físico, o entreno intenso casi a diario y muchos pasos', factor: 1.725, Icon: Bike },
+  { value: 'muy_alto', label: 'Muy alto', text: 'Trabajo físico duro y además entrenas, o doble sesión diaria', factor: 1.9, Icon: Dumbbell },
 ]
 
 export const GOALS: { value: Goal; label: string; text: string; tag: string; Icon: LucideIcon }[] = [

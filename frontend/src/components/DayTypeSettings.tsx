@@ -1,8 +1,8 @@
 import clsx from 'clsx'
-import { Dumbbell, Moon, Pencil, RotateCcw } from 'lucide-react'
+import { Dumbbell, Moon, Pencil, RotateCcw, Scale } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useApp, usePrefsActions } from '@/hooks/data'
-import { DEFAULT_REST_ADJUST, DEFAULT_TRAINING_ADJUST, DEFAULT_TRAINING_DAYS, targetsFor } from '@/lib/dayTargets'
+import { balancesRest, DEFAULT_TRAINING_DAYS, restAdjust, targetsFor, trainingAdjust, trainingDaysText } from '@/lib/dayTargets'
 import { fmt, fmtSigned } from '@/lib/format'
 import { haptic } from '@/lib/haptics'
 import { GRAM_MACROS } from '@/lib/macros'
@@ -48,8 +48,8 @@ export function DayTypeSettings() {
   const base = app.targets
 
   const kinds: { kind: DayKind; label: string; Icon: typeof Dumbbell; adjust: number; manual: DayTargetsValues | null | undefined }[] = [
-    { kind: 'entreno', label: 'Días de entreno', Icon: Dumbbell, adjust: prefs.training_kcal_adjust ?? DEFAULT_TRAINING_ADJUST, manual: prefs.training_targets },
-    { kind: 'descanso', label: 'Días de descanso', Icon: Moon, adjust: prefs.rest_kcal_adjust ?? DEFAULT_REST_ADJUST, manual: prefs.rest_targets },
+    { kind: 'entreno', label: 'Días de entreno', Icon: Dumbbell, adjust: trainingAdjust(prefs), manual: prefs.training_targets },
+    { kind: 'descanso', label: 'Días de descanso', Icon: Moon, adjust: restAdjust(base.kcal, prefs), manual: prefs.rest_targets },
   ]
 
   return (
@@ -109,6 +109,9 @@ export function DayTypeSettings() {
                 </button>
               </div>
               <TargetsLine values={targetsFor(base, prefs, kind)} />
+              {kind === 'descanso' && !manual && balancesRest(prefs) && (
+                <p className="mt-1 text-[12.5px] text-text-3">Compensan los días de entreno: de media, la semana queda en tu objetivo.</p>
+              )}
             </div>
           ))}
         </>
@@ -140,25 +143,34 @@ function DayKindSheet({ kind, onClose }: { kind: DayKind | null; onClose: () => 
   const prefs = app.prefs ?? { water_goal_ml: null }
   const training = kind === 'entreno'
   const manual = training ? prefs.training_targets : prefs.rest_targets
-  const [mode, setMode] = useState<'adjust' | 'manual'>('adjust')
+  const [mode, setMode] = useState<'balance' | 'adjust' | 'manual'>('adjust')
   const [adjust, setAdjust] = useState(0)
   const [values, setValues] = useState<DayTargetsValues>(app.targets)
 
   useEffect(() => {
     if (!kind) return
-    setMode(manual ? 'manual' : 'adjust')
-    setAdjust(training ? (prefs.training_kcal_adjust ?? DEFAULT_TRAINING_ADJUST) : (prefs.rest_kcal_adjust ?? DEFAULT_REST_ADJUST))
+    setMode(manual ? 'manual' : !training && balancesRest(prefs) ? 'balance' : 'adjust')
+    setAdjust(training ? trainingAdjust(prefs) : restAdjust(app.targets.kcal, prefs))
     setValues(manual ?? targetsFor(app.targets, prefs, kind))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind])
 
-  const preview = mode === 'manual' ? values : targetsFor(app.targets, { ...prefs, training_targets: null, rest_targets: null, training_kcal_adjust: adjust, rest_kcal_adjust: adjust }, kind)
+  const dailyTraining = new Set(prefs.training_days ?? DEFAULT_TRAINING_DAYS).size === 7
+  const preview =
+    mode === 'manual'
+      ? values
+      : mode === 'balance'
+        ? targetsFor(app.targets, { ...prefs, rest_targets: null, balance_rest: true }, kind)
+        : training
+          ? targetsFor(app.targets, { ...prefs, training_targets: null, training_kcal_adjust: adjust }, kind)
+          : targetsFor(app.targets, { ...prefs, rest_targets: null, rest_kcal_adjust: adjust, balance_rest: false }, kind)
   const invalid = mode === 'manual' && (values.kcal < 800 || values.protein < 20 || values.fat < 10)
 
   function submit() {
     if (!kind || invalid) return
     if (mode === 'manual') save(training ? { training_targets: values } : { rest_targets: values })
-    else save(training ? { training_kcal_adjust: adjust, training_targets: null } : { rest_kcal_adjust: adjust, rest_targets: null })
+    else if (mode === 'balance') save({ balance_rest: true, rest_targets: null })
+    else save(training ? { training_kcal_adjust: adjust, training_targets: null } : { rest_kcal_adjust: adjust, rest_targets: null, balance_rest: false })
     haptic('success')
     toast.success(training ? 'Objetivo de entreno guardado' : 'Objetivo de descanso guardado', `${fmt(preview.kcal)} kcal`)
     onClose()
@@ -176,12 +188,34 @@ function DayKindSheet({ kind, onClose }: { kind: DayKind | null; onClose: () => 
       }
     >
       <div className="space-y-5">
-        {mode === 'adjust' ? (
+        {mode === 'balance' ? (
+          <>
+            <p className="text-[14.5px] leading-relaxed text-text-2">
+              Bajan lo justo para compensar lo que suben tus días de entreno ({trainingDaysText(prefs.training_days ?? DEFAULT_TRAINING_DAYS)}): así la media de
+              la semana es tu objetivo de siempre ({fmt(app.targets.kcal)} kcal). Ahora mismo, {fmtSigned(restAdjust(app.targets.kcal, prefs))} kcal en hidratos.
+            </p>
+            <Button variant="ghost" size="sm" block onClick={() => setMode('adjust')} icon={<Pencil className="size-4" aria-hidden />}>
+              Prefiero elegir el ajuste yo
+            </Button>
+            <Button variant="ghost" size="sm" block onClick={() => setMode('manual')} icon={<Pencil className="size-4" aria-hidden />}>
+              Prefiero fijar las cifras a mano
+            </Button>
+          </>
+        ) : mode === 'adjust' ? (
           <>
             <p className="text-[14.5px] leading-relaxed text-text-2">
               Parte de tu objetivo de siempre ({fmt(app.targets.kcal)} kcal) y suma o resta calorías en forma de hidratos.
+              {training && balancesRest(prefs) && ' Los días de descanso bajan lo mismo, repartido, para que la media de la semana no cambie.'}
             </p>
+            {training && dailyTraining && balancesRest(prefs) && (
+              <Notice level="info">Entrenas todos los días: no hay días de descanso con los que compensar, así que no se suma nada.</Notice>
+            )}
             <Stepper label="Ajuste de calorías" value={adjust} onChange={setAdjust} step={50} min={-800} max={800} unit="kcal" />
+            {!training && (
+              <Button variant="ghost" size="sm" block onClick={() => setMode('balance')} icon={<Scale className="size-4" aria-hidden />}>
+                Compensar los días de entreno automáticamente
+              </Button>
+            )}
             <Button variant="ghost" size="sm" block onClick={() => setMode('manual')} icon={<Pencil className="size-4" aria-hidden />}>
               Prefiero fijar las cifras a mano
             </Button>
@@ -215,8 +249,14 @@ function DayKindSheet({ kind, onClose }: { kind: DayKind | null; onClose: () => 
               ))}
             </div>
             {invalid && <Notice level="warn">Revisa las cifras: mínimo 800 kcal, 20 g de proteína y 10 g de grasa.</Notice>}
-            <Button variant="ghost" size="sm" block onClick={() => setMode('adjust')} icon={<RotateCcw className="size-4" aria-hidden />}>
-              Volver a calcularlo con un ajuste
+            <Button
+              variant="ghost"
+              size="sm"
+              block
+              onClick={() => setMode(!training && balancesRest(prefs) ? 'balance' : 'adjust')}
+              icon={<RotateCcw className="size-4" aria-hidden />}
+            >
+              Volver a calcularlo
             </Button>
           </>
         )}

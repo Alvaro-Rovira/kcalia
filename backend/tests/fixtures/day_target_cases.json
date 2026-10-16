@@ -39,7 +39,7 @@
       }
     },
     {
-      "name": "martes de descanso: -100 kcal",
+      "name": "martes de descanso: compensa los 3 días de entreno (-150 kcal)",
       "prefs": {
         "day_types": true
       },
@@ -48,9 +48,9 @@
       "exercise": 0,
       "kind": "descanso",
       "targets": {
-        "kcal": 2100,
+        "kcal": 2052,
         "protein": 160,
-        "carbs": 205,
+        "carbs": 193,
         "fat": 70
       }
     },
@@ -135,7 +135,8 @@
       "name": "los hidratos no bajan de cero",
       "prefs": {
         "day_types": true,
-        "rest_kcal_adjust": -800
+        "rest_kcal_adjust": -800,
+        "balance_rest": false
       },
       "base": {
         "kcal": 1500,
@@ -199,6 +200,109 @@
       "exercise": 310,
       "measured": true,
       "kind": null,
+      "targets": {
+        "kcal": 2200,
+        "protein": 160,
+        "carbs": 230,
+        "fat": 70
+      }
+    },
+    {
+      "name": "sin compensar: el ajuste fijo de descanso (-100 kcal)",
+      "prefs": {
+        "day_types": true,
+        "balance_rest": false
+      },
+      "date": "2026-10-06",
+      "overrides": {},
+      "exercise": 0,
+      "kind": "descanso",
+      "targets": {
+        "kcal": 2100,
+        "protein": 160,
+        "carbs": 205,
+        "fat": 70
+      }
+    },
+    {
+      "name": "4 días de entreno: el descanso compensa con -270 kcal",
+      "prefs": {
+        "day_types": true,
+        "training_days": [
+          0,
+          1,
+          3,
+          4
+        ]
+      },
+      "date": "2026-10-07",
+      "overrides": {},
+      "exercise": 0,
+      "kind": "descanso",
+      "targets": {
+        "kcal": 1932,
+        "protein": 160,
+        "carbs": 163,
+        "fat": 70
+      }
+    },
+    {
+      "name": "todos los días de entreno: compensado, sin ajuste",
+      "prefs": {
+        "day_types": true,
+        "training_days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      "date": "2026-10-05",
+      "overrides": {},
+      "exercise": 0,
+      "kind": "entreno",
+      "targets": {
+        "kcal": 2200,
+        "protein": 160,
+        "carbs": 230,
+        "fat": 70
+      }
+    },
+    {
+      "name": "entreno fijado a mano: el descanso compensa su diferencia",
+      "prefs": {
+        "day_types": true,
+        "training_targets": {
+          "kcal": 2500,
+          "protein": 160,
+          "carbs": 305,
+          "fat": 70
+        }
+      },
+      "date": "2026-10-06",
+      "overrides": {},
+      "exercise": 0,
+      "kind": "descanso",
+      "targets": {
+        "kcal": 1980,
+        "protein": 160,
+        "carbs": 175,
+        "fat": 70
+      }
+    },
+    {
+      "name": "sin días de entreno: el descanso no cambia",
+      "prefs": {
+        "day_types": true,
+        "training_days": []
+      },
+      "date": "2026-10-06",
+      "overrides": {},
+      "exercise": 0,
+      "kind": "descanso",
       "targets": {
         "kcal": 2200,
         "protein": 160,

@@ -204,6 +204,9 @@ class Prefs(BaseModel):
     training_days: list[Weekday] = Field(default_factory=lambda: [0, 2, 4], max_length=7)  # 0 = lunes
     training_kcal_adjust: int = Field(default=200, ge=-800, le=800)
     rest_kcal_adjust: int = Field(default=-100, ge=-800, le=800)
+    # Los días de descanso compensan los de entreno: la media de la semana queda en el objetivo de siempre (entonces
+    # rest_kcal_adjust no se usa). Sin compensar, cada día de entreno suma y la semana acaba por encima del plan.
+    balance_rest: bool = True
     # Objetivos fijados a mano para cada tipo de día (None = calculados con el ajuste).
     training_targets: DayTargetsIn | None = None
     rest_targets: DayTargetsIn | None = None
@@ -231,6 +234,7 @@ class PrefsPatch(BaseModel):
     training_days: list[Weekday] | None = Field(default=None, max_length=7)
     training_kcal_adjust: int | None = Field(default=None, ge=-800, le=800)
     rest_kcal_adjust: int | None = Field(default=None, ge=-800, le=800)
+    balance_rest: bool | None = None
     training_targets: DayTargetsIn | None = None
     rest_targets: DayTargetsIn | None = None
     add_exercise_kcal: bool | None = None
