@@ -50,6 +50,7 @@ Kcalia es una PWA en español, pensada primero para el móvil, que vive en tu pr
 - [Elegir el modelo de IA](#elegir-el-modelo-de-ia)
 - [Copias de seguridad](#copias-de-seguridad)
 - [Desarrollo y pruebas](#desarrollo-y-pruebas)
+- [Pendiente](#pendiente)
 - [Roadmap](#roadmap)
 - [Licencia](#licencia)
 
@@ -275,6 +276,13 @@ docs/       Decisiones, guía del atajo de iPhone, capturas
 - **Entradas acotadas.** Peticiones de 1 MiB como mucho en JSON y 16 MiB en total (en Caddy y en la app). Las imágenes se aceptan solo si sus bytes son JPEG, PNG o WebP, y se sirven con el tipo detectado, no con el que dijo el navegador. Las notificaciones push solo se envían a los servicios reales (Google, Mozilla, Apple, Microsoft), nunca a direcciones internas. Las exportaciones CSV neutralizan las celdas que empiezan por `=`, `+`, `-` o `@`.
 - **Contenedor.** Usuario sin privilegios, sistema de archivos de solo lectura, sin capacidades de Linux, `no-new-privileges`, memoria limitada y el puerto solo escucha en `127.0.0.1` detrás de Caddy (TLS 1.2 y 1.3).
 - **Privacidad**: las fotos de progreso nunca van a la IA; el código de barras solo envía el número a Open Food Facts; las copias externas pueden ir cifradas con AES-256-GCM con una frase que solo tienes tú.
+
+- **Probada a romperla.**
+  - Entradas absurdas: `tests/test_fuzz.py` manda a las 102 operaciones de la API cuerpos vacíos o del tipo equivocado, JSON roto, `NaN`, números enormes, textos de 100.000 caracteres, nulos, Unicode roto, fechas extremas e identificadores imposibles. Falla ante cualquier error 500 o respuesta lenta.
+  - Concurrencia: si dos escrituras simultáneas chocan en un índice único, la petición se repite en vez de fallar (`app/conflicts.py`). Probado con 300 peticiones a la vez: ninguna falla y no se pierde ningún dato.
+  - Fallos al dibujar: un fallo en una pantalla muestra un aviso con «Reintentar» y «Borrar la copia de este dispositivo y recargar», en vez de dejarla en blanco.
+  - Datos extremos: `e2e/test_zz_extremos.py` prueba nombres de longitud máxima y comidas de 180.000 kcal en un móvil de 375 px, el doble envío, exportar e importar, y una copia local corrupta.
+- **Contraseña.** Se cambia en Ajustes → Cuenta: pide la actual y cierra las sesiones de los demás dispositivos. Las confirmaciones con contraseña (borrar datos, borrar la cuenta, cambiarla) tienen un freno por cuenta, así que con una sesión robada no se pueden probar contraseñas sin límite.
 
 Cómo avisar de un fallo de seguridad y qué se revisó: [SECURITY.md](SECURITY.md).
 
@@ -538,16 +546,18 @@ make e2e
 | Tabla de alimentos: cifras literales de la fuente, alias sin choques, energía coherente, emparejado estricto | `test_foodtable.py`, `test_foodtable_data.py` | 115 |
 | Canalización de las comidas (gramos, aceite, energía UE), resolución sin IA, historial y banco | `test_refine.py`, `test_api_table.py`, `test_bench.py` | 62 |
 | Gasto real con datos simulados y su API | `test_expenditure.py` | 11 |
-| Metabolismo basal, objetivos, días de entreno y descanso | `test_nutrition.py`, `test_daytargets.py` | 35 |
+| Metabolismo basal, objetivos, días de entreno y descanso (con la compensación semanal) | `test_nutrition.py`, `test_daytargets.py` | 41 |
 | Normalización, similitud, coincidencias y productos | `test_textnorm.py`, `test_matching.py`, `test_products.py`, `test_api_products.py` | 117 |
-| IA (comidas, etiquetas, plan, sugerencias), código de barras y API completa | `test_ai.py`, `test_barcode.py`, `test_api.py` | 60 |
-| Agua, medidas, fotos, entrenos, plan, sugerencias e importación | `test_tracking.py`, `test_training.py`, `test_planner.py`, `test_suggest.py`, `test_importer.py` | 33 |
+| IA (comidas, etiquetas, plan, sugerencias; Claude y proveedores compatibles con OpenAI), código de barras y API completa | `test_ai.py`, `test_claude.py`, `test_barcode.py`, `test_api.py` | 81 |
+| Agua, medidas, fotos, entrenos, plan, sugerencias e importación | `test_tracking.py`, `test_training.py`, `test_planner.py`, `test_suggest.py`, `test_importer.py` | 42 |
+| Refuerzos de seguridad, fuzzing de las 102 operaciones, escrituras simultáneas y cambio de contraseña | `test_hardening.py`, `test_fuzz.py`, `test_conflicts.py`, `test_password.py` | 33 |
 | Web Push (vector de la RFC 8291), recordatorios, VAPID | `test_webpush.py`, `test_push.py`, `test_gen_vapid.py` | 12 |
 | Copias: firma SigV4 (ejemplo oficial de AWS), cifrado, subida verificada, retención | `test_offsite.py`, `test_jobs.py` | 13 |
 | Resumen semanal y HTML servido | `test_summary.py`, `test_spa.py` | 16 |
 | Audio de Chrome, Safari y Firefox decodificado para Whisper | `stt/test_audio.py` | 5 |
-| Formato es-ES, espejos de la normalización, de los objetivos y de las calorías del entreno, origen de los valores, sugerencias (propiedades sobre 2.000 escenarios), entrenos, compra, atajos… | `frontend/src/lib/*.test.ts` | 198 |
-| Flujos completos en un móvil de 390 px | `e2e/test_flow.py` | 27 |
+| Formato es-ES, espejos de la normalización, de los objetivos y de las calorías del entreno, origen de los valores, sugerencias (propiedades sobre 2.000 escenarios), entrenos, compra, atajos, cola sin conexión… | `frontend/src/**/*.test.ts` | 210 |
+| Flujos completos en un móvil de 390 px | `e2e/test_flow.py` | 28 |
+| Datos extremos en 375 px, doble envío, exportar e importar y copia local corrupta | `e2e/test_zz_extremos.py` | 3 |
 
 Las pruebas de extremo a extremo levantan la app real con una IA simulada (`e2e/fake_ai.py`) y recorren: crear la cuenta de administrador, cuestionario inicial, registrar con IA y sin ella, trabajar sin conexión, productos con etiqueta y código de barras, aprobar una solicitud de cuenta, ingrediente a mano, copiar, agua, bebidas, medidas y fotos, días de entreno, un entreno sin conexión, recordatorios, plan y lista de la compra, cerrar el día, compartir la semana, importar un CSV y los atajos. Comprueban además que la IA se llama exactamente las veces esperadas.
 
@@ -557,6 +567,24 @@ Las pruebas de extremo a extremo levantan la app real con una IA simulada (`e2e/
 |---|---|---|---|
 | Las cinco pantallas con sesión y datos, móvil simulado (red lenta, CPU ×4), en local | 90 – 93 | 100 | 100 |
 | Pantalla de acceso en producción, escritorio | 98 | 100 | 100 |
+
+## Pendiente
+
+Lo que queda, en orden de importancia (estado a 16 de octubre de 2026):
+
+1. **Copia de seguridad fuera del servidor.** Hoy las copias diarias están en la misma VPS: si se perdiera la máquina, se perderían también. El código ya lo hace (cifrado AES-256-GCM, ver [Copias de seguridad](#copias-de-seguridad)); falta configurar `BACKUP_REMOTE_URL`, `BACKUP_REMOTE_BUCKET`, `BACKUP_REMOTE_ACCESS_KEY` y `BACKUP_REMOTE_SECRET_KEY` con un almacenamiento compatible con S3 (Backblaze B2 o Cloudflare R2 tienen capa gratuita). Las credenciales las pone el dueño en el servidor, nunca por chat.
+2. **Revocar la clave del proveedor de IA anterior** en su consola. Ya no se usa y se borró del servidor, pero sigue activa allí. Esto lo hace el dueño.
+3. **Fotos.** El error mediano de calorías con foto es del 41 % (`app.bench_photos`, 18 platos de Nutrition5k), y los modelos tienden a pasarse con las raciones. Si se toca `PHOTO_INSTRUCTIONS` en `ai.py`, conviene validarlo también con otra muestra (`scripts/fetch_nutrition5k.py --seed` distinta) para no sobreajustar.
+4. **Exportación.** El JSON exportado no incluye las fotos de progreso ni las imágenes de los productos (solo los datos).
+5. **Avisos de errores en producción.** Los 500 solo quedan en el registro del contenedor. En la VPS hay un Uptime Kuma (proyecto `panel`, no se toca sin permiso) que podría vigilar `/api/health`.
+6. **Detalle visual:** con cifras enormes, en las tarjetas de macros de Hoy la unidad «g» baja sola a otra línea.
+
+**Notas para quien continúe:**
+- Producción: `root@161.97.67.178` (`/opt/kcalia`). Se despliega con `./deploy/deploy.sh`, que hace pull de `main`, build, `up -d` y el bloque de Caddy.
+- Claves: siempre con `scripts/set-ai-key.sh`, que las pide sin mostrarlas. Nunca se leen ni se imprimen los valores de `.env`.
+- Otros proyectos: en la VPS hay otros proyectos en sus contenedores (`mosca`, `panel-*`, `horario-*`). No se paran ni se tocan.
+- Ajustes del sistema: los de seguridad de la VPS (SSH, cortafuegos, fail2ban) los aplica el dueño con los scripts de `deploy/`.
+- Antes de subir, pasan todas las suites (ver [Desarrollo y pruebas](#desarrollo-y-pruebas)).
 
 ## Roadmap
 
@@ -579,6 +607,10 @@ Hecho después:
 - [x] Tabla oficial de alimentos (CIQUAL 2025 y USDA) con la IA solo para identificar y pesar
 - [x] Gasto real medido con lo apuntado y el peso
 - [x] Calorías netas del entreno con los MET del Compendium 2024
+
+- [x] Claude Haiku 5.5 como modelo de IA (texto y fotos), medido frente al anterior
+- [x] Días de descanso que compensan los de entreno y nivel de actividad «Medio»
+- [x] Cambio de contraseña, freno en las confirmaciones, fuzzing de toda la API, escrituras simultáneas sin errores y aviso en vez de pantalla en blanco
 
 Ideas para más adelante:
 
