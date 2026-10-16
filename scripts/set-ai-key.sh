@@ -2,6 +2,7 @@
 # Guarda la clave de la IA en .env sin mostrarla ni dejarla en el historial ni en la lista de procesos.
 #   ssh -t root@TU_VPS /opt/kcalia/scripts/set-ai-key.sh                     # AI_API_KEY (proveedor compatible con OpenAI)
 #   ssh -t root@TU_VPS /opt/kcalia/scripts/set-ai-key.sh ANTHROPIC_API_KEY   # clave de Claude (la habitual)
+#   ... BACKUP_REMOTE_ACCESS_KEY, BACKUP_REMOTE_SECRET_KEY, BACKUP_ENCRYPTION_KEY   # copia fuera del servidor
 # Después: cd /opt/kcalia && docker compose up -d app
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -10,7 +11,8 @@ cd "$(dirname "$0")/.."
 VAR="${1:-AI_API_KEY}"
 case "$VAR" in
   AI_API_KEY | AI_VISION_API_KEY | ANTHROPIC_API_KEY) ;;
-  *) echo "Variable no admitida: $VAR (AI_API_KEY, AI_VISION_API_KEY o ANTHROPIC_API_KEY)" >&2; exit 1 ;;
+  BACKUP_REMOTE_ACCESS_KEY | BACKUP_REMOTE_SECRET_KEY | BACKUP_ENCRYPTION_KEY) ;;
+  *) echo "Variable no admitida: $VAR (claves de IA o de la copia externa)" >&2; exit 1 ;;
 esac
 
 read -rs -p "Clave para $VAR (no se mostrará): " KEY
