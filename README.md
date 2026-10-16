@@ -469,6 +469,18 @@ docker compose exec app python -m app.bench --model claude-haiku-5-5 --price-in 
 
 Usa la clave que ya está en el contenedor y no la muestra.
 
+**Kimi K2.6 frente a Claude Haiku 5.5** (16 de octubre de 2026, las 40 comidas con la tabla oficial; dos pasadas de cada uno, porque las respuestas varían de una vez a otra):
+
+| | Kimi K2.6 | Haiku 5.5 sin razonamiento |
+|---|---|---|
+| Error medio de calorías (30 con cantidades) | 0,2 % y 2,8 % | 4,7 % y 0,7 % |
+| Dentro de ±12 % | 30/30 y 28/30 | 29/30 y 30/30 |
+| Comidas sin cantidades en rango | 8/10 y 10/10 | 8/10 y 8/10 |
+| Latencia mediana · p95 | 3,7-4,1 s · 11-12 s | 1,7 s · 2,6-3,9 s |
+| Coste cada 100 comidas | 0,34 $ | 0,06 $ |
+
+La precisión es equivalente: cada uno falla de vez en cuando en una comida (Kimi, el yogur griego; Haiku, el café con leche), porque la tabla oficial pone casi todas las cifras. Haiku es el doble de rápido y unas 6 veces más barato. Con `--effort low` no mejora (1,5 %, 29/30, 8/10) y tarda algo más. Las fotos no están medidas.
+
 **Medición anterior a la tabla oficial** (Kimi K2.6, 30 de septiembre de 2026, 21 comidas con referencias del propio prompt; la de octubre está en [Cómo se calculan las calorías](#cómo-se-calculan-las-calorías)):
 
 | | Resultado |
