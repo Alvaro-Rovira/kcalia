@@ -851,3 +851,36 @@ def test_26_marcar_entreno_desde_hoy(page: Page, servers):
     expect(page.get_by_role("button", name="¿Entrenas hoy?")).to_be_visible()
     wait_until(lambda: api_get(page, servers, "/api/prefs")["day_types"] is False)
     assert not page.errors  # type: ignore[attr-defined]
+
+
+def test_27_cambiar_la_contrasena(page: Page, servers):
+    """Desde Ajustes, con la actual y una nueva dos veces; luego se entra con la nueva y no con la antigua."""
+    new = "clave-nueva-de-prueba-2"
+    page.goto(servers["app"])
+    page.get_by_role("link", name="Ajustes").click()
+    page.get_by_role("button", name="Cambiar contraseña").click()
+    sheet = page.get_by_role("dialog")
+    sheet.get_by_label("Contraseña actual").fill(PASSWORD)
+    sheet.get_by_label("Contraseña nueva").fill(new)
+    sheet.get_by_label("Repite la nueva").fill(new + "x")
+    expect(sheet.get_by_text("No coincide con la nueva.")).to_be_visible()
+    expect(sheet.get_by_role("button", name="Cambiar contraseña")).to_be_disabled()
+    sheet.get_by_label("Repite la nueva").fill(new)
+    sheet.get_by_role("button", name="Cambiar contraseña").click()
+    expect(page.get_by_text("Contraseña cambiada")).to_be_visible()
+    page.get_by_role("button", name="Cerrar sesión").click()
+    page.locator("input[name=username]").fill("alvaro")
+    page.locator("input[name=password]").fill(PASSWORD)
+    page.get_by_role("button", name="Entrar").click()
+    expect(page.get_by_text("Usuario o contraseña incorrectos")).to_be_visible()
+    page.locator("input[name=password]").fill(new)
+    page.get_by_role("button", name="Entrar").click()
+    expect(page.get_by_role("link", name="Ajustes")).to_be_visible()
+    # Se deja como estaba por si se añaden más pruebas detrás.
+    restored = page.request.post(
+        servers["app"] + "/api/account/password",
+        data={"current_password": new, "new_password": PASSWORD},
+        headers={"Origin": servers["app"]},
+    )
+    assert restored.ok
+    assert not page.errors  # type: ignore[attr-defined]

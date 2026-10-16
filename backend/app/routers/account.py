@@ -2,8 +2,8 @@ import csv
 import io
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Response
-from sqlalchemy import func, select
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from .. import services
@@ -12,6 +12,7 @@ from ..db import get_db
 from ..deps import require_approved_user, require_user
 from ..models import (
     MEASURES,
+    AuthSession,
     BodyMeasurement,
     Exercise,
     Food,
@@ -26,8 +27,15 @@ from ..models import (
     WorkoutSet,
     WorkoutTemplate,
 )
-from ..schemas import PasswordConfirm
-from ..security import SESSION_COOKIE, verify_password
+from ..schemas import PasswordChange, PasswordConfirm
+from ..security import (
+    SESSION_COOKIE,
+    confirm_throttle,
+    hash_password,
+    hash_token,
+    password_problem,
+    verify_password,
+)
 
 # Una celda de texto que empieza por = + - @ (o tabulador/retorno) la ejecuta Excel o LibreOffice como fórmula al
 # abrir el CSV; con un apóstrofo delante se muestra tal cual. Los números se escriben como números.
@@ -231,15 +239,40 @@ def export_workouts_csv(db: Session = Depends(get_db)) -> Response:
     return _download("\ufeff" + out.getvalue(), f"kcalia-entrenos-{_stamp()}.csv", "text/csv; charset=utf-8")
 
 
-def _confirm(user: User, body: PasswordConfirm) -> None:
-    if not verify_password(user.password_hash, body.password):
+def _confirm(user: User, password: str) -> None:
+    key = f"confirm:{user.id}"
+    wait = confirm_throttle.retry_after(key)
+    if wait:
+        when = f"{max(1, round(wait / 60))} min" if wait >= 60 else f"{wait} s"
+        raise HTTPException(429, f"Demasiados intentos con la contraseña. Espera unos {when} y vuelve a probar.")
+    if not verify_password(user.password_hash, password):
+        confirm_throttle.fail(key)
         raise HTTPException(403, "La contraseña no es correcta.")
+    confirm_throttle.reset(key)
+
+
+@router.post("/account/password")
+def change_password(
+    body: PasswordChange, request: Request, user: User = Depends(require_user), db: Session = Depends(get_db)
+) -> dict:
+    """Cambia la contraseña y cierra las sesiones de los demás dispositivos (la de este sigue abierta)."""
+    _confirm(user, body.current_password)
+    problem = password_problem(user.username, body.new_password)
+    if problem:
+        raise HTTPException(422, problem)
+    if verify_password(user.password_hash, body.new_password):
+        raise HTTPException(422, "La nueva contraseña es igual que la actual.")
+    db.get(User, user.id).password_hash = hash_password(body.new_password)
+    current = hash_token(request.cookies.get(SESSION_COOKIE, ""))
+    db.execute(delete(AuthSession).where(AuthSession.user_id == user.id, AuthSession.token_hash != current))
+    db.commit()
+    return {"ok": True}
 
 
 @router.post("/data/delete")
 def delete_data(body: PasswordConfirm, user: User = Depends(require_user), db: Session = Depends(get_db)) -> dict:
     """Borra todos los datos pero conserva la cuenta."""
-    _confirm(user, body)
+    _confirm(user, body.password)
     services.wipe_data(db)
     return {"ok": True}
 
@@ -249,7 +282,7 @@ def delete_account(
     body: PasswordConfirm, response: Response, user: User = Depends(require_user), db: Session = Depends(get_db)
 ) -> dict:
     """Borra los datos y la cuenta de quien lo pide (y nada de nadie más)."""
-    _confirm(user, body)
+    _confirm(user, body.password)
     if user.is_admin:
         raise HTTPException(
             409,

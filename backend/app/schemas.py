@@ -52,6 +52,12 @@ class PasswordConfirm(BaseModel):
     password: str = Field(min_length=1, max_length=200)
 
 
+class PasswordChange(BaseModel):
+    current_password: str = Field(min_length=1, max_length=200)
+    # Las reglas (longitud, que no contenga el usuario, contraseñas comunes) las aplica security.password_problem.
+    new_password: str = Field(min_length=1, max_length=200)
+
+
 class ProfileIn(BaseModel):
     sex: Sex
     age: int = Field(ge=14, le=100)

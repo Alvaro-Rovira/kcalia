@@ -20,6 +20,7 @@ import {
   Sun,
   Trash2,
   Zap,
+  KeyRound,
 } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
@@ -95,7 +96,7 @@ export default function Settings() {
   const online = useOnline()
   const install = useInstall()
   const [theme, setTheme] = useState<ThemePref>(getThemePref)
-  const [sheet, setSheet] = useState<'profile' | 'targets' | 'plan' | 'water' | 'import' | 'voice' | 'delete-data' | 'delete-account' | null>(null)
+  const [sheet, setSheet] = useState<'profile' | 'targets' | 'plan' | 'water' | 'import' | 'voice' | 'delete-data' | 'delete-account' | 'password' | null>(null)
   const unit = profile.weight_unit
   const isAdmin = !!app.user.is_admin
   const admin = useAdminOverview(isAdmin)
@@ -342,6 +343,7 @@ export default function Settings() {
           </Section>
 
           <Section title="Cuenta" id="a-account">
+            <Row label="Cambiar contraseña" onClick={() => setSheet('password')} icon={<KeyRound className="size-[18px]" aria-hidden />} />
             <Row label="Cerrar sesión" onClick={() => void logout()} icon={<LogOut className="size-[18px]" aria-hidden />} />
             <Row label="Borrar mis datos" onClick={() => setSheet('delete-data')} icon={<Trash2 className="size-[18px]" aria-hidden />} danger />
             {isAdmin ? (
@@ -387,6 +389,7 @@ export default function Settings() {
       <WaterGoalSheet open={sheet === 'water'} onClose={() => setSheet(null)} current={app.prefs?.water_goal_ml ?? null} weightKg={profile.weight_kg} />
       <ImportSheet open={sheet === 'import'} onClose={() => setSheet(null)} />
       <VoiceShortcutSheet open={sheet === 'voice'} onClose={() => setSheet(null)} />
+      <PasswordSheet open={sheet === 'password'} onClose={() => setSheet(null)} />
       <DeleteSheet kind={sheet === 'delete-data' ? 'data' : sheet === 'delete-account' ? 'account' : null} onClose={() => setSheet(null)} />
     </main>
   )
@@ -601,6 +604,74 @@ function TargetsSheet({ open, onClose, targets }: { open: boolean; onClose: () =
             {warning.text}
           </Notice>
         ))}
+      </div>
+    </Sheet>
+  )
+}
+
+function PasswordSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [current, setCurrent] = useState('')
+  const [next, setNext] = useState('')
+  const [repeat, setRepeat] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const mismatch = repeat.length > 0 && repeat !== next
+
+  function close() {
+    setCurrent('')
+    setNext('')
+    setRepeat('')
+    setError('')
+    onClose()
+  }
+
+  async function submit() {
+    if (!current || !next || mismatch || busy) return
+    setBusy(true)
+    setError('')
+    try {
+      await api.post('/api/account/password', { current_password: current, new_password: next })
+      haptic('success')
+      toast.success('Contraseña cambiada', 'Se han cerrado las sesiones de tus otros dispositivos')
+      close()
+    } catch (err) {
+      setError(errorMessage(err))
+      haptic('error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Sheet
+      open={open}
+      onClose={close}
+      title="Cambiar contraseña"
+      footer={
+        <Button size="lg" block onClick={submit} loading={busy} disabled={!current || !next || repeat !== next}>
+          Cambiar contraseña
+        </Button>
+      }
+    >
+      <div className="space-y-4 pt-1">
+        <Field label="Contraseña actual" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} />
+        <Field
+          label="Contraseña nueva"
+          type="password"
+          autoComplete="new-password"
+          value={next}
+          onChange={(e) => setNext(e.target.value)}
+          hint="Al menos 10 caracteres y sin tu nombre de usuario."
+        />
+        <Field
+          label="Repite la nueva"
+          type="password"
+          autoComplete="new-password"
+          value={repeat}
+          onChange={(e) => setRepeat(e.target.value)}
+          error={mismatch ? 'No coincide con la nueva.' : error || undefined}
+        />
+        <p className="text-[13px] leading-relaxed text-text-3">Este dispositivo sigue con la sesión abierta; en los demás tendrás que volver a entrar.</p>
       </div>
     </Sheet>
   )

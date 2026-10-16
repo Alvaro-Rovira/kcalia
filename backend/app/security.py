@@ -96,6 +96,9 @@ class RateLimit:
 # aplica desde las conexiones con las que esa cuenta ya entró: así nadie puede dejar al dueño fuera de su cuenta
 # fallando a propósito con su nombre desde muchas IP, y un ataque repartido sigue yendo muy despacio.
 login_throttle = Throttle()
+# Confirmaciones con contraseña (borrar datos o cuenta, cambiarla), por cuenta: con una sesión robada no se
+# pueden probar contraseñas sin límite.
+confirm_throttle = Throttle()
 user_throttle = Throttle(free=20, base=15, cap=300)
 known_logins: dict[str, set[str]] = {}
 MAX_KNOWN_PER_USER = 20

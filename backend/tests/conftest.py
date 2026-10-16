@@ -29,6 +29,7 @@ def reset_database() -> None:
         for table in reversed(Base.metadata.sorted_tables):
             conn.execute(table.delete())
     security.login_throttle._failures.clear()
+    security.confirm_throttle._failures.clear()
     security.user_throttle._failures.clear()
     security.known_logins.clear()
     security.register_limit._events.clear()
