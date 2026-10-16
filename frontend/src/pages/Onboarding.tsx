@@ -300,7 +300,7 @@ export default function Onboarding() {
             )}
 
             {step === 'activity' && (
-              <Question title="¿Cuánto te mueves?" text="Piensa en tu día entero, gimnasio incluido: si estudias o trabajas sentado y entrenas 3 o 4 días, lo normal es Ligero.">
+              <Question title="¿Cuánto te mueves?" text="Piensa en tu día entero y en cuántos días entrenas. Si dudas entre dos, elige el de abajo: luego la app lo afina con tu peso real.">
                 <div role="radiogroup" aria-label="Nivel de actividad" className="space-y-2.5">
                   {ACTIVITIES.map(({ value, label, text, Icon, factor }) => (
                     <Choice

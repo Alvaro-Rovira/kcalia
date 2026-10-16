@@ -10,6 +10,8 @@ KCAL_FAT = 9
 ACTIVITY_FACTORS: dict[str, float] = {
     "sedentario": 1.2,
     "ligero": 1.375,
+    # Sentado casi todo el día y entrenando 4-5 días: entre ligero y moderado (el mismo factor que calculator.net).
+    "medio": 1.465,
     "moderado": 1.55,
     "alto": 1.725,
     "muy_alto": 1.9,

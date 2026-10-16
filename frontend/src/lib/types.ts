@@ -1,5 +1,5 @@
 export type Sex = 'hombre' | 'mujer'
-export type Activity = 'sedentario' | 'ligero' | 'moderado' | 'alto' | 'muy_alto'
+export type Activity = 'sedentario' | 'ligero' | 'medio' | 'moderado' | 'alto' | 'muy_alto'
 export type Goal = 'definicion_ligera' | 'definicion_agresiva' | 'volumen' | 'mantenimiento' | 'recomposicion'
 export type Slot = 'desayuno' | 'comida' | 'merienda' | 'cena' | 'snack'
 export type Source = 'ai' | 'exact' | 'fuzzy' | 'cache' | 'favorite' | 'recent' | 'manual' | 'photo' | 'product' | 'drink' | 'sugerencia' | 'import'

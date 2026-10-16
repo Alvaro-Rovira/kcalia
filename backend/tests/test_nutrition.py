@@ -133,3 +133,14 @@ def test_objetivos_manuales_avisan():
     assert validate_custom_targets(sex="mujer", kcal=1000, tdee_kcal=1900)[0]["code"] == "minimo_calorico"
     assert validate_custom_targets(sex="hombre", kcal=1800, tdee_kcal=3000)[0]["code"] == "deficit_maximo"
     assert validate_custom_targets(sex="hombre", kcal=2600, tdee_kcal=2700) == []
+
+
+def test_nivel_medio_entre_ligero_y_moderado():
+    """Sentado casi todo el día y entrenando 4-5 días: ni Ligero (se queda corto) ni Moderado (se pasa)."""
+    from app.nutrition import ACTIVITY_FACTORS
+
+    assert list(ACTIVITY_FACTORS) == ["sedentario", "ligero", "medio", "moderado", "alto", "muy_alto"]
+    assert ACTIVITY_FACTORS["ligero"] < ACTIVITY_FACTORS["medio"] == 1.465 < ACTIVITY_FACTORS["moderado"]
+    # 19 años, 167 cm, 65 kg: 1.604 de basal y unas 2.350 de mantenimiento, como calculator.net con el mismo factor.
+    plan = calculate_targets(sex="hombre", age=19, weight_kg=65, height_cm=167, activity="medio", goal="mantenimiento")
+    assert plan["bmr"] == 1604 and plan["tdee"] == 2349

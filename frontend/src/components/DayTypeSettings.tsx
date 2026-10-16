@@ -36,7 +36,7 @@ function TargetsLine({ values }: { values: DayTargetsValues }) {
 
 /** Ajustes de los objetivos por tipo de día: días de entreno, ajuste de cada tipo y objetivos fijados a mano. */
 /** Niveles de actividad que ya incluyen entrenar varios días por semana. */
-const ACTIVE = new Set(['moderado', 'alto', 'muy_alto'])
+const ACTIVE = new Set(['ligero', 'medio', 'moderado', 'alto', 'muy_alto'])
 
 export function DayTypeSettings() {
   const app = useApp()

@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 Sex = Literal["hombre", "mujer"]
-Activity = Literal["sedentario", "ligero", "moderado", "alto", "muy_alto"]
+Activity = Literal["sedentario", "ligero", "medio", "moderado", "alto", "muy_alto"]
 Goal = Literal["definicion_ligera", "definicion_agresiva", "volumen", "mantenimiento", "recomposicion"]
 Slot = Literal["desayuno", "comida", "merienda", "cena", "snack"]
 Source = Literal[

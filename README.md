@@ -197,7 +197,7 @@ En **Ajustes** hay un contador de consultas ahorradas, desglosado por cada vía.
 Sin IA y sin cajas negras: la app enseña el cálculo paso a paso.
 
 1. **Metabolismo basal** con Mifflin-St Jeor: `10 × peso + 6,25 × altura − 5 × edad`, `+5` en hombres y `−161` en mujeres.
-2. **Mantenimiento**: basal × factor de actividad (1,2 · 1,375 · 1,55 · 1,725 · 1,9).
+2. **Mantenimiento**: basal × factor de actividad (1,2 · 1,375 · 1,465 · 1,55 · 1,725 · 1,9). Cada nivel describe a la vez cómo es el día y cuántos días se entrena: «Medio» (×1,465) es para quien pasa el día sentado y entrena 4-5 días, el caso que antes caía entre «Ligero», que se quedaba corto, y «Moderado», que se pasaba. Si hay dudas, mejor el nivel de abajo: el gasto real medido lo corrige después.
 3. **Ajuste según el objetivo:**
 
 | Objetivo | Calorías | Proteína | Grasas |
