@@ -44,7 +44,7 @@ def test_cifrado_ida_y_vuelta():
 
 
 class FakeS3:
-    """Lo justo de S3: PUT (comprueba Content-MD5), HEAD, listar y borrar."""
+    """Lo justo de S3: PUT (comprueba Content-MD5), HEAD, descargar, listar y borrar."""
 
     def __init__(self):
         self.objects: dict[str, tuple[bytes, dict]] = {}
@@ -70,6 +70,10 @@ class FakeS3:
             body, meta = self.objects[key]
             sha = "0" * 64 if self.lie else meta["x-amz-meta-sha256"]
             return httpx.Response(200, headers={"content-length": str(len(body)), "x-amz-meta-sha256": sha})
+        if request.method == "GET" and key:  # descargar un objeto
+            if key not in self.objects:
+                return httpx.Response(404)
+            return httpx.Response(200, content=self.objects[key][0])
         if request.method == "GET":
             prefix = parse_qs(urlparse(str(request.url)).query)["prefix"][0]
             keys = "".join(f"<Contents><Key>{k}</Key></Contents>" for k in sorted(self.objects) if k.startswith(prefix))

@@ -180,6 +180,12 @@ class Remote:
         root = ET.fromstring(response.text)
         return sorted(el.text for el in root.iter() if el.tag.endswith("Key") and el.text)
 
+    def get(self, key: str) -> bytes:
+        response = self._request("GET", key)
+        if response.status_code != 200:
+            raise RuntimeError(f"la descarga respondió {response.status_code}")
+        return response.content
+
     def delete(self, key: str) -> None:
         self._request("DELETE", key)
 

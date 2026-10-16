@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
-from .. import notify, offsite, services
+from .. import backupcheck, notify, offsite, services
 from ..config import get_settings
 from ..db import get_db
 from ..deps import require_admin, today_local
@@ -164,6 +164,8 @@ def overview(db: Session = Depends(get_db)) -> dict:
             "remote_keep": settings.backup_remote_keep,
             "encrypted": bool(settings.backup_encryption_key),
             **(services.app_setting(db, BACKUP_STATUS_KEY, {}) or {}),
+            # Última comprobación semanal (se abren las copias de verdad): ver backupcheck.py.
+            "check": services.app_setting(db, backupcheck.STATUS_KEY, None),
         },
         "errors": notify.errors_summary(),
         "prices": {

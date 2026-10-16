@@ -39,6 +39,26 @@ def new_account_request(db: Session, user: User) -> None:
         log.exception("No se ha podido avisar al administrador")
 
 
+def backup_problem(message: str) -> None:
+    """La comprobación semanal de las copias ha fallado: el administrador tiene que saberlo."""
+    log.error("Problema con las copias de seguridad: %s", message)
+    try:
+        from .db import SessionLocal
+
+        with SessionLocal() as db, tenancy.unscoped(db):
+            admin = db.scalar(select(User).where(User.is_admin.is_(True)))
+            if admin is not None:
+                push.send_to_user(
+                    db,
+                    admin.id,
+                    {"title": "Problema con las copias de seguridad", "body": message, "url": "/admin",
+                     "tag": "kcalia-backup"},
+                )  # fmt: skip
+                db.commit()
+    except Exception:
+        log.exception("No se ha podido avisar del problema con las copias")
+
+
 # ---------------------------------------------------------------- errores del servidor
 
 ERROR_ALERT_EVERY = 15 * 60  # como mucho un aviso cada cuarto de hora; los demás se cuentan en el siguiente

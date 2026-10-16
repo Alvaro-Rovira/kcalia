@@ -12,7 +12,7 @@ from pathlib import Path
 import httpx
 from sqlalchemy import select
 
-from . import offsite, reminders, services, tenancy
+from . import backupcheck, offsite, reminders, services, tenancy
 from .config import Settings, get_settings
 from .db import SessionLocal
 from .models import User
@@ -112,6 +112,10 @@ def _tick(settings: Settings) -> None:
             log.info("Copia de seguridad creada: %s", path.name)
     if todays_backup.exists():
         upload_offsite(settings, todays_backup, today.isoformat())
+        # Los lunes, una vez subida, se abren las copias de verdad (local y externa) para saber que sirven.
+        status = backupcheck.run_if_due(settings, today, offsite_http())
+        if status is not None:
+            log.info("Comprobación semanal de las copias: %s", "bien" if status["ok"] else status["error"])
 
     closing_week = now.weekday() == SUMMARY_WEEKDAY and now.hour >= SUMMARY_HOUR
     with SessionLocal() as db:
