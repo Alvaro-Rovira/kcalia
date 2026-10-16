@@ -284,6 +284,11 @@ docs/       Decisiones, guía del atajo de iPhone, capturas
   - Datos extremos: `e2e/test_zz_extremos.py` prueba nombres de longitud máxima y comidas de 180.000 kcal en un móvil de 375 px, el doble envío, exportar e importar, y una copia local corrupta.
 - **Contraseña.** Se cambia en Ajustes → Cuenta: pide la actual y cierra las sesiones de los demás dispositivos. Las confirmaciones con contraseña (borrar datos, borrar la cuenta, cambiarla) tienen un freno por cuenta, así que con una sesión robada no se pueden probar contraseñas sin límite.
 
+- **Vigilancia.**
+  - Errores 500: cada uno queda en la lista de errores recientes del panel (`/api/admin/overview` → `errors`) y el administrador recibe un push como mucho cada 15 minutos (`app/notify.py`). Solo se guardan el tipo de error y la ruta, nunca datos.
+  - Web caída: desde fuera, el workflow `Disponibilidad` de GitHub comprueba `kcalia.space` cada 15 minutos. Si no responde tras tres intentos, abre una incidencia, que avisa por correo, y la cierra al volver.
+  - Copias: cada lunes, `app/backupcheck.py` abre de verdad la última copia local y, si existe, la externa descifrada. Comprueba la integridad, que tiene datos y su antigüedad, y avisa si algo falla.
+
 Cómo avisar de un fallo de seguridad y qué se revisó: [SECURITY.md](SECURITY.md).
 
 ## Stack
@@ -570,14 +575,32 @@ Las pruebas de extremo a extremo levantan la app real con una IA simulada (`e2e/
 
 ## Pendiente
 
-Lo que queda, en orden de importancia (estado a 16 de octubre de 2026):
+Lo que queda, en orden (estado del 16 de octubre de 2026, por la tarde):
 
-1. **Copia de seguridad fuera del servidor.** Hoy las copias diarias están en la misma VPS: si se perdiera la máquina, se perderían también. El código ya lo hace (cifrado AES-256-GCM, ver [Copias de seguridad](#copias-de-seguridad)); falta configurar `BACKUP_REMOTE_URL`, `BACKUP_REMOTE_BUCKET`, `BACKUP_REMOTE_ACCESS_KEY` y `BACKUP_REMOTE_SECRET_KEY` con un almacenamiento compatible con S3 (Backblaze B2 o Cloudflare R2 tienen capa gratuita). Las credenciales las pone el dueño en el servidor, nunca por chat.
-2. **Revocar la clave del proveedor de IA anterior** en su consola. Ya no se usa y se borró del servidor, pero sigue activa allí. Esto lo hace el dueño.
-3. **Fotos.** El error mediano de calorías con foto es del 41 % (`app.bench_photos`, 18 platos de Nutrition5k), y los modelos tienden a pasarse con las raciones. Si se toca `PHOTO_INSTRUCTIONS` en `ai.py`, conviene validarlo también con otra muestra (`scripts/fetch_nutrition5k.py --seed` distinta) para no sobreajustar.
-4. **Exportación.** El JSON exportado no incluye las fotos de progreso ni las imágenes de los productos (solo los datos).
-5. **Avisos de errores en producción.** Los 500 solo quedan en el registro del contenedor. En la VPS hay un Uptime Kuma (proyecto `panel`, no se toca sin permiso) que podría vigilar `/api/health`.
-6. **Detalle visual:** con cifras enormes, en las tarjetas de macros de Hoy la unidad «g» baja sola a otra línea.
+1. **Copia de seguridad fuera del servidor: falta la cuenta del dueño.** Hoy todas las copias viven en la misma VPS. Se eligió **Backblaze B2** (10 GB gratis, sin tarjeta). El dueño crea:
+   - un bucket privado (por ejemplo `kcalia-copias-…`) y apunta su *endpoint* (`s3.<región>.backblazeb2.com`);
+   - una *Application Key* limitada a ese bucket, con permiso *Read and Write*;
+   - una frase de cifrado larga, guardada en su gestor de contraseñas.
+
+   Después:
+   - `.env`: `BACKUP_REMOTE_URL=https://s3.<región>.backblazeb2.com`, `BACKUP_REMOTE_BUCKET=<bucket>` y `BACKUP_REMOTE_REGION=<región>`. No son secretos.
+   - Los secretos los mete el dueño, sin que pasen por el chat: `ssh -t root@161.97.67.178 /opt/kcalia/scripts/set-ai-key.sh BACKUP_REMOTE_ACCESS_KEY`, y lo mismo con `BACKUP_REMOTE_SECRET_KEY` y `BACKUP_ENCRYPTION_KEY`.
+   - `docker compose up -d app`. Para comprobarlo: `backupcheck.run(...)` debe dar `remote` con la clave de la copia subida.
+2. **Doble factor (TOTP), aprobado por el dueño y sin empezar.** Diseño previsto:
+   - Columnas en `users`, con migración v5: `totp_secret`, `totp_enabled`, `totp_last_step` (contra reutilizar un código) y `recovery_codes`, que son 10 códigos guardados como SHA-256.
+   - El login acepta un `code` opcional. Si la cuenta tiene doble factor y falta el código, responde `401` con `code: "totp_required"`; un código erróneo cuenta en el freno de intentos. Se admite un paso de margen (±30 s).
+   - En Ajustes → Cuenta, el usuario lo activa y desactiva confirmando su contraseña. Ve un código QR (un SVG generado en el servidor, por ejemplo con `segno`) y un código para escribir a mano, confirma con un primer código y recibe los códigos de recuperación, que se muestran una sola vez.
+   - Obligatorio para el administrador: sin él, `/api/admin/*` responde que lo active. Habrá un script de emergencia `scripts/disable-2fa.py` para usarlo por ssh.
+3. **Cuestionario de actividad en dos preguntas, aprobado y sin empezar.** En el cuestionario inicial, en lugar de la lista de niveles: «¿Cómo es tu día?» (sentado / de pie o andando / trabajo físico) × «¿Cuántos días entrenas?» (0 / 1-3 / 4-5 / 6-7), con esta tabla:
+   - sentado: `sedentario`, `ligero`, `medio`, `moderado`;
+   - de pie: `ligero`, `medio`, `moderado`, `alto`;
+   - trabajo físico: `moderado`, `alto`, `alto`, `muy_alto`.
+
+   Es solo del frontend (`Onboarding.tsx`, con la tabla probada en vitest), y hay que actualizar el paso de actividad de `e2e/test_flow.py::test_01`.
+4. **Lista de errores en la pantalla del panel.** La API ya los da (`errors.recent`) y el estado de la comprobación de copias (`backup.check`); falta pintarlos en `Admin.tsx`.
+5. **Revocar la clave del proveedor de IA anterior** en su consola. Lo hace el dueño.
+6. **Fotos.** El error mediano de calorías con foto es del 41 % (`app.bench_photos`). Si se toca `PHOTO_INSTRUCTIONS`, conviene validarlo con otra muestra (`scripts/fetch_nutrition5k.py --seed` distinta).
+7. **Exportación.** El JSON no incluye las fotos de progreso ni las imágenes de los productos.
 
 **Notas para quien continúe:**
 - Producción: `root@161.97.67.178` (`/opt/kcalia`). Se despliega con `./deploy/deploy.sh`, que hace pull de `main`, build, `up -d` y el bloque de Caddy.
