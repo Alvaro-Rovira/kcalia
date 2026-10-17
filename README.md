@@ -31,6 +31,8 @@ Kcalia es una PWA en español, pensada primero para el móvil, que vive en tu pr
 <img src="docs/demo-entreno.gif" width="250" alt="Animación: se empieza la rutina de pierna, se apunta una serie de sentadilla, corre el descanso, se repite la serie y se termina el entreno" />
 </div>
 
+> **¿Vas a continuar el proyecto con una IA (Codex, Claude Code…)?** Todo lo necesario —estado, historial, reglas, comandos y pendiente— está en [`AGENTS.md`](AGENTS.md), que esas herramientas leen solas al abrir la carpeta.
+
 ## Índice
 
 - [Características](#características)
