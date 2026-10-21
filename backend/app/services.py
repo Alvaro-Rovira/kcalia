@@ -793,7 +793,11 @@ def compute_stats(db: Session, today: date, ai_limit: int) -> dict:
 
 
 def wipe_data(db: Session) -> None:
-    """Borra todos los datos del usuario de la sesión (el filtro por usuario se aplica también a los DELETE)."""
+    """Borra todos los datos del usuario de la sesión (el filtro por usuario se aplica también a los DELETE).
+
+    El uso de IA y de voz (AiUsage) se conserva: borrándolo, cualquiera recuperaba su cupo del día (y el global, que
+    lo suma) con solo borrar sus datos. Al borrar la cuenta desaparece con ella (ON DELETE CASCADE).
+    """
     if tenancy.current_user_id(db) is None:
         raise tenancy.TenancyError("wipe_data necesita una sesión limitada a un usuario")
     for model in (
@@ -820,7 +824,6 @@ def wipe_data(db: Session) -> None:
         WeeklySummary,
         Achievement,
         Counter,
-        AiUsage,
         Targets,
         Profile,
     ):
