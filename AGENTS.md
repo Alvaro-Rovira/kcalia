@@ -57,7 +57,8 @@ de una tabla oficial** (CIQUAL 2025 + USDA), no de la IA. Además:
 - **No leas ni imprimas valores de `/opt/kcalia/.env`.** Para saber si una variable tiene valor:
   `grep -qE '^VAR=.+' .env`. Para cambiar valores que no son secretos: `sed -i`, sin mostrar el fichero.
 - **VPS compartida:** en `root@161.97.67.178` hay **otros proyectos en sus propios Docker** (`mosca`, `panel-*`
-  con Grafana, Prometheus y Uptime Kuma, `horario-*` y `nixai`). **No se paran, reinician ni configuran.** Caddy
+  con Grafana, Prometheus y Uptime Kuma, `horario-*`, `intradia`, `pokerlog`, `studyflow-*` y `nixai`). **No se
+  paran, reinician ni configuran.** Caddy
   está en el host (`/etc/caddy/Caddyfile`); Kcalia solo toca su bloque `# BEGIN/END kcalia` con
   `deploy/caddy-site.sh`, que valida, hace copia y recarga en caliente.
 - **Ajustes del sistema de la VPS** (SSH, cortafuegos, fail2ban, reinicios): no los hagas tú. Prepara un script
@@ -68,11 +69,14 @@ de una tabla oficial** (CIQUAL 2025 + USDA), no de la IA. Además:
   (`sqlite3 .backup` a `backup_dir`).
 - **Descargas de terceros:** pide permiso, diciendo qué, de dónde y cuánto ocupa.
 
-## 4. Estado actual (17 de octubre de 2026)
+## 4. Estado actual (21 de octubre de 2026)
 
-- **Producción:** `main` desplegado en `/opt/kcalia`. Contenedores `kcalia-app` (FastAPI, en `127.0.0.1:8095`) y
-  `kcalia-stt` (Whisper). Base SQLite con migraciones por `PRAGMA user_version`, ahora en **v4**. El CI de GitHub va
-  en verde.
+- **Producción:** `main` desplegado en `/opt/kcalia` (el 21 de octubre, con la revisión de seguridad 3).
+  Contenedores `kcalia-app` (FastAPI, en `127.0.0.1:8095`) y `kcalia-stt` (Whisper). Base SQLite con migraciones
+  por `PRAGMA user_version`, ahora en **v4**. El CI de GitHub va en verde.
+- **Ramas:** `main` y `haiku` apuntan al mismo commit. Las ramas `claude/revision-*` son de la sesión de Claude en
+  la nube: los PR #1 y #2 ya están fusionados; los #3 (`seguridad`) y #4 (`mejoras-v2`) siguen abiertos, sobre
+  ramas antiguas, y no hacen falta (su contenido ya está en `main`).
 - **IA:** **Claude Haiku 5.5** (`claude-haiku-5-5`) para texto, fotos, etiquetas y sugerencias, por el SDK oficial
   de Anthropic con salida estructurada. Configuración: `AI_EFFORT=low`. Precios en el panel: 0,10 $ y 0,50 $ por
   millón de tokens. Topes: 60 consultas al día en total y 20 por cuenta. El proveedor anterior se retiró por
@@ -210,7 +214,7 @@ ssh root@161.97.67.178 'cd /opt/kcalia && docker compose run --rm --no-deps -T -
   - **Vigilancia:** avisos de errores 500, aviso de caídas desde GitHub y comprobación semanal de copias.
   - **Registro:** el nivel de actividad sale de dos preguntas (`lib/activity.ts`).
 - **17 oct:** este `AGENTS.md` (con `CLAUDE.md` que lo importa) sustituye a `docs/TRASPASO-CODEX.md`.
-- **21 oct (revisión de seguridad 3, en PR, sin desplegar):**
+- **21 oct (revisión de seguridad 3, hecha en una sesión en la nube y desplegada ese mismo día):**
   - una suscripción push con claves rotas cortaba los recordatorios de las demás cuentas;
   - «Borrar mis datos» devolvía el cupo de IA del día (y el global);
   - `null` en los PATCH de ejercicios, entrenos, series y productos daba 500;
@@ -238,3 +242,7 @@ La lista completa, con el diseño de cada punto, está en la sección **«Pendie
 7. **Móvil compartido:** si la sesión caduca y en ese navegador entra otra cuenta, la cola sin conexión de la
    primera se envía a la segunda, y la caché enseña sus datos hasta recargar. Propuesta: al entrar con otro usuario,
    vaciar la cola y la caché (`clearOutbox` y `clearLocalData`).
+8. **Cerrar los PR #3 y #4** (revisiones sobre las ramas antiguas `seguridad` y `mejoras-v2`): no se despliegan.
+9. **Historial con Claude como colaborador.** Los commits antiguos llevan `Co-Authored-By` de la IA. Quitarlo
+   obliga a reescribir el historial: cambian todos los identificadores y hay que rehacer la copia local y la del
+   servidor. Sin decidir; si se hace, avisando antes a cualquier otra sesión que trabaje en el proyecto.
