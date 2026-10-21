@@ -137,3 +137,65 @@ def test_json_de_kcalia_a_otra_cuenta_sin_duplicar(client):
         client.post("/api/import/json", files={"file": ("x.json", b"no es json", "application/json")}).status_code
         == 422
     )
+
+
+ITEM = {"name": "pan", "grams": 50, "kcal": 130, "protein": 4, "carbs": 25, "fat": 1}
+
+
+def import_json(client, data: dict):
+    raw = json.dumps(data).encode()
+    return client.post("/api/import/json", files={"file": ("kcalia.json", raw, "application/json")})
+
+
+def test_json_con_forma_rara_da_422_y_no_guarda_nada(client):
+    good_meal = {"client_id": "imp-buena-01", "date": "2026-10-10", "items": [ITEM]}
+    for data in (
+        {"app": "Kcalia", "meals": {"a": 1}},
+        {"app": "Kcalia", "meals": ["texto"]},
+        {"app": "Kcalia", "weights": [1]},
+        {"app": "Kcalia", "workouts": [{"client_id": "wk-raro-01", "date": "2026-10-10", "sets": [5]}]},
+        # Lo bueno del mismo fichero tampoco se queda a medias.
+        {"app": "Kcalia", "meals": [good_meal], "water": "mucha"},
+    ):
+        response = import_json(client, data)
+        assert response.status_code == 422, (data, response.text)
+    assert client.get("/api/meals", params={"date": "2026-10-10"}).json()["meals"] == []
+    preview = upload(client, "/api/import/csv/preview", MFP, mapping="[1, 2]")
+    assert preview.status_code == 422
+
+
+def test_json_con_valores_imposibles_no_rompe_la_cuenta(client):
+    client.get("/api/training")  # catálogo de ejercicios
+    sets = [
+        {"client_id": "set-imp-0001", "exercise": "ex-press-banca", "reps": 5, "weight": 60},
+        {"client_id": "set-imp-0001", "exercise": "ex-press-banca", "reps": 5, "weight": 60},  # repetida
+        {"client_id": "set-imp-0002", "exercise": "ex-press-banca", "reps": 5, "rpe": "duro"},
+    ]
+    data = {
+        "app": "Kcalia",
+        "meals": [
+            {"client_id": "imp-fecha-01", "date": "10/10/2026", "items": [ITEM]},
+            {"client_id": "imp-nan-0001", "date": "2026-10-10", "items": [ITEM], "servings": float("nan")},
+            {"client_id": "imp-enorme-1", "date": "2026-10-10", "items": [ITEM], "servings": 1e300},
+        ],
+        "weights": [{"date": "11/10/2026", "kg": 70}],
+        "dishes": [{"name": "Raro", "items": [ITEM], "use_count": 10**30}],
+        "foods": [{"name": "inventado", "kcal100": float("nan"), "protein100": 1, "carbs100": 1, "fat100": 1}],
+        "workouts": [{"client_id": "wk-imp-0001", "date": "2026-10-10", "duration_min": "abc", "sets": sets}],
+    }
+    response = import_json(client, data)
+    assert response.status_code == 200, response.text
+    created = response.json()["created"]
+    assert created["comidas"] == 1 and created["pesos"] == 1 and created["comidas conocidas"] == 1
+    assert created["entrenos"] == 1 and "ingredientes" not in created
+    # La fecha se guarda normalizada: antes «10/10/2026» tal cual dejaba en 500 las estadísticas y el peso.
+    meals = client.get("/api/meals", params={"date": "2026-10-10"}).json()["meals"]
+    assert [m["client_id"] for m in meals] == ["imp-fecha-01"]
+    assert "2026-10-11" in [e["date"] for e in client.get("/api/weight").json()["entries"]]
+    for path in ("/api/stats", "/api/summary/history", "/api/bootstrap", "/api/training"):
+        assert client.get(path).status_code == 200, path
+    # Y la exportación sigue funcionando (con «abc» como duración daba un 500 desde la importación).
+    exported = client.get("/api/export/json")
+    assert exported.status_code == 200
+    (workout,) = [w for w in exported.json()["workouts"] if w["client_id"] == "wk-imp-0001"]
+    assert workout["duration_min"] is None and [s["client_id"] for s in workout["sets"]] == ["set-imp-0001"]
