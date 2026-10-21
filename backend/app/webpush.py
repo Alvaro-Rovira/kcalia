@@ -118,6 +118,20 @@ def push_endpoint_allowed(endpoint: str) -> bool:
     return host in PUSH_HOSTS or host.endswith(PUSH_HOST_SUFFIXES)
 
 
+def subscription_keys_valid(p256dh: str, auth: str) -> bool:
+    """`p256dh` es un punto P-256 sin comprimir (65 bytes) y `auth` un secreto de 16 bytes (RFC 8291).
+
+    Con otras claves el cifrado lanza una excepción: en el bucle de recordatorios cortaría los avisos de las demás
+    cuentas.
+    """
+    try:
+        ua_public = b64url_decode(p256dh)
+        ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256R1(), ua_public)
+        return len(ua_public) == 65 and len(b64url_decode(auth)) == 16
+    except (TypeError, ValueError):
+        return False
+
+
 def send(
     endpoint: str,
     p256dh: str,
@@ -132,6 +146,8 @@ def send(
 ) -> SendResult:
     if not push_endpoint_allowed(endpoint):
         return SendResult(ok=False, status=0, gone=True)  # suscripción anterior a la lista: se borra
+    if not subscription_keys_valid(p256dh, auth):
+        return SendResult(ok=False, status=0, gone=True)  # guardada antes de validar las claves: se borra
     body = encrypt(json.dumps(payload, ensure_ascii=False).encode(), b64url_decode(p256dh), b64url_decode(auth))
     headers = {
         "TTL": str(ttl),
