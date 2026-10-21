@@ -11,6 +11,8 @@ echo
 [ -n "$KEY" ] || { echo "No has escrito nada; no se cambia nada." >&2; exit 1; }
 
 tmp="$(mktemp)"
+# Lleva todas las claves de .env: se borra también si algo falla a medias (set -e).
+trap 'rm -f "$tmp"' EXIT
 # La clave viaja por el entorno de awk, no por argumentos, y no se interpreta (sin escapes ni comodines).
 KEY="$KEY" awk '
   /^AI_API_KEY=/ { print "AI_API_KEY=" ENVIRON["KEY"]; done = 1; next }
