@@ -151,3 +151,31 @@ def test_csv_exports_neutralise_formulas(user_client):
     cells = [cell for row in csv.reader(io.StringIO(text), delimiter=";") for cell in row]
     assert "'@SUM(A1)" in cells
     assert not any(cell.startswith(("=", "+", "@")) for cell in cells)
+
+
+def test_null_en_cada_campo_de_un_patch_sobre_datos_que_existen(user_client):
+    """null en un campo que no puede quedar vacío chocaba con la columna NOT NULL: era un 500."""
+    import json
+
+    from app.schemas import ExercisePatch, ProductPatch, SetPatch, WorkoutPatch
+
+    assert user_client.post("/api/exercises", json={"client_id": "ej-null", "name": "Press"}).status_code == 201
+    assert user_client.post("/api/workouts", json={"client_id": "wk-null-1", "date": "2026-10-10"}).status_code == 201
+    body = {"client_id": "st-null-1", "exercise": "ej-null", "reps": 5}
+    assert user_client.post("/api/workouts/wk-null-1/sets", json=body).status_code == 201
+    product = {"name": "Yogur", "kcal100": 60, "protein100": 4, "carbs100": 5, "fat100": 2}
+    product_id = user_client.post("/api/products", data={"data": json.dumps(product)}).json()["id"]
+
+    problems = []
+    for url, schema in (
+        ("/api/exercises/ej-null", ExercisePatch),
+        ("/api/workouts/wk-null-1", WorkoutPatch),
+        ("/api/sets/st-null-1", SetPatch),
+        (f"/api/products/{product_id}", ProductPatch),
+    ):
+        for field in schema.model_fields:
+            response = user_client.patch(url, json={field: None})
+            if response.status_code >= 500:
+                problems.append(f"{response.status_code} PATCH {url} {{{field}: null}}")
+    assert not problems, "\n".join(problems)
+    assert user_client.get("/api/training").status_code == 200 and user_client.get("/api/products").status_code == 200
