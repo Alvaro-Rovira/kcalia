@@ -599,8 +599,7 @@ Lo que queda, en orden (estado del 16 de octubre de 2026, por la tarde):
 6. **Fotos.** El error mediano de calorías con foto es del 41 % (`app.bench_photos`). Si se toca `PHOTO_INSTRUCTIONS`, conviene validarlo con otra muestra (`scripts/fetch_nutrition5k.py --seed` distinta).
 7. **Exportación.** El JSON no incluye las fotos de progreso ni las imágenes de los productos.
 8. **Móvil compartido.** Si la sesión caduca y en ese navegador entra otra cuenta, la cola sin conexión de la primera se envía a la segunda, y la caché enseña sus datos hasta recargar. Propuesta: al entrar con otro usuario, vaciar la cola y la caché (`clearOutbox` y `clearLocalData`).
-9. **Cerrar los PR #3 y #4** (la misma revisión del 21 de octubre sobre las ramas antiguas `seguridad` y `mejoras-v2`). No se despliegan: su contenido ya está en `main`.
-10. **Historial con Claude como colaborador.** Los commits antiguos llevan `Co-Authored-By` de la IA. Quitarlo obliga a reescribir el historial (cambian todos los identificadores y hay que rehacer la copia local y la del servidor). Sin decidir.
+9. **Historial con Claude como colaborador.** Los commits antiguos llevan `Co-Authored-By` de la IA. Quitarlo obliga a reescribir el historial (cambian todos los identificadores y hay que rehacer la copia local y la del servidor). Sin decidir.
 
 **Notas para quien continúe:**
 - Producción: `root@161.97.67.178` (`/opt/kcalia`). Se despliega con `./deploy/deploy.sh`, que hace pull de `main`, build, `up -d` y el bloque de Caddy.

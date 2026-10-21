@@ -75,8 +75,8 @@ de una tabla oficial** (CIQUAL 2025 + USDA), no de la IA. Además:
   Contenedores `kcalia-app` (FastAPI, en `127.0.0.1:8095`) y `kcalia-stt` (Whisper). Base SQLite con migraciones
   por `PRAGMA user_version`, ahora en **v4**. El CI de GitHub va en verde.
 - **Ramas:** `main` y `haiku` apuntan al mismo commit. Las ramas `claude/revision-*` son de la sesión de Claude en
-  la nube: los PR #1 y #2 ya están fusionados; los #3 (`seguridad`) y #4 (`mejoras-v2`) siguen abiertos, sobre
-  ramas antiguas, y no hacen falta (su contenido ya está en `main`).
+  la nube: los PR #1 y #2 están fusionados; los #3 (`seguridad`) y #4 (`mejoras-v2`), sobre ramas antiguas, se
+  cerraron sin fusionar porque su contenido ya estaba en `main`.
 - **IA:** **Claude Haiku 5.5** (`claude-haiku-5-5`) para texto, fotos, etiquetas y sugerencias, por el SDK oficial
   de Anthropic con salida estructurada. Configuración: `AI_EFFORT=low`. Precios en el panel: 0,10 $ y 0,50 $ por
   millón de tokens. Topes: 60 consultas al día en total y 20 por cuenta. El proveedor anterior se retiró por
@@ -242,7 +242,6 @@ La lista completa, con el diseño de cada punto, está en la sección **«Pendie
 7. **Móvil compartido:** si la sesión caduca y en ese navegador entra otra cuenta, la cola sin conexión de la
    primera se envía a la segunda, y la caché enseña sus datos hasta recargar. Propuesta: al entrar con otro usuario,
    vaciar la cola y la caché (`clearOutbox` y `clearLocalData`).
-8. **Cerrar los PR #3 y #4** (revisiones sobre las ramas antiguas `seguridad` y `mejoras-v2`): no se despliegan.
-9. **Historial con Claude como colaborador.** Los commits antiguos llevan `Co-Authored-By` de la IA. Quitarlo
+8. **Historial con Claude como colaborador.** Los commits antiguos llevan `Co-Authored-By` de la IA. Quitarlo
    obliga a reescribir el historial: cambian todos los identificadores y hay que rehacer la copia local y la del
    servidor. Sin decidir; si se hace, avisando antes a cualquier otra sesión que trabaje en el proyecto.
