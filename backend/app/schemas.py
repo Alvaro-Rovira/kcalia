@@ -35,6 +35,14 @@ def _iso_date(value: str) -> str:
     return value
 
 
+def _no_nulls(model: BaseModel, fields: tuple[str, ...]) -> BaseModel:
+    """En un PATCH, «null» en un campo que no puede quedar vacío es un dato que no cuadra (422), no un 500."""
+    wrong = sorted(key for key in fields if key in model.model_fields_set and getattr(model, key) is None)
+    if wrong:
+        raise ValueError(f"{', '.join(wrong)} no puede quedar vacío")
+    return model
+
+
 class LoginIn(BaseModel):
     username: str = Field(min_length=1, max_length=64)
     password: str = Field(min_length=1, max_length=200)
@@ -186,6 +194,10 @@ class ProductPatch(BaseModel):
     unit_label: str | None = Field(default=None, max_length=30)
     unit_grams: float | None = Field(default=None, gt=0, le=5000)
     barcode: str | None = Field(default=None, max_length=20)
+
+    @model_validator(mode="after")
+    def _not_null(self):
+        return _no_nulls(self, ("name", "basis", "kcal100", "protein100", "carbs100", "fat100", "unit_label"))
 
 
 HHMM = Annotated[str, Field(pattern=r"^([01]\d|2[0-3]):[0-5]\d$")]
@@ -363,6 +375,10 @@ class ExercisePatch(BaseModel):
     muscle: Muscle | None = None
     archived: bool | None = None
 
+    @model_validator(mode="after")
+    def _not_null(self):
+        return _no_nulls(self, ("name", "muscle", "archived"))
+
 
 class TemplateExercise(BaseModel):
     exercise: str = Field(min_length=4, max_length=40)
@@ -393,6 +409,10 @@ class WorkoutPatch(BaseModel):
     duration_min: int | None = Field(default=None, ge=1, le=600)
     intensity: Intensity | None = None
 
+    @model_validator(mode="after")
+    def _not_null(self):
+        return _no_nulls(self, ("name", "notes", "intensity"))
+
 
 class SetIn(BaseModel):
     client_id: str = Field(min_length=8, max_length=40)
@@ -407,6 +427,10 @@ class SetPatch(BaseModel):
     reps: int | None = Field(default=None, ge=0, le=600)
     weight: float | None = Field(default=None, ge=0, le=1000)
     rpe: float | None = Field(default=None, ge=1, le=10)
+
+    @model_validator(mode="after")
+    def _not_null(self):
+        return _no_nulls(self, ("reps", "weight"))
 
 
 class PlanIn(BaseModel):

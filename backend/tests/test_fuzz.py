@@ -207,3 +207,30 @@ def test_ninguna_entrada_rompe_la_api(clients):
                 elif seconds > SLOW_SECONDS:
                     problems.append(f"LENTO {seconds:.1f}s {method.upper()} {url[:80]} [{name}]")
     assert not problems, "\n".join(problems[:80]) + f"\n... {len(problems)} en total"
+
+
+def test_null_en_cada_campo_de_un_patch_sobre_datos_que_existen(clients):
+    """Arriba la ruta lleva identificadores absurdos y se queda en el 404: aquí cada PATCH llega a escribir."""
+    from app.schemas import ExercisePatch, ProductPatch, SetPatch, WorkoutPatch
+
+    user = clients["ana"]
+    assert user.post("/api/exercises", json={"client_id": "ej-null", "name": "Press"}).status_code == 201
+    assert user.post("/api/workouts", json={"client_id": "wk-null-1", "date": "2026-10-10"}).status_code == 201
+    body = {"client_id": "st-null-1", "exercise": "ej-null", "reps": 5}
+    assert user.post("/api/workouts/wk-null-1/sets", json=body).status_code == 201
+    product = {"name": "Yogur", "kcal100": 60, "protein100": 4, "carbs100": 5, "fat100": 2}
+    product_id = user.post("/api/products", data={"data": json.dumps(product)}).json()["id"]
+
+    problems = []
+    for url, schema in (
+        ("/api/exercises/ej-null", ExercisePatch),
+        ("/api/workouts/wk-null-1", WorkoutPatch),
+        ("/api/sets/st-null-1", SetPatch),
+        (f"/api/products/{product_id}", ProductPatch),
+    ):
+        for field in schema.model_fields:
+            response, _ = _send(user, "patch", url, field, json={field: None})
+            if response.status_code >= 500:
+                problems.append(f"{response.status_code} PATCH {url} {{{field}: null}}")
+    assert not problems, "\n".join(problems)
+    assert user.get("/api/training").status_code == 200 and user.get("/api/products").status_code == 200
