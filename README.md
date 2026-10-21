@@ -598,6 +598,7 @@ Lo que queda, en orden (estado del 16 de octubre de 2026, por la tarde):
 5. **Revocar la clave del proveedor de IA anterior** en su consola. Lo hace el dueño.
 6. **Fotos.** El error mediano de calorías con foto es del 41 % (`app.bench_photos`). Si se toca `PHOTO_INSTRUCTIONS`, conviene validarlo con otra muestra (`scripts/fetch_nutrition5k.py --seed` distinta).
 7. **Exportación.** El JSON no incluye las fotos de progreso ni las imágenes de los productos.
+8. **Móvil compartido.** Si la sesión caduca y en ese navegador entra otra cuenta, la cola sin conexión de la primera se envía a la segunda, y la caché enseña sus datos hasta recargar. Propuesta: al entrar con otro usuario, vaciar la cola y la caché (`clearOutbox` y `clearLocalData`).
 
 **Notas para quien continúe:**
 - Producción: `root@161.97.67.178` (`/opt/kcalia`). Se despliega con `./deploy/deploy.sh`, que hace pull de `main`, build, `up -d` y el bloque de Caddy.

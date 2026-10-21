@@ -7,7 +7,7 @@ de producto, de la arquitectura y de las pruebas está en [`README.md`](README.m
 **Mantenlo al día:** al terminar cada tarea, y antes de parar por el límite de uso, actualiza «Estado actual»,
 «Historial» y «Pendiente» (aquí y en la sección «Pendiente» del README).
 
-Última actualización: 17 de octubre de 2026.
+Última actualización: 21 de octubre de 2026.
 
 ---
 
@@ -44,6 +44,8 @@ de una tabla oficial** (CIQUAL 2025 + USDA), no de la IA. Además:
   - este archivo y el «Pendiente» del README al día.
 - **Commits:** en español, estilo `tipo(área): descripción` (`feat`, `fix`, `docs`, `test`, `chore`…), explicando
   el porqué en el cuerpo.
+- **Autoría:** el dueño quiere salir como único colaborador en GitHub. Los commits van a su nombre
+  (`Álvaro Rovira <281969355+Alvaro-Rovira@users.noreply.github.com>`) y **sin** línea `Co-Authored-By` de la IA.
 - **Antes de dar algo por hecho:** pasa todas las pruebas (sección 6). Di lo que no se ha podido probar.
 
 ## 3. Reglas de seguridad (no se rompen)
@@ -208,6 +210,14 @@ ssh root@161.97.67.178 'cd /opt/kcalia && docker compose run --rm --no-deps -T -
   - **Vigilancia:** avisos de errores 500, aviso de caídas desde GitHub y comprobación semanal de copias.
   - **Registro:** el nivel de actividad sale de dos preguntas (`lib/activity.ts`).
 - **17 oct:** este `AGENTS.md` (con `CLAUDE.md` que lo importa) sustituye a `docs/TRASPASO-CODEX.md`.
+- **21 oct (revisión de seguridad 3, en PR, sin desplegar):**
+  - una suscripción push con claves rotas cortaba los recordatorios de las demás cuentas;
+  - «Borrar mis datos» devolvía el cupo de IA del día (y el global);
+  - `null` en los PATCH de ejercicios, entrenos, series y productos daba 500;
+  - la importación JSON daba 500 con formas raras y guardaba fechas sin normalizar, que dejaban en 500 las
+    estadísticas, el peso y la exportación;
+  - certifi, vite y source-map-js actualizados por vulnerabilidades conocidas;
+  - `set-ai-key.sh` ya no deja una copia de `.env` en `/tmp` si falla.
 
 Más detalle: `git log` y los documentos de `docs/` (decisiones, progreso de cada etapa y diseños en
 `docs/superpowers/`).
@@ -225,3 +235,6 @@ La lista completa, con el diseño de cada punto, está en la sección **«Pendie
 4. **Revocar la clave del proveedor de IA anterior** en su consola. Lo hace el dueño.
 5. **Fotos:** se pueden seguir mejorando; si se toca el prompt, hay que validarlo con otra muestra de Nutrition5k.
 6. **Exportación:** el JSON exportado no incluye imágenes.
+7. **Móvil compartido:** si la sesión caduca y en ese navegador entra otra cuenta, la cola sin conexión de la
+   primera se envía a la segunda, y la caché enseña sus datos hasta recargar. Propuesta: al entrar con otro usuario,
+   vaciar la cola y la caché (`clearOutbox` y `clearLocalData`).
