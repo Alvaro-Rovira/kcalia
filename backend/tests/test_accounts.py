@@ -7,13 +7,13 @@ import pytest
 from conftest import PASSWORD, create_user, login, reset_database
 from fastapi.testclient import TestClient
 
-from app import services
+from app import services, tenancy
 from app.ai import AiClient
 from app.config import get_settings
 from app.db import SessionLocal
 from app.deps import get_ai_client
 from app.main import app
-from app.models import User
+from app.models import AiUsage, User
 from app.security import Throttle, password_problem, username_problem
 
 MEAL = {
@@ -202,6 +202,24 @@ def test_limite_por_usuario(client):
     r = resolve(client, "tres manzanas")
     assert r.status_code == 429 and r.json()["code"] == "limit"
     assert client.fake.calls == 2  # type: ignore[attr-defined]
+
+
+def test_borrar_los_datos_no_devuelve_el_cupo_de_ia(client):
+    create_user("lucia")
+    with SessionLocal() as db:
+        db.query(User).filter_by(username="lucia").update({"ai_daily_limit": 1})
+        db.commit()
+    login(client, "lucia")
+    assert resolve(client, "una manzana").status_code == 200
+    # Borrar los datos se llevaba también el uso de hoy: el cupo (y el global, que lo suma) volvía a empezar.
+    assert client.post("/api/data/delete", json={"password": PASSWORD}).json() == {"ok": True}
+    r = resolve(client, "dos manzanas")
+    assert r.status_code == 429 and r.json()["code"] == "limit"
+    assert client.fake.calls == 1  # type: ignore[attr-defined]
+    # Al borrar la cuenta entera sí desaparece, con ella.
+    assert client.post("/api/account/delete", json={"password": PASSWORD}).json() == {"ok": True}
+    with SessionLocal() as db, tenancy.unscoped(db):
+        assert db.query(AiUsage).count() == 0
 
 
 def test_limite_global_no_bloquea_al_admin(client):
