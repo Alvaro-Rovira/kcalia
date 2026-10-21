@@ -37,6 +37,8 @@ def _prepare(raw: bytes, mapping: str, month_first: bool):
             chosen = json.loads(mapping)
         except ValueError as exc:
             raise HTTPException(422, "El mapeo de columnas no es válido.") from exc
+        if not isinstance(chosen, dict):
+            raise HTTPException(422, "El mapeo de columnas no es válido.")
         for key, column in chosen.items():
             if key in importer.FIELDS and (column is None or column in parsed.columns):
                 guessed[key] = column
@@ -154,5 +156,9 @@ def import_json(file: UploadFile = File(...), db: Session = Depends(get_db)) -> 
         counts = importer.import_kcalia(db, data)
     except (ValueError, UnicodeDecodeError) as exc:
         raise HTTPException(422, str(exc) if "Kcalia" in str(exc) else "El fichero no es un JSON válido.") from exc
+    except (AttributeError, KeyError, TypeError, OverflowError) as exc:
+        # Una lista donde va un objeto, un número donde va un texto...: no tiene la forma de una exportación.
+        # Nada se ha guardado todavía (se guarda todo junto al final).
+        raise HTTPException(422, "El fichero no tiene la forma de una exportación de Kcalia.") from exc
     services.ensure_summaries(db, today_local())
     return {"created": counts}

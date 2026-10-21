@@ -8,6 +8,7 @@ calorías) para poder saltarlas.
 import csv
 import hashlib
 import io
+import math
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
@@ -123,6 +124,17 @@ def parse_number(text: str) -> float | None:
         return float(text)
     except ValueError:
         return None
+
+
+def _bounded(value, low: float, high: float) -> float | None:
+    """Un número finito entre low y high; None si no lo es (un JSON editado a mano puede traer cualquier cosa)."""
+    if isinstance(value, bool):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    return number if math.isfinite(number) and low <= number <= high else None
 
 
 def parse_date(text: str, month_first: bool = False) -> str | None:
@@ -273,7 +285,7 @@ def import_kcalia(db, data: dict) -> dict[str, int]:
         WorkoutSet,
         WorkoutTemplate,
     )
-    from .schemas import Item, Prefs, ProductIn, ProfileIn, TargetsIn
+    from .schemas import Item, MeasurementIn, Prefs, ProductIn, ProfileIn, SetIn, TargetsIn, TemplateExercise
     from .textnorm import food_key
 
     if not isinstance(data, dict) or data.get("app") != "Kcalia":
@@ -289,12 +301,18 @@ def import_kcalia(db, data: dict) -> dict[str, int]:
         except Exception:
             return None
 
+    def _valid(model, raw):
+        try:
+            return model.model_validate(raw)
+        except ValueError:
+            return None
+
     if data.get("profile") and services.get_profile(db) is None:
         try:
             db.add(
                 Profile(
                     **ProfileIn.model_validate(data["profile"]).model_dump(),
-                    weight_unit=data["profile"].get("weight_unit", "kg"),
+                    weight_unit="lb" if data["profile"].get("weight_unit") == "lb" else "kg",
                 )
             )
             bump("perfil")
@@ -307,10 +325,10 @@ def import_kcalia(db, data: dict) -> dict[str, int]:
             db.add(
                 Targets(
                     **values,
-                    bmr=int(t.get("bmr", 0)),
-                    tdee=int(t.get("tdee", values["kcal"])),
+                    bmr=int(_bounded(t.get("bmr", 0), 0, 10000) or 0),
+                    tdee=int(_bounded(t.get("tdee"), 800, 20000) or values["kcal"]),
                     custom=bool(t.get("custom")),
-                    basis_weight_kg=float(t.get("basis_weight_kg", 70)),
+                    basis_weight_kg=_bounded(t.get("basis_weight_kg"), 30, 300) or 70,
                 )
             )
             bump("objetivos")
@@ -327,10 +345,13 @@ def import_kcalia(db, data: dict) -> dict[str, int]:
     for meal in data.get("meals", []):
         items = items_ok(meal.get("items", []))
         cid = str(meal.get("client_id", ""))[:40]
-        day = str(meal.get("date", ""))
-        if not items or not cid or cid in existing or parse_date(day) is None:
+        # Se guarda la fecha normalizada (AAAA-MM-DD): «10/10/2026» tal cual rompía los resúmenes y las estadísticas.
+        day = parse_date(str(meal.get("date", "")))
+        servings = _bounded(meal.get("servings") or 1, 0, 20)
+        if not items or not cid or cid in existing or day is None or not servings:
             continue
-        servings = float(meal.get("servings") or 1)
+        assumptions = meal.get("assumptions")
+        assumptions = [a for a in assumptions if isinstance(a, str)][:12] if isinstance(assumptions, list) else []
         db.add(
             Meal(
                 client_id=cid,
@@ -341,8 +362,8 @@ def import_kcalia(db, data: dict) -> dict[str, int]:
                 items=items,
                 servings=servings,
                 source=str(meal.get("source") or "import")[:12],
-                confidence=float(meal.get("confidence") or 0.8),
-                assumptions=list(meal.get("assumptions") or [])[:12],
+                confidence=_bounded(meal.get("confidence"), 0, 1) or 0.8,
+                assumptions=assumptions,
                 **totals(items, servings),
                 **extras(items, servings),
             )
@@ -352,12 +373,13 @@ def import_kcalia(db, data: dict) -> dict[str, int]:
 
     have = set(db.scalars(select(Weight.date)))
     for weight in data.get("weights", []):
-        if weight.get("date") in have or parse_date(str(weight.get("date"))) is None:
+        day = parse_date(str(weight.get("date")))
+        if day is None or day in have:
             continue
         kg = parse_number(str(weight.get("kg")))
         if kg and 30 <= kg <= 300:
-            db.add(Weight(date=weight["date"], kg=kg))
-            have.add(weight["date"])
+            db.add(Weight(date=day, kg=kg))
+            have.add(day)
             bump("pesos")
 
     norms = set(db.scalars(select(Dish.norm)))
@@ -374,7 +396,7 @@ def import_kcalia(db, data: dict) -> dict[str, int]:
                 items=items,
                 **totals(items),
                 favorite=bool(dish.get("favorite")),
-                use_count=int(dish.get("use_count") or 0),
+                use_count=int(_bounded(dish.get("use_count") or 0, 0, 1_000_000) or 0),
             )
         )
         norms.add(norm)
@@ -398,51 +420,59 @@ def import_kcalia(db, data: dict) -> dict[str, int]:
         key = food_key(str(food.get("name", "")))
         if not key or key in foods:
             continue
-        try:
-            db.add(
-                Food(
-                    name=str(food["name"])[:120],
-                    norm=key,
-                    kcal100=float(food["kcal100"]),
-                    protein100=float(food["protein100"]),
-                    carbs100=float(food["carbs100"]),
-                    fat100=float(food["fat100"]),
-                    fiber100=food.get("fiber100"),
-                    alcohol100=food.get("alcohol100"),
-                    unit_grams=dict(food.get("unit_grams") or {}),
-                )
-            )
-            foods.add(key)
-            bump("ingredientes")
-        except (KeyError, TypeError, ValueError):
+        values = {
+            k: _bounded(food.get(k), 0, 950 if k == "kcal100" else 100)
+            for k in ("kcal100", "protein100", "carbs100", "fat100")
+        }
+        if any(v is None for v in values.values()):
             continue
+        units = food.get("unit_grams")
+        db.add(
+            Food(
+                name=str(food["name"])[:120],
+                norm=key,
+                **values,
+                fiber100=_bounded(food.get("fiber100"), 0, 100),
+                alcohol100=_bounded(food.get("alcohol100"), 0, 100),
+                unit_grams={str(u)[:40]: g for u, v in units.items() if (g := _bounded(v, 0, 5000))}
+                if isinstance(units, dict)
+                else {},
+            )
+        )
+        foods.add(key)
+        bump("ingredientes")
 
     water = set(db.scalars(select(WaterLog.client_id)))
     for entry in data.get("water", []):
         cid, ml = str(entry.get("client_id", ""))[:40], parse_number(str(entry.get("ml")))
-        if cid and cid not in water and ml and 0 < ml <= 3000 and parse_date(str(entry.get("date"))):
-            db.add(WaterLog(client_id=cid, date=entry["date"], ml=int(ml)))
+        day = parse_date(str(entry.get("date")))
+        if cid and cid not in water and ml and 0 < ml <= 3000 and day:
+            db.add(WaterLog(client_id=cid, date=day, ml=int(ml)))
             water.add(cid)
             bump("agua")
 
     days = set(db.scalars(select(BodyMeasurement.date)))
     for entry in data.get("measurements", []):
-        if entry.get("date") in days or parse_date(str(entry.get("date"))) is None:
+        day = parse_date(str(entry.get("date")))
+        if day is None or day in days:
             continue
-        values = {k: entry.get(k) for k in ("waist", "chest", "arm", "hip", "thigh")}
-        if any(isinstance(v, int | float) for v in values.values()):
-            db.add(
-                BodyMeasurement(
-                    date=entry["date"], **{k: v if isinstance(v, int | float) else None for k, v in values.items()}
-                )
-            )
-            days.add(entry["date"])
+        try:
+            # Los mismos márgenes que al apuntarlas (una cintura de 1 cm o de 1e308 no es una medida).
+            values = MeasurementIn.model_validate({**entry, "date": day}).model_dump(exclude={"date"})
+        except ValueError:
+            continue
+        if any(v is not None for v in values.values()):
+            db.add(BodyMeasurement(date=day, **values))
+            days.add(day)
             bump("medidas")
 
     typed = set(db.scalars(select(DayType.date)))
-    for day, kind in (data.get("day_types") or {}).items():
-        if day not in typed and kind in ("entreno", "descanso") and parse_date(day):
+    day_types = data.get("day_types") or {}
+    for raw_day, kind in day_types.items() if isinstance(day_types, dict) else []:
+        day = parse_date(str(raw_day))
+        if day and day not in typed and kind in ("entreno", "descanso"):
             db.add(DayType(date=day, kind=kind))
+            typed.add(day)
             bump("tipos de día")
 
     exercise_ids = dict(db.execute(select(Exercise.client_id, Exercise.id)).all())
@@ -469,23 +499,31 @@ def import_kcalia(db, data: dict) -> dict[str, int]:
                 WorkoutTemplate(
                     client_id=cid,
                     name=str(template.get("name") or "Rutina")[:60],
-                    exercises=[e for e in template.get("exercises", []) if e.get("exercise") in exercise_ids],
-                    position=int(template.get("position") or 0),
+                    exercises=[
+                        e.model_dump()
+                        for e in (_valid(TemplateExercise, raw) for raw in template.get("exercises", []))
+                        if e is not None and e.exercise in exercise_ids
+                    ],
+                    position=int(_bounded(template.get("position") or 0, 0, 1000) or 0),
                 )
             )
             templates.add(cid)
             bump("plantillas")
     workouts = set(db.scalars(select(Workout.client_id)))
+    set_ids = set(db.scalars(select(WorkoutSet.client_id)))
     for workout in data.get("workouts", []):
         cid = str(workout.get("client_id", ""))[:40]
-        if not cid or cid in workouts or parse_date(str(workout.get("date"))) is None:
+        day = parse_date(str(workout.get("date")))
+        if not cid or cid in workouts or day is None:
             continue
+        duration = _bounded(workout.get("duration_min"), 1, 600)
         row = Workout(
             client_id=cid,
-            date=workout["date"],
+            date=day,
             name=str(workout.get("name") or "Entreno")[:60],
             notes=str(workout.get("notes") or "")[:1000],
-            duration_min=workout.get("duration_min"),
+            # Un texto aquí se guardaba tal cual y la exportación daba un 500 desde entonces.
+            duration_min=round(duration) if duration else None,
             intensity=workout.get("intensity")
             if workout.get("intensity") in ("suave", "moderada", "intensa")
             else "moderada",
@@ -494,21 +532,24 @@ def import_kcalia(db, data: dict) -> dict[str, int]:
         )
         db.add(row)
         db.flush()
-        for s in workout.get("sets", []):
-            exercise_id = exercise_ids.get(s.get("exercise"))
-            if exercise_id is None:
+        for raw in workout.get("sets", []):
+            # Los mismos márgenes que al apuntar una serie; un client_id repetido chocaba con el índice único.
+            s = _valid(SetIn, {"reps": 0, **raw})
+            exercise_id = exercise_ids.get(s.exercise) if s else None
+            if exercise_id is None or s.client_id in set_ids:
                 continue
             db.add(
                 WorkoutSet(
-                    client_id=str(s.get("client_id"))[:40],
+                    client_id=s.client_id,
                     workout_id=row.id,
                     exercise_id=exercise_id,
-                    position=int(s.get("position") or 0),
-                    reps=int(s.get("reps") or 0),
-                    weight=float(s.get("weight") or 0),
-                    rpe=s.get("rpe"),
+                    position=s.position,
+                    reps=s.reps,
+                    weight=s.weight,
+                    rpe=s.rpe,
                 )
             )
+            set_ids.add(s.client_id)
         workouts.add(cid)
         bump("entrenos")
 
@@ -516,15 +557,17 @@ def import_kcalia(db, data: dict) -> dict[str, int]:
     for plan in data.get("meal_plans", []):
         items = items_ok(plan.get("items", []))
         cid = str(plan.get("client_id", ""))[:40]
-        if items and cid and cid not in plans and parse_date(str(plan.get("date"))):
+        day = parse_date(str(plan.get("date")))
+        servings = _bounded(plan.get("servings") or 1, 0, 20)
+        if items and cid and cid not in plans and day and servings:
             db.add(
                 MealPlan(
                     client_id=cid,
-                    date=plan["date"],
+                    date=day,
                     slot=plan.get("slot") if plan.get("slot") in SLOT_WORDS else "comida",
                     name=str(plan.get("name") or "Comida")[:160],
                     items=items,
-                    servings=float(plan.get("servings") or 1),
+                    servings=servings,
                 )
             )
             plans.add(cid)
