@@ -11,10 +11,13 @@ import pytest
 from conftest import PASSWORD, create_user, login, reset_database
 from cryptography.hazmat.primitives.asymmetric import ec
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
-from app import push, reminders
+from app import push, reminders, tenancy
 from app.config import get_settings
+from app.db import SessionLocal
 from app.main import app
+from app.models import PushSubscription, User
 from app.webpush import _public_bytes, b64url, generate_vapid_keys
 
 NOW = datetime(2026, 10, 7, 16, 10)  # miércoles
@@ -110,6 +113,36 @@ def test_las_suscripciones_caducadas_se_borran(client, service):
     subscribe(client, "https://updates.push.services.mozilla.com/wpush/caducada")
     assert client.post("/api/push/test").json() == {"sent": 1}
     assert client.get("/api/push").json()["devices"] == 1
+
+
+def test_claves_que_no_son_de_un_navegador_se_rechazan(client):
+    endpoint = "https://updates.push.services.mozilla.com/wpush/ana-movil"
+    for keys in (
+        {"p256dh": "!!no-es-base64!!", "auth": "x"},
+        {"p256dh": "a" * 87, "auth": "b" * 22},  # 65 bytes, pero no es un punto de la curva
+        {**browser_keys(), "auth": b64url(os.urandom(8))},  # el secreto son 16 bytes
+    ):
+        assert client.post("/api/push/subscribe", json={"endpoint": endpoint, "keys": keys}).status_code == 422
+    assert client.get("/api/push").json()["devices"] == 0
+
+
+def test_una_suscripcion_con_claves_rotas_no_corta_los_recordatorios_de_los_demas(client, service):
+    # La del administrador se guarda sin pasar por la API (como las de antes de validar las claves) y su cuenta va
+    # antes en el bucle: lanzaba una excepción al cifrar y ana se quedaba sin aviso.
+    with SessionLocal() as db:
+        admin_id = db.scalar(select(User.id).where(User.username == "alvaro"))
+    with SessionLocal() as db, tenancy.as_user(db, admin_id):
+        db.add(PushSubscription(endpoint="https://updates.push.services.mozilla.com/wpush/rota", p256dh="!!", auth="x"))
+        db.commit()
+    login(client, "alvaro")
+    client.patch("/api/prefs", json={"reminders": True})
+    login(client, "ana")
+    subscribe(client, "https://updates.push.services.mozilla.com/wpush/ana-movil")
+    client.patch("/api/prefs", json={"reminders": True})
+    assert reminders.run(NOW) == 1
+    assert [str(r.url) for r in service.requests] == ["https://updates.push.services.mozilla.com/wpush/ana-movil"]
+    login(client, "alvaro")
+    assert client.get("/api/push").json()["devices"] == 0  # la rota se ha borrado
 
 
 def test_el_mismo_navegador_pasa_a_la_cuenta_que_se_suscribe(client):

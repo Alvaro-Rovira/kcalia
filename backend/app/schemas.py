@@ -307,8 +307,12 @@ class PushSubscriptionIn(BaseModel):
 
     @model_validator(mode="after")
     def _keys(self):
+        from .webpush import subscription_keys_valid
+
         if not self.keys.get("p256dh") or not self.keys.get("auth"):
             raise ValueError("faltan las claves p256dh y auth")
+        if not subscription_keys_valid(self.keys["p256dh"], self.keys["auth"]):
+            raise ValueError("las claves p256dh y auth no son válidas")
         return self
 
 
